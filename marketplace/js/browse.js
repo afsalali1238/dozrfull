@@ -113,7 +113,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const quoteHref = DozrWhatsApp.requestQuote(unit.name, dateRange, searchLocation);
     return `<article class="listing-card">
       <a class="card-link" href="equipment-detail.html?id=${unit.id}" aria-label="View ${unit.name} details">
-        <div class="photo card-photo" role="img" aria-label="${unit.categoryLabel}" data-cap="${unit.categoryLabel}">${unit.verified ? '<span class="verified-badge">Verified</span>' : ''}</div>
+        <div class="photo card-photo" style="background-image: url('assets/equipment/${unit.id}-hero.jpg');" role="img" aria-label="${unit.categoryLabel}" data-cap="${unit.categoryLabel}">${unit.verified ? '<span class="verified-badge">Verified</span>' : ''}</div>
         <div class="card-body"><div class="card-kicker">${unit.categoryLabel} - ${weight}</div><div class="card-name">${unit.name}</div><div class="spec-pills"><span>${getAvailability(unit).replace('-', ' ')}</span>${unit.gpsTracked ? '<span>GPS on</span>' : ''}</div></div>
       </a>
       <div class="card-actions" style="justify-content:flex-end"><a class="btn btn-secondary" href="${quoteHref}">Request quote</a></div>

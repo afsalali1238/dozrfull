@@ -199,6 +199,9 @@ h1, h2, h3, h4 {
 .photo {
   position: relative;
   background: var(--line-strong);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
   border-radius: inherit;
 }
 .photo[data-cap]:not([data-cap=""])::after {

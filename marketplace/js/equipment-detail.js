@@ -16,8 +16,8 @@ document.addEventListener("DOMContentLoaded", () => {
   main.innerHTML = `
     <div class="card-kicker">${unit.categoryLabel} - ${weight}</div>
     <h1 style="font-size:34px;margin-bottom:18px">${unit.name}</h1>
-    <div class="photo detail-hero" role="img" aria-label="${unit.name} ${unit.categoryLabel} in-situ, Al Quoz" data-cap="${unit.name} - Al Quoz">${unit.verified ? '<span class="verified-badge">Verified supplier</span>' : ''}</div>
-    <div class="thumb-row"><div class="photo" aria-hidden="true" data-cap=""></div><div class="photo" aria-hidden="true" data-cap=""></div><div class="photo" aria-hidden="true" data-cap=""></div><div class="photo" aria-hidden="true" data-cap=""></div></div>
+    <div class="photo detail-hero" style="background-image: url('assets/equipment/${unit.id}-hero.jpg');" role="img" aria-label="${unit.name} ${unit.categoryLabel} in-situ, Al Quoz" data-cap="${unit.name} - Al Quoz">${unit.verified ? '<span class="verified-badge">Verified supplier</span>' : ''}</div>
+    <div class="thumb-row"><div class="photo" style="background-image: url('assets/equipment/${unit.id}-thumb-1.jpg');" aria-hidden="true" data-cap=""></div><div class="photo" style="background-image: url('assets/equipment/${unit.id}-thumb-2.jpg');" aria-hidden="true" data-cap=""></div><div class="photo" style="background-image: url('assets/equipment/${unit.id}-thumb-3.jpg');" aria-hidden="true" data-cap=""></div><div class="photo" style="background-image: url('assets/equipment/${unit.id}-thumb-4.jpg');" aria-hidden="true" data-cap=""></div></div>
     <div class="eyebrow" style="margin:32px 0 14px">Specs</div>
     <div class="spec-table">${specs}</div>
     <p class="text-muted" style="font-size:15px;line-height:1.7;margin:24px 0 0">${unit.description || 'Verified unit available through Dozr vendors. Share your dates and site location to receive a fixed vendor quote over WhatsApp.'}</p>`;
