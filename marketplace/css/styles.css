@@ -230,10 +230,37 @@ h1, h2, h3, h4 {
 
 /* ---------------- Footer ---------------- */
 .site-footer {
-  border-top: 1px solid var(--line);
-  padding: var(--space-4) 0;
-  color: var(--slate);
-  font-size: 13px;
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 48px 0;
+  border-top: 4px solid var(--yellow);
+  font-size: 14px;
+}
+.footer-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.logo-box {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--yellow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.footer-logotext {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--surface);
+  letter-spacing: -.02em;
 }
 
 /* ---------------- Utility ---------------- */
@@ -366,7 +393,7 @@ h1, h2, h3, h4 {
 .summary-row span:first-child { color:var(--slate); }
 .price-line { font-family:var(--font-heading); font-size:24px; font-weight:700; }
 @media (max-width:900px) { .site-nav .links { display:none; } .tile-grid, .card-grid, .results-grid { grid-template-columns:repeat(2, 1fr); } .feature-showcase, .steps-band, .browse-layout, .detail-layout { grid-template-columns:1fr; } .quote-rail { position:static; } }
-@media (max-width:640px) { .search-panel, .stats-row, .results-header, .section-title { align-items:stretch; flex-direction:column; } .divider { display:none; } .tile-grid, .card-grid, .results-grid, .spec-table { grid-template-columns:1fr; } .hero { padding-top:40px; } .card-actions, .phone-actions { flex-direction:column; align-items:stretch; } .feature-visual { min-height: 240px; } }
+@media (max-width:640px) { .search-panel, .stats-row, .results-header, .section-title { align-items:stretch; flex-direction:column; } .divider { display:none; } .tile-grid, .card-grid, .results-grid, .spec-table { grid-template-columns:1fr; } .hero { padding-top:40px; } .card-actions, .phone-actions { flex-direction:column; align-items:stretch; } .feature-visual { min-height: 240px; } .footer-inner { flex-direction:column; align-items:flex-start; gap:20px; } }
 
 .nav-toggle {
   display: none;
