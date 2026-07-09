@@ -516,6 +516,7 @@ h1, h2, h3, h4 {
   border-radius: 18px;
   padding: var(--space-3);
 }
+.vehicle-preview { height: 180px; border-radius: var(--radius-card); margin-bottom: var(--space-3); }
 .not-found-panel {
   background: var(--surface);
   border: 1.5px solid var(--error);
