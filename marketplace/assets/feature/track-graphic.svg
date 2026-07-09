@@ -1,0 +1,70 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Map grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <rect width="40" height="40" fill="none" stroke="#22242a" stroke-width="1"/>
+    </pattern>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background base -->
+  <rect width="800" height="600" fill="#141518"/>
+  
+  <!-- Map texture -->
+  <rect width="800" height="600" fill="url(#grid)" opacity="0.6"/>
+
+  <!-- Subtle geography shapes -->
+  <path d="M 0,150 Q 200,100 400,200 T 800,100 L 800,600 L 0,600 Z" fill="#1c1e22" opacity="0.5"/>
+  <path d="M -100,400 Q 150,250 350,450 T 900,300 L 900,800 L -100,800 Z" fill="#24262b" opacity="0.3"/>
+
+  <!-- Route Line -->
+  <path d="M 200,450 Q 250,300 450,350 T 650,200" fill="none" stroke="#FFC400" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 10"/>
+  
+  <!-- Active glowing route path -->
+  <path d="M 200,450 Q 250,300 450,350" fill="none" stroke="#FFC400" stroke-width="8" stroke-linecap="round" filter="url(#glow)"/>
+
+  <!-- Origin Marker -->
+  <circle cx="200" cy="450" r="12" fill="#5B5F66" stroke="#141518" stroke-width="4"/>
+  <circle cx="200" cy="450" r="4" fill="#FFFFFF"/>
+  <text x="200" y="485" font-family="Space Mono, monospace" font-size="12" fill="#8A8D93" text-anchor="middle" letter-spacing="1">ORIGIN</text>
+
+  <!-- Driver Pin (Moving) -->
+  <g transform="translate(450,350)">
+    <circle cx="0" cy="0" r="28" fill="#FFC400" opacity="0.2">
+      <animate attributeName="r" values="24; 44; 24" dur="2s" repeatCount="indefinite"/>
+      <animate attributeName="opacity" values="0.4; 0; 0.4" dur="2s" repeatCount="indefinite"/>
+    </circle>
+    <circle cx="0" cy="0" r="14" fill="#141518" stroke="#FFC400" stroke-width="4"/>
+    <circle cx="0" cy="0" r="4" fill="#FFC400"/>
+  </g>
+
+  <!-- Destination Marker -->
+  <path d="M 650,200 C 650,183 636,170 620,170 C 604,170 590,183 590,200 C 590,225 620,250 620,250 C 620,250 650,225 650,200 Z" fill="#146447"/>
+  <circle cx="620" cy="195" r="8" fill="#FFFFFF"/>
+  <text x="620" y="155" font-family="Space Mono, monospace" font-size="12" fill="#FFFFFF" text-anchor="middle" letter-spacing="1">DESTINATION</text>
+
+  <!-- Overlay UI Card: GPS Stats -->
+  <g transform="translate(60, 60)" filter="url(#shadow)">
+    <rect width="260" height="130" rx="16" fill="#FFFFFF"/>
+    
+    <!-- Topbar -->
+    <rect width="260" height="40" rx="16" fill="#141518"/>
+    <rect y="20" width="260" height="20" fill="#141518"/> <!-- cover bottom rounded corners -->
+    <text x="20" y="26" font-family="Space Mono, monospace" font-size="11" fill="#FFFFFF" font-weight="bold" letter-spacing="1">LIVE TRACKING</text>
+    <circle cx="230" cy="20" r="4" fill="#146447"/>
+    
+    <!-- Content -->
+    <text x="20" y="70" font-family="Space Grotesk, sans-serif" font-size="13" fill="#5B5F66">ETA</text>
+    <text x="20" y="96" font-family="Hanken Grotesk, sans-serif" font-size="28" fill="#141518" font-weight="bold">14 mins</text>
+
+    <text x="140" y="70" font-family="Space Grotesk, sans-serif" font-size="13" fill="#5B5F66">Speed</text>
+    <text x="140" y="96" font-family="Hanken Grotesk, sans-serif" font-size="28" fill="#141518" font-weight="bold">65 <tspan font-size="16" fill="#5B5F66">km/h</tspan></text>
+  </g>
+
+</svg>
