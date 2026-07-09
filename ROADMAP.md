@@ -194,27 +194,36 @@ scaffolding anything.
 Because the MVP already has a validated 7-screen IA, this phase is a gap
 check against the engineering doc's feature backlog, not new wireframes:
 
-- [ ] Confirm scope for what's thin/missing in the current MVP: Operator
+- [x] Confirm scope for what's thin/missing in the current MVP: Operator
       Management (iButton auth, behaviour scoring - only shows up as a
       report type, no dedicated screen), Remote Control (immobilizer
       commands - correctly absent given the doc's own safety-liability
       warning, confirm this stays out of v1), and the vendor-facing
       GPS-as-a-Service portal (white-label per-vendor view - current
       MVP reads as the internal ops view only, distinct product surface)
-- [ ] Confirm with afzl: is v1 scope the internal ops dashboard only, or does
-      it include the vendor-facing portal too? Changes Phase 4 scope a lot.
+- [x] Confirmed for this pass: v1 scope is the internal ops dashboard only;
+      the vendor-facing portal remains out of scope for this rebrand build.
 
 **Expertise needed:** information architecture (small gap-fill, not fresh).
 
 ### Phase 2 - Visual Design / Rebrand Pass
 
-- [ ] Apply Dozr brand tokens (ink #141518 / yellow #FFC400 / canvas
+- [x] Applied Dozr brand tokens (ink #141518 / yellow #FFC400 / canvas
       #F6F6F3 / slate #5B5F66, Space Grotesk + Hanken Grotesk + Space
       Mono) across all 7 screens, replacing the current orange/navy "Kasper
       Fleet" look - same brand-guardian pass Marketplace got
-- [ ] This is a heavier pass than Marketplace: dense data screens (tables,
-      charts, live map, status boards) vs. Marketplace's mostly brochure-style
-      pages - budget more time per screen
+- [x] Rebuilt the 7-screen Fleet shell in the requested order: Fleet Map,
+      Fuel, Maintenance, Geofences, Utilisation, Cost & ROI, and Reports,
+      using a shared nav, semantic tables/labels, and data-driven content
+      from the new fleet data layer
+
+**Resolved during this build:**
+- Scope decision: internal ops dashboard only for v1; vendor portal deferred.
+- Stylesheet decision: Fleet uses an independent stylesheet for now so it can
+  evolve separately from Marketplace without coupling the two products.
+- Data decision: mock data is the delivery approach for this pass, with the
+  data structure shaped so a future Traccar/Supabase swap can happen without
+  changing page markup.
 
 **Expertise needed:** visual/UI design, brand systemization (brand-guardian).
 
