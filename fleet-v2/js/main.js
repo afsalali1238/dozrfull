@@ -317,11 +317,11 @@
 
   function bindNavToggle() {
     var toggle = document.getElementById("nav-toggle");
-    var sidebar = document.getElementById("app-sidebar");
-    if (!toggle || !sidebar) return;
+    var nav = document.getElementById("top-nav");
+    if (!toggle || !nav) return;
     toggle.addEventListener("click", function () {
-      var open = sidebar.getAttribute("data-open") === "true";
-      sidebar.setAttribute("data-open", open ? "false" : "true");
+      var open = nav.getAttribute("data-open") === "true";
+      nav.setAttribute("data-open", open ? "false" : "true");
       toggle.setAttribute("aria-expanded", open ? "false" : "true");
     });
   }

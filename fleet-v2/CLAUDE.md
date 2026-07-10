@@ -259,6 +259,50 @@ Timesheet, Alerts Center - one page per pass, per Working mode. Cost & ROI
 should reuse `.metric-card-grid`/`.metric-card` for its per-asset costs
 (see note above). Ask afzl before starting Cost & ROI.
 
+## Seventh pass (2026-07-10) - nav moved from left sidebar to header
+
+afzl asked to move navigation into the header instead of a left sidebar,
+matching the original `telematics-flame.vercel.app` reference (confirmed by
+fetching the live site - it uses a flat horizontal nav row in the header,
+no left sidebar, no Operate/Monitor/Analyze grouping). This is a real
+architecture change from every prior pass in this file, applied across all
+9 pages at once (not one-page-per-pass, since it's a shared-shell change,
+not a page-content change).
+
+What changed:
+- `css/styles.css`: removed `.app-layout`/`.app-sidebar` (200px grid +
+  fixed drawer), replaced with `.app-shell` (single column) and `.top-nav`
+  (flex-wrap horizontal link row inside `.app-header`). Removed
+  `.nav-group-label` (no longer used - nav is flat, not grouped).
+  Mobile: `.top-nav` collapses to `display:none` under 1150px and toggles
+  open via the existing `#nav-toggle` button, same interaction pattern as
+  before, different target element.
+- All 9 pages: `<nav class="app-sidebar">...</nav>` removed, links moved
+  into a `<nav class="top-nav" id="top-nav">` inside `<header
+  class="app-header">`. Nav order kept from the old grouping (Fleet Map,
+  Timesheet, Fuel, Maintenance, Geofences, Alerts Center, Utilisation,
+  Cost & ROI, Reports) even though the group labels themselves are gone -
+  closest match to the reference's flat list while keeping our 9 pages (the
+  reference only has 7 - no Timesheet/Alerts Center).
+- `js/main.js`: `bindNavToggle()` now targets `#top-nav` instead of
+  `#app-sidebar` for the `data-open` toggle.
+- Every page's `<main class="app-main" id="main-content">...</main>` block
+  (the actual page content built in prior passes) was extracted and
+  reinserted verbatim - Fleet Map, Fuel, Maintenance, Geofences, and
+  Utilisation's real content is unchanged, only the shell around it moved.
+
+Verified: `node --check` both JS files, null-byte scan across every file,
+structure/dup-id/broken-link check on all 9 pages plus an explicit check
+for leftover `app-sidebar` references (found none), CSS brace balance.
+
+## Next checkpoint
+
+Nav-in-header is done and verified across all 9 pages. Remaining stubs:
+Cost & ROI, Reports, Timesheet, Alerts Center - one page per pass, per
+Working mode. New pages should build directly into the `.app-shell` /
+`.top-nav` header pattern, not the old sidebar. Ask afzl before starting
+Cost & ROI.
+
 ## Working mode (confirmed 2026-07-10)
 
 afzl builds each page himself (in his own tool). Claude's job is reviewer/

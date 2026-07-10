@@ -180,17 +180,14 @@ th { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text
 .gauge-value { position: relative; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink); }
 .gauge-label { font-size: 9.5px; color: var(--slate); text-transform: uppercase; font-family: var(--font-mono); letter-spacing: .5px; }
 
-/* App layout: persistent left nav sidebar shared across all fleet-v2 pages */
-.app-layout { display: grid; grid-template-columns: 200px 1fr; min-height: 100vh; }
-.app-sidebar { background: var(--surface); border-right: 1px solid var(--line); display: flex; flex-direction: column; padding: var(--space-3) 0; position: sticky; top: 0; height: 100vh; overflow-y: auto; z-index: 50; transition: transform .3s; }
-.app-sidebar .logo { padding: 0 var(--space-3); margin-bottom: var(--space-3); }
-.app-sidebar .links { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0 var(--space-2); list-style: none; }
-.app-sidebar .links a { display: flex; align-items: center; padding: 8px 10px; border-radius: var(--radius-button); text-decoration: none; color: var(--slate); font-weight: 500; font-size: 12.5px; transition: background .2s, color .2s; }
-.app-sidebar .links a:hover { background: var(--canvas); color: var(--ink); }
-.app-sidebar .links a[aria-current="page"] { background: var(--yellow-tint); color: var(--ink); font-weight: 600; }
-
-.app-content { display: flex; flex-direction: column; min-width: 0; }
-.app-header { background: var(--canvas); padding: 10px 20px; display: flex; align-items: center; gap: 8px; position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); }
+/* App layout: single-column shell, horizontal nav in the header (matches telematics-flame reference) */
+.app-shell { display: flex; flex-direction: column; min-height: 100vh; }
+.app-header { background: var(--canvas); padding: 10px 20px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; position: sticky; top: 0; z-index: 40; border-bottom: 1px solid var(--line); }
+.app-header .logo { flex-shrink: 0; }
+.top-nav { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.top-nav a { padding: 7px 10px; border-radius: var(--radius-button); text-decoration: none; color: var(--slate); font-weight: 500; font-size: 12.5px; white-space: nowrap; transition: background .2s, color .2s; }
+.top-nav a:hover { background: var(--surface); color: var(--ink); }
+.top-nav a[aria-current="page"] { background: var(--yellow-tint); color: var(--ink); font-weight: 600; }
 .app-header .nav-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
 .app-main { padding: 14px 20px 28px; display: grid; gap: 10px; }
 
@@ -204,9 +201,6 @@ th { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text
 .d-empty .icon { font-size: 24px; }
 
 .placeholder-panel { padding: 48px 20px; text-align: center; color: var(--slate); display: grid; gap: 6px; justify-items: center; }
-
-.nav-group-label { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--slate); font-weight: 700; margin: 12px 10px 4px; }
-.nav-group-label:first-child { margin-top: 4px; }
 
 .map-actions { position: absolute; top: 10px; left: 10px; display: flex; gap: 6px; z-index: 5; }
 .map-actions button, .map-actions a { border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; background: var(--surface); font-size: 11px; cursor: pointer; font-family: var(--font-mono); text-decoration: none; color: var(--ink); display: inline-flex; align-items: center; }
@@ -234,11 +228,11 @@ th { font-family: var(--font-mono); font-size: 10px; letter-spacing: .06em; text
 .route-point { fill: var(--surface); stroke: var(--ink); stroke-width: .5; }
 
 @media (max-width: 1150px) {
-  .nav-toggle { display: inline-flex; align-items: center; }
-  .app-layout { grid-template-columns: 1fr; }
-  .app-sidebar { position: fixed; transform: translateX(-100%); width: 240px; box-shadow: 0 0 40px rgba(0,0,0,.1); }
-  .app-sidebar[data-open="true"] { transform: translateX(0); }
-  .nav-toggle { display: inline-flex; margin-right: auto; }
+  .nav-toggle { display: inline-flex; align-items: center; order: 1; }
+  .top-nav { display: none; width: 100%; flex-direction: column; align-items: stretch; order: 3; }
+  .top-nav[data-open="true"] { display: flex; }
+  .top-nav a { padding: 10px 12px; }
+  .app-header .nav-actions { order: 2; }
   .map-card, .fleetmap-grid { grid-template-columns: 1fr; }
   .stats-grid, .summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .asset-panel { max-height: 260px; }
