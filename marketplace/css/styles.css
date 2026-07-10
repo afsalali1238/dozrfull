@@ -342,8 +342,9 @@ h1, h2, h3, h4 {
 .faq-list { background:var(--line); border:1px solid var(--line); border-radius:14px; overflow:hidden; }
 .faq-item { background:var(--surface); padding:20px 22px; }
 .faq-item + .faq-item { border-top:1px solid var(--line); }
-.faq-item h3 { font-size:15px; margin-bottom:6px; }
-.faq-item p { margin:0; font-size:14px; color:var(--slate); line-height:1.6; }
+.faq-item h3 { display:flex; align-items:flex-start; gap:10px; font-size:15px; margin-bottom:6px; }
+.faq-item h3::before { content:""; width:6px; height:6px; margin-top:6px; border-radius:var(--radius-pill); background:var(--yellow); flex-shrink:0; }
+.faq-item p { margin:0 0 0 16px; font-size:14px; color:var(--slate); line-height:1.6; }
 .category-tabs { display:flex; gap:4px; overflow-x:auto; padding-bottom:0; }
 .category-tabs button { all:unset; cursor:pointer; font-family:var(--font-heading); font-weight:600; font-size:13px; color:var(--slate); border-radius:10px 10px 0 0; padding:10px 16px; white-space:nowrap; }
 .category-tabs button[aria-current="true"] { background:var(--yellow-tint); color:var(--ink); }
