@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fleet Map - Dozr Fleet</title>
+<meta name="description" content="Live fleet map, asset status, and active alerts across all Dozr Fleet sites.">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="app-layout">
+
+  <nav class="app-sidebar" id="app-sidebar" aria-label="Primary">
+    <a class="logo" href="index.html" aria-label="Dozr Fleet home">
+      <span class="logo-mark" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M12 6c-2 0-3.2 1.3-3.2 3.4V18.5h4.4V11c0-1.1.5-1.7 1.5-1.7H17V6z" fill="var(--yellow)"/><path d="M14.5 14.5 21.5 18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/><circle cx="22.5" cy="20.5" r="2.6" fill="var(--yellow)"/><path d="M6.5 24H18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <span>dozr fleet</span>
+    </a>
+    <div class="nav-group-label">Operate</div>
+    <ul class="links">
+      <li><a href="index.html" aria-current="page">Fleet Map</a></li>
+      <li><a href="timesheet.html">Timesheet</a></li>
+    </ul>
+    <div class="nav-group-label">Monitor</div>
+    <ul class="links">
+      <li><a href="fuel.html">Fuel</a></li>
+      <li><a href="maintenance.html">Maintenance</a></li>
+      <li><a href="geofences.html">Geofences</a></li>
+      <li><a href="alerts.html">Alerts Center</a></li>
+    </ul>
+    <div class="nav-group-label">Analyze</div>
+    <ul class="links">
+      <li><a href="utilisation.html">Utilisation</a></li>
+      <li><a href="cost-roi.html">Cost &amp; ROI</a></li>
+      <li><a href="reports.html">Reports</a></li>
+    </ul>
+  </nav>
+
+  <div class="app-content">
+    <header class="app-header">
+      <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="app-sidebar">Menu</button>
+      <label class="search-field" for="global-search">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="search" id="global-search" placeholder="Search assets, sites" aria-label="Search assets and sites">
+      </label>
+      <div class="nav-actions">
+        <span class="live-pill"><span class="dot" aria-hidden="true"></span><span id="clock">--:--:--</span></span>
+        <button class="alert-badge" type="button" id="alert-badge-btn">2 alerts</button>
+      </div>
+    </header>
+
+    <main class="app-main" id="main-content">
+      <h1 class="sr-only">Fleet Map</h1>
+
+      <section class="stats-grid" id="stats-bar" aria-label="Fleet summary"></section>
+
+      <div class="fleetmap-grid">
+        <section class="panel asset-panel" aria-label="Assets and sites">
+          <div class="panel-header">
+            <h2>Fleet <span id="asset-count" style="color:var(--slate);font-weight:500"></span></h2>
+          </div>
+          <div class="asset-list" id="asset-list" role="list"></div>
+          <div class="panel-header" style="border-top:1px solid var(--line);border-bottom:0">
+            <h2>Sites</h2>
+          </div>
+          <div class="site-list" id="site-list" style="padding:0 8px 8px" role="list"></div>
+        </section>
+
+        <section class="panel" aria-label="Fleet map" style="padding:8px">
+          <div class="map-surface" id="map-surface">
+            <div class="map-zoom-layer" id="map-zoom-layer">
+            <svg id="map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Map of UAE fleet sites and asset positions">
+              <rect width="100" height="100" fill="#DCE7F0"/>
+              <path d="M0,0 L100,0 L100,16 Q80,14 60,15 Q40,16 20,17 Q10,17.5 0,18 Z" fill="#B9D3E6"/>
+              <path d="M0,18 Q10,17.5 20,17 Q40,16 60,15 Q80,14 100,16 L100,100 L0,100 Z" fill="#E7EEE1"/>
+              <text x="50" y="9" fill="#7FA0BA" font-size="3" font-family="Space Mono, monospace" text-anchor="middle" font-style="italic">PERSIAN GULF</text>
+
+              <rect x="12" y="12" width="20" height="18" rx="1.2" fill="rgba(255,196,0,.14)" stroke="var(--yellow-dark)" stroke-width=".4" stroke-dasharray="1.4,1"/>
+              <text x="22" y="10.5" fill="var(--yellow-dark)" font-size="2.4" font-family="Space Mono, monospace" text-anchor="middle" font-weight="700">AL QUOZ</text>
+
+              <rect x="30" y="34" width="20" height="16" rx="1.2" fill="rgba(20,100,71,.09)" stroke="var(--green)" stroke-width=".4" stroke-dasharray="1.4,1"/>
+              <text x="40" y="32.5" fill="var(--green)" font-size="2.4" font-family="Space Mono, monospace" text-anchor="middle" font-weight="700">JEBEL ALI PORT</text>
+
+              <rect x="55" y="58" width="24" height="20" rx="1.2" fill="rgba(20,21,24,.07)" stroke="var(--slate)" stroke-width=".4" stroke-dasharray="1.4,1"/>
+              <text x="67" y="56.5" fill="var(--slate)" font-size="2.4" font-family="Space Mono, monospace" text-anchor="middle" font-weight="700">CREEK HARBOUR</text>
+
+              <rect x="76" y="10" width="16" height="16" rx="1.2" fill="rgba(162,36,36,.08)" stroke="var(--error)" stroke-width=".4" stroke-dasharray="1.4,1"/>
+              <text x="84" y="8.5" fill="var(--error)" font-size="2.4" font-family="Space Mono, monospace" text-anchor="middle" font-weight="700">KIZAD</text>
+
+              <line x1="80" y1="94" x2="92" y2="94" stroke="#7A9E7A" stroke-width=".3"/>
+              <line x1="80" y1="93" x2="80" y2="95" stroke="#7A9E7A" stroke-width=".3"/>
+              <line x1="92" y1="93" x2="92" y2="95" stroke="#7A9E7A" stroke-width=".3"/>
+              <text x="86" y="97.5" fill="#7A9E7A" font-size="1.8" font-family="Space Mono, monospace" text-anchor="middle">20 km</text>
+            </svg>
+
+            <div class="map-markers" id="map-markers"></div>
+            </div>
+
+            <div class="map-actions">
+              <a href="geofences.html">+ Geofence</a>
+              <button type="button" id="route-replay-btn">Route Replay</button>
+            </div>
+
+            <div class="map-control">
+              <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+              <button type="button" id="zoom-out" aria-label="Zoom out">&minus;</button>
+              <button type="button" id="zoom-reset" aria-label="Reset zoom">&#8853;</button>
+            </div>
+
+            <div class="map-legend" role="group" aria-label="Filter markers by status">
+              <button type="button" data-filter="Operating" aria-pressed="false"><span class="dot" style="background:var(--green)" aria-hidden="true"></span>Active</button>
+              <button type="button" data-filter="Idle" aria-pressed="false"><span class="dot" style="background:var(--yellow-dark)" aria-hidden="true"></span>Idle</button>
+              <button type="button" data-filter="Alert" aria-pressed="false"><span class="dot" style="background:var(--error)" aria-hidden="true"></span>Alert</button>
+              <button type="button" data-filter="Offline" aria-pressed="false"><span class="dot" style="background:var(--slate)" aria-hidden="true"></span>Offline</button>
+              <button type="button" id="filter-clear">Clear</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel detail-panel" id="detail-panel" aria-label="Asset detail" aria-live="polite">
+          <div class="d-empty">
+            <p>Click an asset to inspect</p>
+          </div>
+        </section>
+      </div>
+
+      <section class="panel" aria-label="Alerts and events" id="alerts-panel">
+        <div class="panel-header">
+          <div class="tab-row" role="tablist" aria-label="Alerts and event log">
+            <button role="tab" id="tab-alerts" aria-selected="true" aria-controls="tabpanel-alerts" type="button">Active Alerts</button>
+            <button role="tab" id="tab-events" aria-selected="false" aria-controls="tabpanel-events" type="button">Event Log</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div id="tabpanel-alerts" role="tabpanel" aria-labelledby="tab-alerts">
+            <div class="alert-feed" id="alert-feed" aria-live="polite"></div>
+          </div>
+          <div id="tabpanel-events" role="tabpanel" aria-labelledby="tab-events" hidden>
+            <div class="timeline" id="event-log"></div>
+          </div>
+        </div>
+      </section>
+
+      <dialog id="trip-history-modal" class="modal">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Trip History &amp; Playback</h3>
+            <button class="close-btn" id="trip-modal-close" type="button" aria-label="Close">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div style="display:grid;grid-template-columns:220px minmax(0,1fr);gap:14px">
+              <div>
+                <div class="form-field" style="margin-bottom:12px">
+                  <label class="eyebrow" for="trip-vehicle-select">Vehicle</label>
+                  <select id="trip-vehicle-select" class="form-select"></select>
+                </div>
+                <div class="form-field" style="margin-bottom:16px">
+                  <label class="eyebrow" for="trip-date-select">Date</label>
+                  <input type="date" id="trip-date-select" class="form-input">
+                </div>
+                <h4 style="margin-bottom:8px">Trip Details</h4>
+                <div id="trip-details-panel" style="font-size:12px;color:var(--slate)">Select a vehicle to view trip history.</div>
+              </div>
+              <div>
+                <div class="trip-map panel">
+                  <svg id="trip-map-svg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Trip route map" style="width:100%;height:100%;display:block">
+                    <rect width="100" height="100" fill="var(--canvas)"/>
+                    <g id="trip-route-group"></g>
+                  </svg>
+                </div>
+                <div class="trip-controls">
+                  <button class="btn btn-secondary" id="trip-play-btn" type="button" style="min-width:80px">Play</button>
+                  <div style="flex:1">
+                    <div class="scrubber-times">
+                      <span id="trip-start-time">--:--</span>
+                      <span id="trip-current-time" class="current">--:--</span>
+                      <span id="trip-end-time">--:--</span>
+                    </div>
+                    <div class="scrubber-track" id="trip-scrubber-track">
+                      <div class="scrubber-fill" id="trip-scrubber-fill"></div>
+                      <div class="scrubber-handle" id="trip-scrubber-handle"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </dialog>
+    </main>
+  </div>
+</div>
+
+<script src="data/fleet.js" defer></script>
+<script src="js/main.js" defer></script>
+</body>
+</html>
