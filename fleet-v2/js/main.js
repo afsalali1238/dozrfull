@@ -581,12 +581,108 @@
     }
   }
 
+  function renderCostRoiPage() {
+    var summary = document.getElementById("cost-summary");
+    if (summary && FLEET.costRoi) {
+      summary.innerHTML = FLEET.costRoi.summary.map(function (card) {
+        return '<div class="summary-card"><div class="eyebrow">' + card.label + '</div><strong>' + card.value + '</strong><span>' + card.note + '</span></div>';
+      }).join("");
+    }
+    var hero = document.getElementById("cost-hero");
+    if (hero && FLEET.costRoi) {
+      hero.innerHTML = '<div class="eyebrow">' + FLEET.costRoi.hero.title + '</div><h2 style="font-size:26px;margin:6px 0">' + FLEET.costRoi.hero.value + '</h2><p style="color:var(--slate)">' + FLEET.costRoi.hero.note + '</p>';
+    }
+    var cards = document.getElementById("cost-cards");
+    if (cards && FLEET.costRoi) {
+      cards.innerHTML = FLEET.costRoi.assets.map(function (asset) {
+        var statusAttr = asset.status.toLowerCase();
+        return (
+          '<div class="panel metric-card">' +
+            '<div class="panel-header"><h3>' + asset.name + '</h3><span class="status-chip" data-status="' + statusAttr + '">' + asset.status + '</span></div>' +
+            '<div class="panel-body">' +
+              '<div class="metric-line"><span>' + asset.id + '</span><span>' + asset.value + '</span></div>' +
+              '<div class="metric-line"><span>' + asset.detail + '</span></div>' +
+            '</div>' +
+          '</div>'
+        );
+      }).join("");
+    }
+    var chart = document.getElementById("cost-trend-chart");
+    if (chart && FLEET.costRoi) {
+      var points = FLEET.costRoi.trend.map(function (value, index) {
+        return (index * 18) + 8 + "," + (90 - value * 3.8);
+      }).join(" ");
+      chart.innerHTML = '<svg viewBox="0 0 120 100" role="img" aria-label="6 month savings trend, illustrative only"><path d="M 8 90 L ' + points + '" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round"/><line x1="8" y1="90" x2="112" y2="90" stroke="var(--line)" stroke-width="1"/><line x1="8" y1="10" x2="8" y2="90" stroke="var(--line)" stroke-width="1"/></svg>';
+    }
+  }
+
+  function renderReportsPage() {
+    var summary = document.getElementById("reports-summary");
+    if (summary && FLEET.reports) {
+      summary.innerHTML = FLEET.reports.summary.map(function (card) {
+        return '<div class="summary-card"><div class="eyebrow">' + card.label + '</div><strong>' + card.value + '</strong><span>' + card.note + '</span></div>';
+      }).join("");
+    }
+    var grid = document.getElementById("report-grid");
+    if (grid && FLEET.reports) {
+      grid.innerHTML = FLEET.reports.available.map(function (item) {
+        return '<div class="panel"><div class="panel-header"><h3>' + item.title + '</h3></div><div class="panel-body"><div class="metric-line"><span>Type</span><span>' + item.type + '</span></div><div class="metric-line"><span>Cadence</span><span>' + item.cadence + '</span></div></div></div>';
+      }).join("");
+    }
+    var body = document.getElementById("recent-table-body");
+    if (body && FLEET.reports) {
+      body.innerHTML = FLEET.reports.recent.map(function (item) {
+        return '<tr><td>' + item.name + '</td><td>' + item.period + '</td><td>' + item.assets + '</td><td>' + item.generated + '</td><td>' + item.delivery + '</td><td><button class="btn btn-secondary" type="button">Open</button></td></tr>';
+      }).join("");
+    }
+  }
+
+  function renderTimesheetPage() {
+    var summary = document.getElementById("timesheet-summary");
+    if (summary && FLEET.timesheet) {
+      summary.innerHTML = FLEET.timesheet.summary.map(function (card) {
+        return '<div class="summary-card"><div class="eyebrow">' + card.label + '</div><strong>' + card.value + '</strong><span>' + card.note + '</span></div>';
+      }).join("");
+    }
+    var body = document.getElementById("timesheet-table-body");
+    if (body && FLEET.timesheet) {
+      body.innerHTML = FLEET.timesheet.entries.map(function (entry) {
+        return '<tr><td>' + entry.driver + '</td><td>' + entry.vehicle + '</td><td>' + entry.shift + '</td><td>' + entry.total + '</td><td><div class="metric-line"><span>' + entry.moving + '</span><span>' + entry.idle + '</span><span>' + entry.stopped + '</span></div></td></tr>';
+      }).join("");
+    }
+  }
+
+  function renderAlertsPage() {
+    var summary = document.getElementById("alerts-summary");
+    if (summary && FLEET.alerts) {
+      summary.innerHTML = FLEET.alerts.summary.map(function (card) {
+        return '<div class="summary-card"><div class="eyebrow">' + card.label + '</div><strong>' + card.value + '</strong><span>' + card.note + '</span></div>';
+      }).join("");
+    }
+    var feed = document.getElementById("alerts-center-feed");
+    if (feed && FLEET.alerts) {
+      feed.innerHTML = FLEET.alerts.items.map(function (item) {
+        return '<div class="event-item" data-severity="' + item.severity + '"><div><strong style="display:block;font-size:12px">' + item.asset + ' - ' + item.rule + '</strong><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--slate)">' + item.note + '</span></div><span style="font-family:var(--font-mono);font-size:9.5px;color:var(--slate);white-space:nowrap">' + item.time + '</span></div>';
+      }).join("");
+    }
+    var rules = document.getElementById("routing-rules");
+    if (rules && FLEET.alerts) {
+      rules.innerHTML = FLEET.alerts.rules.map(function (rule) {
+        return '<div class="panel"><div class="panel-body"><strong>' + rule.title + '</strong><p style="margin-top:6px;color:var(--slate);font-size:11.5px">' + rule.detail + '</p></div></div>';
+      }).join("");
+    }
+  }
+
   function renderPageContent() {
     var page = document.body.getAttribute("data-page");
     if (page === "fuel") renderFuelPage();
     if (page === "maintenance") renderMaintenancePage();
     if (page === "geofences") renderGeofencesPage();
     if (page === "utilisation") renderUtilisationPage();
+    if (page === "cost-roi") renderCostRoiPage();
+    if (page === "reports") renderReportsPage();
+    if (page === "timesheet") renderTimesheetPage();
+    if (page === "alerts") renderAlertsPage();
   }
 
   document.addEventListener("DOMContentLoaded", function () {

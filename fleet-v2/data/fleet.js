@@ -296,4 +296,76 @@ window.DOZR_FLEET = {
     ],
     trend: [14, 21, 19, 28, 33, 41, 37]
   }
+,
+  costRoi: {
+    summary: [
+      { label: "Fuel spend", value: "AED 18.2k", note: "Last 30 days" },
+      { label: "Maintenance", value: "AED 4.6k", note: "Service spend" },
+      { label: "Savings", value: "AED 9.4k", note: "Vs. baseline" },
+      { label: "ROI", value: "2.3x", note: "Annualized" }
+    ],
+    hero: {
+      title: "Avoided idle spend",
+      value: "AED 9.4k",
+      note: "Automated alerts cut unplanned downtime by 22% this month."
+    },
+    assets: [
+      { id: "DZR-001", name: "CAT 320 Excavator", value: "AED 2.2k", detail: "Fuel + service", status: "On track" },
+      { id: "DZR-003", name: "Komatsu WA320 Loader", value: "AED 1.8k", detail: "Fuel + service", status: "Healthy" },
+      { id: "DZR-004", name: "MAN TGX 18.500 Truck", value: "AED 2.6k", detail: "Road haul", status: "On track" },
+      { id: "DZR-006", name: "Volvo EC220E Excavator", value: "AED 1.4k", detail: "Site support", status: "Healthy" }
+    ],
+    trend: [9, 11, 12, 13, 15, 18]
+  },
+  reports: {
+    summary: [
+      { label: "Weekly reports", value: "6", note: "Scheduled" },
+      { label: "Auto-deliveries", value: "4", note: "Via email" },
+      { label: "Last export", value: "08:40", note: "Today" }
+    ],
+    available: [
+      { title: "Fuel consumption", type: "Operations", cadence: "Daily" },
+      { title: "Maintenance outlook", type: "Service", cadence: "Weekly" },
+      { title: "Utilisation trend", type: "Operations", cadence: "Weekly" },
+      { title: "Cost and ROI", type: "Finance", cadence: "Monthly" }
+    ],
+    recent: [
+      { name: "Fuel consumption", period: "Today", assets: "8", generated: "08:40", delivery: "Email + WhatsApp" },
+      { name: "Maintenance outlook", period: "This week", assets: "6", generated: "06:10", delivery: "Email" },
+      { name: "Utilisation trend", period: "Last 7 days", assets: "8", generated: "Yesterday", delivery: "Email" }
+    ]
+  },
+  timesheet: {
+    summary: [
+      { label: "Shift hours", value: "25.0h", note: "Today, 3 drivers" },
+      { label: "Moving", value: "16.6h", note: "66%" },
+      { label: "Idle", value: "6.5h", note: "26%" },
+      { label: "Stopped", value: "1.9h", note: "8%" }
+    ],
+    entries: [
+      { driver: "M. Rahman", vehicle: "DZR-001", shift: "06:00-14:00", total: "8.0h", moving: "5.4h", idle: "2.0h", stopped: "0.6h" },
+      { driver: "S. Khan", vehicle: "DZR-004", shift: "05:30-14:30", total: "9.0h", moving: "6.2h", idle: "2.1h", stopped: "0.7h" },
+      { driver: "A. Nabil", vehicle: "DZR-006", shift: "07:00-15:00", total: "8.0h", moving: "5.0h", idle: "2.4h", stopped: "0.6h" }
+    ]
+  },
+  alerts: {
+    summary: [
+      { label: "Critical", value: "2", note: "Immediate action" },
+      { label: "Warnings", value: "2", note: "Monitor" },
+      { label: "System", value: "2", note: "Connected" }
+    ],
+    items: [
+      { time: "14:15", asset: "DZR-002", severity: "critical", rule: "Fuel pressure low", note: "Dispatch refuel crew" },
+      { time: "13:42", asset: "DZR-005", severity: "critical", rule: "Lost communication", note: "Escalate to site lead" },
+      { time: "12:30", asset: "DZR-001", severity: "warning", rule: "DPF pressure high", note: "Schedule service" },
+      { time: "11:15", asset: "DZR-008", severity: "warning", rule: "Sensor reference voltage low", note: "Inspect wiring" },
+      { time: "09:45", asset: "DZR-004", severity: "info", rule: "Reconnected to network", note: "No action needed" },
+      { time: "08:10", asset: "DZR-003", severity: "ok", rule: "Firmware updated", note: "No action needed" }
+    ],
+    rules: [
+      { title: "Geofence exit at night", detail: "Critical alert for any site departure between 18:00 and 06:00." },
+      { title: "Fuel pressure threshold", detail: "Routes low pressure events to the nearest maintenance lead." },
+      { title: "WhatsApp escalation", detail: "Critical alerts send to the active site manager immediately." }
+    ]
+  }
 };

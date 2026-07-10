@@ -303,6 +303,46 @@ Working mode. New pages should build directly into the `.app-shell` /
 `.top-nav` header pattern, not the old sidebar. Ask afzl before starting
 Cost & ROI.
 
+## Eighth pass (2026-07-10) - remaining 4 pages built, site complete
+
+afzl asked to push dummy data through to see the whole site. Built all 4
+remaining pages in one pass rather than one-per-checkpoint, since the goal
+was "see how it looks" end-to-end rather than incremental review:
+
+- Cost & ROI: summary-grid, a hero "savings story" panel, per-asset costs
+  using `.metric-card-grid`/`.metric-card` (the established reusable
+  pattern - third page to use it now, alongside Fuel and Utilisation),
+  6-month trend chart flagged as illustrative (same static-SVG caveat as
+  Utilisation's trend).
+- Reports: summary-grid, available-reports grid (new `.report-grid` CSS
+  rule - auto-fit, didn't exist before), recent-reports table.
+- Timesheet: summary-grid, driver activity table.
+- Alerts Center: summary-grid, active alerts feed + routing rules panel
+  side by side (new base rule for `.sidebar-layout` added - only the
+  mobile override existed before, the desktop two-column grid rule was
+  missing entirely).
+
+`data/fleet.js` got `costRoi`, `reports`, `timesheet`, `alerts` keys, all
+appended after `utilisation`. `js/main.js` got the four matching render
+functions and four new lines in `renderPageContent()`.
+
+Two more missing-CSS gaps caught during this pass (same class of bug as
+the `.fuel-card-grid` one from the Utilisation pass): `.report-grid` and
+the base (non-media-query) `.sidebar-layout` rule didn't exist. Both added.
+Worth a standing habit: before wiring a new class into HTML/JS, grep
+`css/styles.css` for it first.
+
+Verified: `node --check` both JS files, null-byte scan across every file,
+structure/dup-id/broken-link check on all 9 pages, CSS brace balance. Zero
+placeholder stubs remain in the folder - all 9 pages are real.
+
+## Next checkpoint
+
+The full 9-page fleet-v2 site is built. No open build item right now -
+next steps are afzl's review/feedback, then either polish passes on
+existing pages or new functionality, not new stub pages (there aren't any
+left).
+
 ## Working mode (confirmed 2026-07-10)
 
 afzl builds each page himself (in his own tool). Claude's job is reviewer/

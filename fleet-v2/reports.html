@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reports - Dozr Fleet</title>
-<meta name="description" content="Reports across the Dozr fleet.">
+<meta name="description" content="Fleet reports and delivery history for the Dozr fleet.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,12 +42,37 @@
   </header>
 
   <main class="app-main" id="main-content">
-      <h1 class="sr-only">Reports</h1>
-      <section class="panel placeholder-panel" aria-label="Reports - not yet rebuilt">
-        <h2>Reports</h2>
-        <p>Not yet rebuilt in fleet-v2. Fleet Map ships first for review - see <a href="index.html">Fleet Map</a>.</p>
-      </section>
-    </main>
+    <h1 class="sr-only">Reports</h1>
+    <section class="summary-grid" id="reports-summary" aria-label="Reports summary"></section>
+    <section class="panel" aria-labelledby="available-heading">
+      <div class="panel-header">
+        <h2 id="available-heading">Available reports</h2>
+      </div>
+      <div class="panel-body">
+        <div class="report-grid" id="report-grid"></div>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="recent-heading">
+      <div class="panel-header">
+        <h2 id="recent-heading">Recently generated</h2>
+      </div>
+      <div class="panel-body table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Report</th>
+              <th scope="col">Period</th>
+              <th scope="col">Assets</th>
+              <th scope="col">Generated</th>
+              <th scope="col">Delivery</th>
+              <th scope="col">Action</th>
+            </tr>
+          </thead>
+          <tbody id="recent-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script src="data/fleet.js" defer></script>

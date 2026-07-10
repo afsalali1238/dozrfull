@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cost &amp; ROI - Dozr Fleet</title>
-<meta name="description" content="Cost &amp; ROI across the Dozr fleet.">
+<meta name="description" content="Cost and ROI reporting across the Dozr fleet.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,12 +42,33 @@
   </header>
 
   <main class="app-main" id="main-content">
-      <h1 class="sr-only">Cost &amp; ROI</h1>
-      <section class="panel placeholder-panel" aria-label="Cost &amp; ROI - not yet rebuilt">
-        <h2>Cost &amp; ROI</h2>
-        <p>Not yet rebuilt in fleet-v2. Fleet Map ships first for review - see <a href="index.html">Fleet Map</a>.</p>
-      </section>
-    </main>
+    <h1 class="sr-only">Cost and ROI</h1>
+    <section class="summary-grid" id="cost-summary" aria-label="Cost summary"></section>
+    <section class="panel" aria-labelledby="hero-heading">
+      <div class="panel-header">
+        <h2 id="hero-heading">Savings story</h2>
+        <button class="btn btn-secondary" type="button">Export data</button>
+      </div>
+      <div class="panel-body" id="cost-hero"></div>
+    </section>
+    <section class="panel" aria-labelledby="cost-assets-heading">
+      <div class="panel-header">
+        <h2 id="cost-assets-heading">Cost per asset</h2>
+      </div>
+      <div class="panel-body">
+        <div class="metric-card-grid" id="cost-cards"></div>
+      </div>
+    </section>
+    <section class="panel" aria-labelledby="cost-trend-heading">
+      <div class="panel-header">
+        <h2 id="cost-trend-heading">6-month savings trend</h2>
+      </div>
+      <div class="panel-body chart-surface">
+        <div id="cost-trend-chart"></div>
+        <p style="color:var(--slate);font-size:10.5px;margin-top:6px">Illustrative trend line, not plotted from live data.</p>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script src="data/fleet.js" defer></script>

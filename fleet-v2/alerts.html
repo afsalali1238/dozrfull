@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alerts Center - Dozr Fleet</title>
-<meta name="description" content="Alerts Center across the Dozr fleet.">
+<meta name="description" content="Alerts center and routing rules for the Dozr fleet.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,12 +42,26 @@
   </header>
 
   <main class="app-main" id="main-content">
-      <h1 class="sr-only">Alerts Center</h1>
-      <section class="panel placeholder-panel" aria-label="Alerts Center - not yet rebuilt">
-        <h2>Alerts Center</h2>
-        <p>Not yet rebuilt in fleet-v2. Fleet Map ships first for review - see <a href="index.html">Fleet Map</a>.</p>
+    <h1 class="sr-only">Alerts Center</h1>
+    <section class="summary-grid" id="alerts-summary" aria-label="Alerts summary"></section>
+    <div class="sidebar-layout">
+      <section class="panel" aria-labelledby="alerts-heading">
+        <div class="panel-header">
+          <h2 id="alerts-heading">Active alerts</h2>
+          <span class="status-chip" data-status="critical">Live feed</span>
+        </div>
+        <div class="panel-body">
+          <div class="alert-feed" id="alerts-center-feed" aria-live="polite"></div>
+        </div>
       </section>
-    </main>
+      <aside class="panel" aria-labelledby="routing-heading">
+        <div class="panel-header">
+          <h2 id="routing-heading">Routing rules</h2>
+        </div>
+        <div class="panel-body" id="routing-rules"></div>
+      </aside>
+    </div>
+  </main>
 </div>
 
 <script src="data/fleet.js" defer></script>

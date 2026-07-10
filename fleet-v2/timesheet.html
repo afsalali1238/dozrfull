@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Timesheet - Dozr Fleet</title>
-<meta name="description" content="Timesheet across the Dozr fleet.">
+<meta name="description" content="Driver activity and timesheet reporting for the Dozr fleet.">
 <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -42,12 +42,29 @@
   </header>
 
   <main class="app-main" id="main-content">
-      <h1 class="sr-only">Timesheet</h1>
-      <section class="panel placeholder-panel" aria-label="Timesheet - not yet rebuilt">
-        <h2>Timesheet</h2>
-        <p>Not yet rebuilt in fleet-v2. Fleet Map ships first for review - see <a href="index.html">Fleet Map</a>.</p>
-      </section>
-    </main>
+    <h1 class="sr-only">Timesheet</h1>
+    <section class="summary-grid" id="timesheet-summary" aria-label="Timesheet summary"></section>
+    <section class="panel" aria-labelledby="activity-heading">
+      <div class="panel-header">
+        <h2 id="activity-heading">Driver activity</h2>
+        <button class="btn btn-secondary" type="button">Export</button>
+      </div>
+      <div class="panel-body table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">Driver</th>
+              <th scope="col">Vehicle</th>
+              <th scope="col">Shift</th>
+              <th scope="col">Total</th>
+              <th scope="col">Moving / Idle / Stopped</th>
+            </tr>
+          </thead>
+          <tbody id="timesheet-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
 </div>
 
 <script src="data/fleet.js" defer></script>
