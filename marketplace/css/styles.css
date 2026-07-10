@@ -324,8 +324,8 @@ h1, h2, h3, h4 {
 .spec-pills span { font-family:var(--font-mono); font-size:11px; padding:4px 9px; background:var(--canvas); color:var(--slate); border-radius:6px; }
 .card-actions { display:flex; align-items:center; justify-content:space-between; gap:var(--space-1); padding:0 16px 18px; }
 .status-text { font-family:var(--font-mono); font-size:11px; color:var(--green); }
-.feature-showcase { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:stretch; min-height: 420px; }
-.feature-tabs { display:flex; flex-direction:column; gap:8px; justify-content:space-between; height:100%; }
+.feature-showcase { display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:stretch; min-height: 320px; }
+.feature-tabs { display:flex; flex-direction:column; gap:8px; justify-content:center; height:100%; }
 .feature-tab { border:0; text-align:left; border-radius:12px; padding:16px 18px; background:transparent; color:var(--ink); cursor:pointer; transition: background-color 0.2s ease; }
 .feature-tab:hover:not([aria-selected="true"]) { background-color: rgba(20, 21, 24, 0.04); }
 .feature-tab[aria-selected="true"] { background:var(--ink); color:var(--surface); }
