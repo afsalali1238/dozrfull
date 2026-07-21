@@ -644,3 +644,66 @@ h1, h2, h3, h4 {
 @media (max-width: 720px) {
   .info-card-grid, .value-grid { grid-template-columns: 1fr; }
 }
+
+/* ---------------- Client sign in / sign up nav slot ---------------- */
+.nav-signin-link {
+  display: inline-flex;
+  align-items: center;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: var(--radius-button);
+  background: var(--yellow);
+}
+.nav-signin-link:hover { background: var(--yellow-dark); }
+.nav-account {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-right: 4px;
+}
+.nav-signout {
+  all: unset;
+  font-size: 12px;
+  color: var(--slate);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.nav-signout:hover { color: var(--ink); }
+.nav-client-auth { display: flex; align-items: center; gap: 6px; }
+
+/* ---------------- Auth pages (login / signup) ---------------- */
+.auth-shell {
+  min-height: calc(100vh - 68px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-2);
+}
+.auth-card {
+  width: 100%;
+  max-width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-4) var(--space-3) var(--space-3);
+}
+.auth-card h1 { font-size: 22px; margin: 10px 0 4px; }
+.auth-card > p.text-muted { margin: 0 0 var(--space-3); font-size: 13px; }
+.auth-card .btn-full { width: 100%; justify-content: center; }
+.auth-switch {
+  margin-top: var(--space-2);
+  text-align: center;
+  font-size: 13px;
+  color: var(--slate);
+}
+.auth-switch a { color: var(--ink); font-weight: 600; text-decoration: underline; }
+.auth-note {
+  margin-top: var(--space-2);
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
+}

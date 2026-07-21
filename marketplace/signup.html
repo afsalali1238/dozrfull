@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Browse Equipment - Dozr</title>
-<meta name="description" content="Browse vetted excavators, wheel loaders, cranes, dump trucks, flatbed trailers, and generators. Filter by weight, availability, and GPS tracking.">
+<title>Create an account - Dozr</title>
+<meta name="description" content="Create a Dozr account to request quotes and track your equipment and freight bookings.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -18,10 +18,11 @@
     <a class="logo" href="index.html" aria-label="Dozr home">
       <div style="width:30px;height:30px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center">
         <svg width="18" height="18" viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M12 6c-2 0-3.2 1.3-3.2 3.4V18.5h4.4V11c0-1.1.5-1.7 1.5-1.7H17V6z" fill="var(--yellow)"/><path d="M14.5 14.5 21.5 18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/><circle cx="22.5" cy="20.5" r="2.6" fill="var(--yellow)"/><path d="M6.5 24H18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/></svg>
-      </div><span>dozr</span>
+      </div>
+      <span>dozr</span>
     </a>
     <nav class="links" data-nav-menu data-open="false" aria-label="Primary">
-      <a href="browse.html" aria-current="page">Equipment</a>
+      <a href="browse.html" aria-current="false">Equipment</a>
       <a href="freight.html" aria-current="false">Freight</a>
       <a href="index.html#how-it-works" aria-current="false">How it works</a>
       <a href="about.html" aria-current="false">About</a>
@@ -34,37 +35,43 @@
     </div>
     <a class="nav-auth" href="../ops/login.html" title="Internal staff access - Ops Dashboard">Staff sign in</a>
   </div>
-  <div class="container category-tabs" id="category-tabs" aria-label="Equipment categories"></div>
 </header>
 
-<main id="main-content" class="container browse-layout">
-  <h1 class="sr-only">Browse equipment</h1>
-  <div class="mobile-filter-bar">
-    <button type="button" class="btn btn-secondary btn-full" id="mobileFilterToggle" aria-expanded="false" aria-controls="filters">Filters</button>
-  </div>
-  <aside id="filters" aria-label="Filters" data-filters-open="false">
-    <h2 style="font-size:16px;margin-bottom:16px">Filters</h2>
-    <div class="filter-group">
-      <div class="filter-title">Operating weight</div>
-      <div style="display:flex;flex-wrap:wrap;gap:7px">
-        <button class="chip" type="button" data-weight="up-to-6" aria-pressed="false">Up to 6T</button>
-        <button class="chip" type="button" data-weight="6-20" aria-pressed="false">6-20T</button>
-        <button class="chip" type="button" data-weight="20-plus" aria-pressed="false">20T+</button>
-      </div>
-    </div>
-    <div class="filter-group">
-      <div class="filter-title">Availability</div>
-      <div class="filter-stack">
-        <button class="check-row" type="button" data-availability="same-day" aria-pressed="false"><span class="fake-check"></span>Same-day</button>
-        <button class="check-row" type="button" data-availability="next-day" aria-pressed="false"><span class="fake-check"></span>Next-day</button>
-        <button class="check-row" type="button" data-availability="this-week" aria-pressed="false"><span class="fake-check"></span>This week</button>
-      </div>
-    </div>
-    <div class="filter-group"><div class="filter-title">GPS tracked</div><button class="check-row" type="button" data-toggle-filter="gps" aria-pressed="false"><span class="toggle"></span>Live GPS on this unit</button></div>
-    <div class="filter-group"><div class="filter-title">Verified only</div><button class="check-row" type="button" data-toggle-filter="verified" aria-pressed="false"><span class="toggle"></span>On</button></div>
-  </aside>
+<main id="main-content">
+  <div class="auth-shell">
+    <div class="auth-card">
+      <div class="eyebrow eyebrow-dot">Get started</div>
+      <h1>Create your Dozr account</h1>
+      <p class="text-muted">Request quotes, approve them, and track every job in one place.</p>
 
-  <section id="results" data-category-results aria-live="polite"></section>
+      <form class="form-stack" id="signup-form" novalidate>
+        <div>
+          <label class="field-label" for="signupName">Full name</label>
+          <input class="input-control" id="signupName" name="name" type="text" autocomplete="name" required>
+        </div>
+        <div>
+          <label class="field-label" for="signupCompany">Company</label>
+          <input class="input-control" id="signupCompany" name="company" type="text" autocomplete="organization">
+        </div>
+        <div>
+          <label class="field-label" for="signupEmail">Email</label>
+          <input class="input-control" id="signupEmail" name="email" type="email" autocomplete="email" required>
+        </div>
+        <div>
+          <label class="field-label" for="signupPhone">Phone</label>
+          <input class="input-control" id="signupPhone" name="phone" type="tel" autocomplete="tel" required>
+        </div>
+        <div>
+          <label class="field-label" for="signupPassword">Password</label>
+          <input class="input-control" id="signupPassword" name="password" type="password" autocomplete="new-password" required>
+        </div>
+        <button class="btn btn-primary btn-full" type="submit" style="margin-top:6px;">Create account</button>
+      </form>
+
+      <p class="auth-switch">Already have an account? <a href="login.html">Sign in</a></p>
+      <p class="auth-note">Mock sign-up for this preview build - no verification email is sent yet. Real onboarding (Supabase Auth) lands with the backend, per ROADMAP.md.</p>
+    </div>
+  </div>
 </main>
 
 <footer class="site-footer">
@@ -80,10 +87,16 @@
     </div>
   </div>
 </footer>
-<script src="data/equipment.js" defer></script>
-<script src="js/whatsapp.js" defer></script>
 <script src="js/main.js" defer></script>
 <script src="js/auth.js" defer></script>
-<script src="js/browse.js" defer></script>
+<script>
+document.getElementById("signup-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  var name = document.getElementById("signupName").value.trim() || "there";
+  var email = document.getElementById("signupEmail").value.trim();
+  dozrSaveSession(name, email);
+  window.location.href = "index.html";
+});
+</script>
 </body>
 </html>
