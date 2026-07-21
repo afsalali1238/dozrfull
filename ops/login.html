@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Staff Sign In - Dozr Ops</title>
+<meta name="description" content="Kasper/Dozr internal staff sign in.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
+<style>
+  .login-shell {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-3);
+  }
+  .login-card {
+    width: 100%;
+    max-width: 380px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-card);
+    padding: var(--space-4) var(--space-3) var(--space-3);
+  }
+  .login-logo { display: flex; align-items: center; gap: 10px; margin-bottom: var(--space-3); }
+  .login-logo span { font-family: var(--font-heading); font-weight: 700; font-size: 18px; }
+  .login-card h1 { font-size: 20px; margin-bottom: 6px; }
+  .login-card p { margin: 0 0 var(--space-3); font-size: 13px; color: var(--slate); line-height: 1.5; }
+  .login-field { margin-bottom: 14px; }
+  .login-field label { display: block; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--slate); margin-bottom: 6px; }
+  .login-field input {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-button);
+    padding: 11px 12px;
+    font-size: 14px;
+    background: var(--canvas);
+    color: var(--ink);
+  }
+  .login-field input:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .login-note { margin-top: var(--space-3); font-size: 11px; color: var(--muted); line-height: 1.5; text-align: center; }
+  .login-back { display: block; text-align: center; margin-top: var(--space-2); font-size: 12px; color: var(--slate); text-decoration: none; }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="login-shell" id="main-content">
+  <div class="login-card">
+    <div class="login-logo" aria-hidden="true">
+      <svg width="24" height="24" viewBox="0 0 32 32" fill="none"><path d="M12 6c-2 0-3.2 1.3-3.2 3.4V18.5h4.4V11c0-1.1.5-1.7 1.5-1.7H17V6z" fill="var(--yellow)"/><path d="M14.5 14.5 21.5 18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/><circle cx="22.5" cy="20.5" r="2.6" fill="var(--yellow)"/><path d="M6.5 24H18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/></svg>
+      <span>dozr ops</span>
+    </div>
+    <h1>Staff sign in</h1>
+    <p>Internal access for Kasper/Dozr ops staff. No account yet? Contact your Ops Manager.</p>
+
+    <form id="login-form" novalidate>
+      <div class="login-field">
+        <label for="login-email">Email</label>
+        <input type="email" id="login-email" name="email" autocomplete="username" placeholder="you@dozr.ae">
+      </div>
+      <div class="login-field">
+        <label for="login-password">Password</label>
+        <input type="password" id="login-password" name="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">Sign in</button>
+    </form>
+
+    <p class="login-note">Mock sign-in for this preview build - any input (or none) continues through. Real Supabase auth lands with the backend, per ROADMAP.md.</p>
+    <a class="login-back" href="../dashboard/index.html">&larr; Back to Dozr Dashboard</a>
+  </div>
+</div>
+
+<script>
+document.getElementById("login-form").addEventListener("submit", function (e) {
+  e.preventDefault();
+  window.location.href = "index.html";
+});
+</script>
+</body>
+</html>
