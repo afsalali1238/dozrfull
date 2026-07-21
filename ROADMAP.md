@@ -350,6 +350,38 @@ Only the Kasper-internal admin view was in scope for this pass.
 and confirming the reconstructed 13-stage names against the real ops manual
 table.
 
+## Client Sign in / Sign up added (2026-07-21, fifth pass)
+
+afzl described the intended v1 launch shape: clients sign up/sign in on
+Marketplace and request quotes; Ops staff coordinate manually for now but
+need notifications, itemized vendor fleets, a quote builder with PDF
+export, status updates, and revenue reporting in `ops/`. Ran an "act as a
+user" walkthrough against that spec (not the original WhatsApp-native-only
+spec) and rated it 4/10 - real scope change, not a bug list.
+
+afzl chose to build client sign-in first, mock UI (no backend) - see
+`marketplace/login.html`, `marketplace/signup.html`, `marketplace/js/
+auth.js` (localStorage session, swaps nav to "Hi, {name}" once signed in).
+Nav across all 8 client pages now has a distinct client "Sign in" pill,
+separate from "Staff sign in" (internal, added in the third pass) - these
+were previously conflated onto one button.
+
+**Still open from the walkthrough, not yet built (afzl's prioritization,
+not forgotten):**
+- Ops: notifications/activity feed (Overview tab only has a 3-row
+  escalations preview, not a real notification center)
+- Ops: itemized vendor vehicle/equipment list (`vendors[].fleet` is a
+  single summary string like "12 flatbeds, 4 low-beds", not a real list
+  with plates/status/availability)
+- Ops: quote builder + PDF export (doesn't exist anywhere in the repo)
+- Ops: interactive status update on Job Detail (currently read-only -
+  the pipeline strip shows the stage, nothing changes it)
+- Ops: revenue/sales reporting beyond the static Billing tab snapshot
+  (MRR/Outstanding/Overdue/Collected numbers exist, no trend over time)
+- Marketplace: client account dashboard (quote history, order history) -
+  correctly deferred as Phase 2 per `vendor_os_brief.txt`'s own phase table,
+  sign-in/sign-up only for now
+
 ## Full-workflow audit (2026-07-21, fourth pass) - client journey has a real gap
 
 afzl asked for an expert review of every user's workflow (not just a page
