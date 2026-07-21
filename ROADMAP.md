@@ -350,6 +350,19 @@ Only the Kasper-internal admin view was in scope for this pass.
 and confirming the reconstructed 13-stage names against the real ops manual
 table.
 
+## Correction (2026-07-21): self-serve signup removed, clients are onboarded by staff
+
+afzl clarified immediately after the fifth pass below: clients don't
+self-register. Kasper/Dozr staff onboard them from the backend (matches
+how `ops/data/ops.js` vendors already work - Kasper approves/creates,
+nobody self-signs-up). `marketplace/signup.html` never fit that model -
+archived to `marketplace/_archive/signup.html` (this mounted folder can't
+truly delete files, only rename - same constraint documented in
+`fleet-v2/CLAUDE.md`). `login.html`'s "New to Dozr? Create an account" link
+now reads "New to Dozr? Get in touch and we'll set up your account" →
+`contact.html`. Client `login.html` + `js/auth.js` mock session stay as-is -
+only the self-signup path was wrong, not sign-in itself.
+
 ## Client Sign in / Sign up added (2026-07-21, fifth pass)
 
 afzl described the intended v1 launch shape: clients sign up/sign in on
