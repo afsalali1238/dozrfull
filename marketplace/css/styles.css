@@ -20,7 +20,7 @@
   /* A couple of secondary tones already used across the prototype —
      keep centralized here rather than repeated inline */
   --line-strong: #D8D6CE;
-  --muted: #8A8D93;
+  --muted: #6B6E74; /* darkened from #8A8D93 - kept in sync with ops/css/styles.css (WCAG AA fix) */
   --green-tint: #E7F6EF;
 
   /* Type */
@@ -570,4 +570,59 @@ h1, h2, h3, h4 {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ---------------- Page hero band (Contact / About) ---------------- */
+.page-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink);
+  color: var(--surface);
+  padding: 56px 0 48px;
+  margin-bottom: var(--space-4);
+}
+/* Same subtle-texture treatment as .steps-band on the homepage - reusing
+   the existing map-texture asset instead of introducing a new visual. */
+.page-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: url('../assets/map-texture.jpg') center/cover;
+  opacity: 0.1;
+  mix-blend-mode: luminosity;
+  pointer-events: none;
+}
+.page-hero .container { position: relative; z-index: 1; }
+.page-hero .eyebrow { color: var(--yellow); }
+.page-hero h1 { font-size: 34px; margin-top: 10px; color: var(--surface); }
+.page-hero p { margin-top: 10px; color: rgba(255,255,255,.72); max-width: 620px; }
+
+/* ---------------- Info cards (Contact) ---------------- */
+.info-card-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); margin-bottom: var(--space-3); }
+.info-card { padding: var(--space-2); }
+.info-card .icon-box {
+  width: 40px; height: 40px; border-radius: var(--radius-button);
+  background: var(--yellow-tint); display: flex; align-items: center; justify-content: center;
+  margin-bottom: 12px;
+}
+.info-card h3 { font-size: 15px; margin-bottom: 4px; }
+.info-card p { margin: 0; font-size: 13px; color: var(--slate); line-height: 1.5; }
+.info-card a { text-decoration: underline; }
+
+.contact-layout { display: grid; grid-template-columns: 1fr 1.1fr; gap: var(--space-4); align-items: start; }
+@media (max-width: 900px) { .contact-layout { grid-template-columns: 1fr; } }
+
+/* ---------------- About: value grid ---------------- */
+.value-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+.value-card { padding: var(--space-3) var(--space-2); text-align: left; }
+.value-card .icon-box {
+  width: 44px; height: 44px; border-radius: var(--radius-button);
+  background: var(--ink); display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+}
+.value-card h3 { font-size: 17px; margin-bottom: 6px; }
+.value-card p { margin: 0; font-size: 14px; color: var(--slate); line-height: 1.6; }
+
+@media (max-width: 720px) {
+  .info-card-grid, .value-grid { grid-template-columns: 1fr; }
 }

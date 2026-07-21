@@ -304,3 +304,173 @@ keep patching. `fleet/` stays as-is (not deleted) for reference.
   Fuel, Maintenance, Geofences, Utilisation, Cost & ROI, Reports, Timesheet,
   Alerts Center - same order as before, Timesheet/Alerts Center slotted in
   wherever they naturally fit once the others are underway.
+
+## Correction (2026-07-21): the section above was stale
+
+`fleet-v2/CLAUDE.md`'s later passes (Third through Tenth, all logged
+2026-07-10 but after the entries above were written) already finished every
+remaining stub: Fuel, Maintenance, Geofences, Utilisation, Cost & ROI,
+Reports, Timesheet, and Alerts Center are all fully built and data-driven
+(`js/main.js` has a `render<Page>()` function for each, wired via a
+`data-page` dispatcher). Re-verified 2026-07-21: `node --check` on both
+`js/main.js` and `data/fleet.js` passes clean, zero stub markers found
+across all 9 pages. **Fleet is complete** - don't re-open it as a build
+task, this file just never got updated to reflect that.
+
+## New surface (2026-07-21): Kasper internal ops dashboard - `ops/`
+
+Scoped out of `LOGISTICS/02_Product/02_Kasper_Vendor_OS.docx`'s `ops.html`
+spec (Section 5 of `vendor_os_brief.txt`), built as its own top-level static
+site rather than inside a `vendor-os/` folder, because **the vendor-facing
+and driver-facing portals (`vendor.html`, `driver.html`, `onboard.html`) are
+explicitly deferred** - afzl is building the vendor side himself, separately.
+Only the Kasper-internal admin view was in scope for this pass.
+
+- `ops/index.html` - single-page, 5-tab dashboard (Overview, Vendors, Jobs,
+  RFQs, Billing). Same vanilla HTML/CSS/JS + mock-data pattern as
+  `marketplace/` and `fleet-v2/`. No auth, no backend. `ops/css/styles.css`
+  copies the `:root` brand tokens from `marketplace/css/styles.css`, then
+  adds its own dashboard components (tabs, pipeline strip, status chips,
+  data tables) - same pattern `fleet-v2` used for its map/detail-panel
+  components.
+- `ops/data/ops.js` - mock vendors, jobs, RFQs, and invoices. Jobs carry a
+  `stage` index into a 13-item `pipeline` array sourced from
+  `LOGISTICS/04_Operations/Kasper_Operations_Manual.docx` Part 1 ("Every
+  Kasper job moves through 13 defined stages"). The manual's stage *names*
+  didn't survive the docx table extraction, so the 13 labels used here
+  (Enquiry Received -> ... -> Paid & Closed) are reconstructed from the job
+  lifecycle in `vendor_os_brief.txt` Section 2, not copied verbatim from the
+  manual - confirm against the source table before treating as final copy.
+  Escalation levels (L1/L2) on the Overview tab and the daily checklist items
+  come directly from Operations Manual Parts 2-3.
+- Verified: `node --check` on both JS files, no hardcoded hex outside
+  `:root` in `index.html`, no duplicate IDs, CSS brace balance.
+
+**Not done yet:** brand-guardian token audit, qa-accessibility-reviewer pass,
+and confirming the reconstructed 13-stage names against the real ops manual
+table.
+
+## Ops expansion + new launcher (2026-07-21, second pass)
+
+afzl asked for the dead "Open"/vendor-row actions to be wired up, plus a
+single entry point across the internal tools. Three additions:
+
+- **Escalations tab** added to `ops/index.html` (6 tabs now: Overview,
+  Vendors, Jobs, RFQs, Escalations, Billing). Full L1/L2/L3 escalation log
+  plus routing rules copied verbatim from Operations Manual Part 2 (the
+  actual policy text, not paraphrased) - `ops/data/ops.js`'s `escalations`
+  key.
+- **`ops/job-detail.html` and `ops/vendor-detail.html`** - real drill-down
+  pages, replacing the no-op "Open"/action buttons. Jobs tab and vendor rows
+  in `ops/index.html` now link to these with `?job=` / `?id=` params.
+  `ops/js/main.js` reads `data-page` on `<body>` (same dispatcher pattern
+  `fleet-v2` uses) to decide whether to render the dashboard tabs or a
+  detail page. `ops/data/ops.js` jobs gained `driver`, `clientContact`,
+  `documents`, and `timeline` fields; vendors gained `phone`, `fleet`, and
+  `documents` (trade license / insurance expiry mock data) to support this.
+- **`dashboard/`** - new top-level folder, a single internal launcher page
+  linking Ops, Fleet, and Marketplace (public site), with a disabled "Vendor
+  OS - Not started" card so the deferred piece stays visible without being
+  clickable. `ops/index.html`, `job-detail.html`, and `vendor-detail.html`
+  each got a small "&larr; Dozr Dashboard" link back to it in the header.
+  Own copy of the brand-token `:root` (same pattern as `ops/`, `fleet-v2/`,
+  `marketplace/` each carrying their own stylesheet) - no shared CSS file
+  across folders yet, that's a legitimate future cleanup, not a bug.
+
+Verified: `node --check` on both ops JS files, no hardcoded hex outside
+`:root` across all 4 new/changed HTML files, no duplicate IDs, CSS brace
+balance on both stylesheets, and a relative-link resolution check
+confirming every `href` in these files points at a file that actually
+exists on disk.
+
+**Not done yet:** same as above (brand-guardian, qa-accessibility-reviewer),
+plus `dashboard/`'s links to `../fleet-v2/` and `../ops/` assume all three
+folders stay siblings in one deploy - if Fleet/Ops end up on separate Vercel
+projects with their own domains (like the original three MVPs were), these
+links need to become absolute URLs instead. Flag before deploying.
+
+## Expert audit + fixes (2026-07-21, third pass)
+
+afzl asked for an expert review of everything built today (ops/, dashboard/,
+marketplace additions) and to check whether images were needed. Ran a
+dedicated audit (images/assets, accessibility, broken links, data integrity,
+brand-token consistency, responsive coverage) and fixed every concrete
+finding:
+
+- **Images:** none of `ops/`, `dashboard/`, or `contact.html`/`about.html`
+  had any image or asset references before this pass - all icons are inline
+  SVG, which is fine for internal admin tools but left `about.html` looking
+  thin next to `index.html`'s hero photo/video. Added one existing
+  photo (`assets/categories/cranes.jpg`, already shipped with the site, no
+  new asset generated) to `about.html`'s "Why we built this" section.
+  `ops/`, `dashboard/`, and `job-detail.html`/`vendor-detail.html` also had
+  no `<link rel="icon">` at all - added, all four now point at
+  `marketplace/assets/favicon.svg` so internal tools don't show a blank tab
+  icon.
+- **Accessibility:** `--muted` (#8A8D93) failed WCAG AA (3.33:1 on white) -
+  darkened to `#6B6E74` (5.11:1) in both `ops/css/styles.css` and
+  `marketplace/css/styles.css` to keep the token in sync. `dashboard/`'s
+  launcher-card titles were marked up as sibling `<h2>`s under an `<h2
+  class="sr-only">` parent, flattening the heading outline - changed to
+  `<h3>`. The disabled "Vendor OS" card used `aria-disabled="true"` on a
+  plain `<div>`, which has no defined ARIA semantics on a non-interactive
+  element - changed to `data-disabled="true"` (CSS selector updated to
+  match) since the card was never focusable/interactive to begin with.
+  `ops/index.html`'s 6 dashboard tabs had no roving-tabindex or arrow-key
+  navigation - `bindTabs()` in `ops/js/main.js` now manages `tabindex`
+  (0 on selected, -1 on others) and handles ArrowLeft/ArrowRight/Home/End,
+  matching the standard ARIA tabs keyboard pattern.
+- **Dead controls:** "+ Onboard vendor", "+ New RFQ", "Add vendor", "Close
+  RFQ", "Receipt", and "Remind" all rendered as clickable buttons with zero
+  event handlers - silently inert. Rather than leave them looking
+  functional, applied the same `disabled` + explanatory `title` pattern
+  already established in `marketplace/index.html`'s "Sign in soon" button
+  (honest about no-backend state instead of faking interactivity). The Jobs
+  tab's Stage filter `<select>` was dead (never read by JS, single static
+  option) - actually wired up: populated from the `pipeline` array, filters
+  the jobs table via a `data-stage` attribute on each row.
+- **Data integrity:** re-verified after the last dummy-data pass and found
+  4 real bugs, all fixed in `ops/data/ops.js`: three jobs (`DZR-J-1034`,
+  `-1035`, `-1036`) had a `stage` index that contradicted their own
+  `timeline`/`price` text - corrected to match. `billing.summary`'s
+  "Overdue >14d" label didn't match any actual invoice (2 of the 4 "Overdue"
+  invoices had future due dates relative to `lastUpdated`, and neither
+  genuinely-overdue invoice was more than 14 days late) - fixed the two
+  invoice statuses to "Pending" and relabeled to "Overdue" (2 invoices,
+  AED 21.0k) without the unsupported ">14d" claim. "Resolved today: 7" only
+  had one entry actually timestamped today - relabeled "Resolved" with an
+  honest "Logged over the last 9 days" note. MRR's "11 active vendor plans"
+  overcounted by one (10 vendors have `active: true`) - corrected.
+- **Consistency:** confirmed no color-token drift across `ops/`,
+  `dashboard/`, and `marketplace/` `:root` blocks (all 8 shared tokens byte-
+  identical) - flagged as fine, no fix needed.
+
+Verified: `node --check` on both ops JS files, no hardcoded hex outside
+`:root` and no duplicate IDs across all 6 touched HTML files, CSS brace
+balance on all 3 stylesheets, and every relative `href`/`src` in these files
+confirmed to resolve to a real file on disk (including the new image and
+favicon references).
+
+## Figma review (2026-07-21) - old Kasper admin backend, legacy scope
+
+afzl shared 12 screens from a pre-rebrand Kasper admin backend Figma
+(`node-id=1398-1994`, black/green theme - not Dozr tokens, IA reference
+only). Content: Category/Sub-Category/Brand/Unit/Item Master (product
+catalog CRUD) plus a Transactions chain (RFQ from customer -> RFQ to
+supplier -> Quotation from supplier -> Quotation to customer -> Sales Order)
+and Reports (Sales day book). Nav bar included a standalone "Materials" tab
+alongside "Rent", and footer categories (Steel, TMT Bars, Cement, Bricks,
+Sand & Aggregates, etc.) confirm this was a **materials-trading vertical**,
+not equipment rental/freight.
+
+**Confirmed with afzl: Materials Trading is legacy, not a current priority.**
+Nothing in `LOGISTICS/02_Product/` scopes it and no phase should be opened
+for it. Not deleting the Figma reference, just not building against it.
+
+**Backlog item (not scheduled):** the Category/Brand/Unit/Item Master
+pattern in those screens is also the obvious long-term fix for
+`marketplace/data/equipment.js` being a hardcoded array - a generic (not
+materials-specific) catalog-admin surface that Marketplace and any future
+vertical could both read from. Confirmed with afzl this is worth its own
+scoped item later, but not in progress now - don't start building it without
+a product doc + phase entry first, same process as everything else.

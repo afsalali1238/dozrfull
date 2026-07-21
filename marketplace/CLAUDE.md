@@ -29,6 +29,8 @@ added, only `data/equipment.js` and the WhatsApp-link functions in
 - `equipment-detail.html` — Equipment detail + request-quote rail (reads `?id=` to look up the unit in `data/equipment.js`)
 - `tracking.html` — Shared tracking link (no-login, single phone-frame card — mobile only, not part of main nav)
 - `quote-approval.html` — Shared approval link (same no-login pattern as tracking) — **build this once the Claude Design pass for it lands in `LOGISTICS/05_Brand_Design/`**
+- `contact.html` — Contact page (info cards + form that opens WhatsApp via `js/whatsapp.js`, no server POST) — added 2026-07-21
+- `about.html` — About page (mission, how-it-works value grid, no fabricated team/testimonials) — added 2026-07-21
 - `css/styles.css` — all brand tokens as CSS custom properties, reset, typography, shared nav/footer/button/card styles
 - `js/main.js` — nav behavior, category tab switching, mobile menu toggle
 - `js/whatsapp.js` — `buildWhatsAppLink(message)` helper — the ONE place the business WhatsApp number lives

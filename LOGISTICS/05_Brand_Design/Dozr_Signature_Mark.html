@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dozr — Signature Mark</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@300;400;500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --yellow:#FFC400; --ink:#141518; --slate:#5B5F66; --canvas:#F6F6F3;
+  --surface:#FFFFFF; --yellow-tint:#FFF6D6; --yellow-dark:#E6AF00;
+  --line:#E8E8E3; --green:#1F9A6D; --error:#D64545;
+  --radius-btn:10px; --radius-card:16px; --radius-chip:999px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--canvas)}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;color:var(--ink);font-size:16px;line-height:1.6}
+.page{max-width:880px;margin:0 auto;padding:64px 32px 100px}
+.eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--slate);display:flex;align-items:center;gap:9px;margin-bottom:16px}
+.eyebrow::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--yellow)}
+h1{font-family:'Space Grotesk';font-weight:700;font-size:clamp(32px,5vw,52px);letter-spacing:-.03em;line-height:1.05;margin-bottom:20px}
+h1 span{color:var(--yellow-dark)}
+.lead{font-size:18px;color:var(--slate);max-width:640px;font-weight:300;margin-bottom:48px}
+h2{font-family:'Space Grotesk';font-weight:600;font-size:22px;letter-spacing:-.02em;margin:56px 0 16px;padding-bottom:12px;border-bottom:2px solid var(--ink)}
+p{color:var(--slate);font-weight:300;margin-bottom:14px;max-width:680px}
+p strong{color:var(--ink);font-weight:600}
+.rule-box{background:var(--ink);color:var(--surface);border-radius:var(--radius-card);padding:32px 36px;margin:20px 0 8px}
+.rule-box .k{font-family:'Space Mono';font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--yellow);margin-bottom:10px}
+.rule-box p{color:rgba(255,255,255,.78);margin-bottom:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:24px 0 8px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius-card);padding:20px;min-height:120px}
+.card.dark{background:var(--ink);color:var(--surface)}
+.card .label{font-family:'Space Mono';font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--slate);margin-bottom:12px}
+.card.dark .label{color:#9a9a95}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);flex-shrink:0}
+.icon-tile{width:100%;height:80px;display:flex;align-items:center;justify-content:center}
+.headline-demo{font-family:'Space Grotesk';font-weight:500;font-size:20px}
+.status-row{display:flex;align-items:center;gap:8px;font-size:13px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--yellow);box-shadow:0 0 0 4px var(--yellow-tint)}
+.avatar{width:44px;height:44px;border-radius:50%;background:#1c1d21;display:flex;align-items:center;justify-content:center;margin:0 auto 10px}
+.avatar .dot{width:10px;height:10px}
+.list-demo{display:flex;flex-direction:column;gap:8px;font-size:13px}
+.list-demo div{display:flex;align-items:center;gap:8px}
+.list-demo .dot{width:6px;height:6px}
+.eyebrow-demo{display:flex;align-items:center;gap:8px;font-family:'Space Mono';font-size:12px;letter-spacing:.08em;color:rgba(255,255,255,.85)}
+table{width:100%;border-collapse:collapse;margin:16px 0 32px;font-size:14px}
+th{font-family:'Space Mono';font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--slate);text-align:left;padding:10px 12px;border-bottom:2px solid var(--ink)}
+td{padding:12px;border-bottom:1px solid var(--line);color:var(--ink)}
+td.no{color:var(--error)}
+td.yes{color:var(--green)}
+.foot{margin-top:64px;padding-top:24px;border-top:1px solid var(--line);font-family:'Space Mono';font-size:11px;color:var(--slate)}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="eyebrow">Dozr brand system — addendum</div>
+  <h1>The dot<span>.</span></h1>
+  <p class="lead">A single yellow full stop, used as a standalone mark wherever the wordmark is impractical or unnecessary — the equivalent of Amazon's smile. This is a supplement to <strong>Dozr_Brand_Guidelines.html</strong>: fold it into section on brand marks the next time that file is regenerated.</p>
+
+  <h2>The rule</h2>
+  <div class="rule-box">
+    <div class="k">Why a period, not a comma</div>
+    <p>A comma implies a pause. Dozr's pitch is decisiveness — book it, dispatch it, done. The full stop can also stand alone as a mark (favicon, avatar, loader) without the wordmark next to it, which a comma reads oddly doing.</p>
+  </div>
+
+  <h2>Construction</h2>
+  <p>Solid circle, <strong>#FFC400</strong>, no outline, no gradient, no tint. Default diameter sits at roughly 0.4× the cap-height of whatever text it accompanies — 8px next to 11px mono labels, scale proportionally elsewhere. Minimum clear space equal to its own diameter on all sides.</p>
+
+  <h2>Where it lives</h2>
+  <div class="grid">
+    <div class="card dark">
+      <div class="label">Favicon / app icon</div>
+      <div class="icon-tile"><div class="dot" style="width:16px;height:16px"></div></div>
+    </div>
+    <div class="card">
+      <div class="label">Headline punctuation</div>
+      <div class="icon-tile" style="justify-content:flex-start"><span class="headline-demo">Move with confidence<span style="color:var(--yellow-dark)">.</span></span></div>
+    </div>
+    <div class="card dark">
+      <div class="label">Eyebrow label</div>
+      <div class="icon-tile" style="justify-content:flex-start"><div class="eyebrow-demo"><span class="dot"></span>UAE CONSTRUCTION LOGISTICS</div></div>
+    </div>
+    <div class="card">
+      <div class="label">Live / status indicator</div>
+      <div class="icon-tile" style="justify-content:flex-start"><div class="status-row"><span class="status-dot"></span>Vehicle live · dispatched 09:41</div></div>
+    </div>
+    <div class="card dark">
+      <div class="label">Bare social avatar</div>
+      <div class="icon-tile"><div class="avatar"><div class="dot"></div></div></div>
+    </div>
+    <div class="card">
+      <div class="label">List / bullet marker</div>
+      <div class="icon-tile" style="justify-content:flex-start;align-items:flex-start;flex-direction:column;gap:8px">
+        <div class="list-demo">
+          <div><span class="dot"></span>RFQ sent</div>
+          <div><span class="dot"></span>Quote received</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Do / don't</h2>
+  <table>
+    <tr><th>Use</th><th></th></tr>
+    <tr><td>Solid #FFC400, never tinted or outlined</td><td class="yes">Do</td></tr>
+    <tr><td>One consistent size relationship to adjacent text — never scaled for effect</td><td class="yes">Do</td></tr>
+    <tr><td>At the start or end of something (a label, a sentence, a status) — never mid-decoration</td><td class="yes">Do</td></tr>
+    <tr><td>As a repeating pattern, wallpaper, or divider filler</td><td class="no">Don't</td></tr>
+    <tr><td>In any color other than brand yellow</td><td class="no">Don't</td></tr>
+    <tr><td>Combined with the pictorial dozr mark (nav/footer logo) in the same lockup — the dot is a separate, lighter-weight device, not a replacement for the primary mark</td><td class="no">Don't</td></tr>
+  </table>
+
+  <h2>Relationship to the primary mark</h2>
+  <p>The existing pictorial mark (the yellow icon in <strong>favicon.svg</strong> and the site nav/footer logo) is the primary logomark and stays as-is — this dot is a secondary, more minimal device for places a full logo doesn't fit: punctuation, status, bullets, avatars. Treat them as two tools, not competitors.</p>
+
+  <div class="foot">Dozr — signature mark addendum · living reference until merged into Dozr_Brand_Guidelines.html</div>
+</div>
+</body>
+</html>

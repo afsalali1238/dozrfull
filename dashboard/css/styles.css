@@ -1,0 +1,101 @@
+/* =================================================================
+   Dozr Dashboard — internal launcher stylesheet
+   Same token set as marketplace/, fleet-v2/, and ops/.
+   ================================================================= */
+
+:root {
+  --ink: #141518;
+  --yellow: #FFC400;
+  --yellow-tint: #FFF6D6;
+  --yellow-dark: #E6AF00;
+  --canvas: #F6F6F3;
+  --surface: #FFFFFF;
+  --slate: #5B5F66;
+  --line: #E8E8E3;
+  --green: #146447;
+  --green-tint: #E7F6EF;
+  --error: #A22424;
+
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  --radius-button: 10px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+}
+h1, h2 { font-family: var(--font-heading); font-weight: 700; letter-spacing: -.02em; margin: 0; }
+a { color: inherit; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: -9999px; top: 0; background: var(--ink); color: #fff;
+  padding: 10px 16px; z-index: 100; border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+
+.launcher-header {
+  background: var(--ink);
+  color: var(--surface);
+  padding: 48px 32px 40px;
+}
+.launcher-header .eyebrow {
+  font-family: var(--font-mono); font-size: 11px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--yellow); display: flex; align-items: center; gap: 8px;
+}
+.launcher-header .eyebrow::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); }
+.launcher-header h1 { font-size: 30px; margin-top: 10px; color: var(--surface); }
+.launcher-header p { margin-top: 8px; color: rgba(255,255,255,.68); max-width: 560px; }
+
+.launcher-main { max-width: 1080px; margin: 0 auto; padding: var(--space-4) 32px 56px; }
+.launcher-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--space-3); }
+
+.launcher-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-3);
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: border-color .15s ease, transform .15s ease;
+}
+.launcher-card:hover { border-color: var(--ink); transform: translateY(-2px); }
+.launcher-card[data-disabled="true"] { opacity: .55; cursor: not-allowed; pointer-events: none; }
+.launcher-card .icon-box {
+  width: 44px; height: 44px; border-radius: var(--radius-button);
+  background: var(--yellow-tint); display: flex; align-items: center; justify-content: center;
+}
+.launcher-card h2 { font-size: 18px; }
+.launcher-card p { margin: 0; font-size: 13px; color: var(--slate); line-height: 1.55; flex-grow: 1; }
+.launcher-card .status-chip {
+  align-self: flex-start;
+  font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: .04em;
+  padding: 3px 9px; border-radius: var(--radius-pill);
+}
+.launcher-card .status-chip[data-tone="ok"] { background: var(--green-tint); color: var(--green); }
+.launcher-card .status-chip[data-tone="neutral"] { background: var(--line); color: var(--slate); }
+
+@media (max-width: 640px) {
+  .launcher-header { padding: 36px 20px 32px; }
+  .launcher-main { padding: var(--space-3) 20px 40px; }
+}

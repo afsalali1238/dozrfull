@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kasper GPS — Cost to Break-Even (Mid-Tier)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f4f7;--surface:#ffffff;--surface2:#fafbfc;
+  --border:#e4e7ec;--border2:#d0d5dd;
+  --text:#101828;--muted:#98a2b3;--muted2:#475467;
+  --accent:#101828;--highlight:#1570ef;
+  --amber:#f5a623;--red:#ff4455;--green:#3ddc84;--blue:#4fa3ff;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+.wrap{max-width:960px;margin:0 auto;padding:56px 6vw 100px}
+.masthead{border-bottom:1px solid var(--border2);padding-bottom:28px;margin-bottom:36px}
+.eyebrow{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:#1570ef;letter-spacing:.25em;text-transform:uppercase;margin-bottom:10px}
+h1{font-family:'Playfair Display',serif;font-size:clamp(2rem,4.5vw,3.2rem);font-weight:900;line-height:1.08;letter-spacing:-.02em;margin-bottom:12px}
+.sub{font-size:1.05rem;color:var(--muted2);font-weight:300;max-width:680px}
+.meta-row{display:flex;gap:28px;flex-wrap:wrap;margin-top:22px}
+.mi{display:flex;flex-direction:column;gap:4px}
+.mi span:first-child{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.mi span:last-child{font-family:'IBM Plex Mono',monospace;font-size:.8rem}
+section{margin-bottom:44px}
+.sl{font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--muted2);letter-spacing:.18em;text-transform:uppercase;margin-bottom:8px}
+h2{font-family:'Playfair Display',serif;font-size:clamp(1.3rem,2.5vw,1.8rem);font-weight:700;line-height:1.25;margin-bottom:14px}
+p{font-size:1rem;color:var(--text);font-weight:300;margin-bottom:14px}
+p strong{font-weight:500}
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin:16px 0}
+.sc{background:var(--surface2);border:1px solid var(--border);padding:18px 16px;display:flex;flex-direction:column;gap:6px}
+.v{font-family:'Playfair Display',serif;font-size:clamp(1.2rem,2.6vw,1.9rem);font-weight:700;line-height:1}
+.v.g{color:var(--green)}.v.a{color:var(--amber)}.v.r{color:var(--red)}.v.h{color:#1570ef}.v.b{color:var(--blue)}
+.lb{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;line-height:1.4}
+table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace}
+th{color:var(--muted2);text-transform:uppercase;letter-spacing:.08em;padding:10px 12px;text-align:left;font-size:.58rem;border-bottom:1px solid var(--border2)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);font-size:.74rem;line-height:1.5}
+tr:last-child td{border-bottom:none}
+.tw{border:1px solid var(--border);background:#fff;overflow-x:auto;border-radius:2px;margin-bottom:14px}
+.cl{border-left:3px solid var(--highlight);padding:16px 20px;background:#eff4ff;font-size:.9rem;line-height:1.6;color:var(--muted2)}
+.cl strong{color:#1570ef}
+.cl.w{border-left-color:var(--amber);background:#fffbeb}.cl.w strong{color:var(--amber)}
+.cl.r{border-left-color:var(--red);background:#fff1f0}.cl.r strong{color:var(--red)}
+.cl.g{border-left-color:var(--green);background:#f0fdf4}.cl.g strong{color:var(--green)}
+.tg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:14px}
+.tc{padding:18px;border:1px solid var(--border);background:var(--surface2)}
+.tc.t1{border-top:3px solid var(--highlight)}.tc.t2{border-top:3px solid var(--amber)}.tc.t3{border-top:3px solid var(--blue)}
+.tn{font-family:'IBM Plex Mono',monospace;font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:8px}
+.tc.t1 .tn{color:#1570ef}.tc.t2 .tn{color:var(--amber)}.tc.t3 .tn{color:var(--blue)}
+.tp{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;margin-bottom:12px}
+.tier-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:.75rem}
+.tier-row:last-child{border-bottom:none}
+.tier-row span:first-child{color:var(--muted2)}
+.tier-row span:last-child{font-family:'IBM Plex Mono',monospace;font-weight:600}
+.verdict{display:inline-flex;align-items:center;gap:12px;border:1px solid var(--highlight);padding:14px 22px;background:#eff4ff;margin-bottom:16px}
+.vi{font-family:'IBM Plex Mono',monospace;font-size:1.4rem;color:#1570ef}
+.vl{font-family:'IBM Plex Mono',monospace;font-size:.58rem;color:var(--muted);letter-spacing:.15em;text-transform:uppercase}
+.vt{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:700;color:#1570ef}
+.footer{font-family:'IBM Plex Mono',monospace;font-size:.62rem;color:var(--muted);border-top:1px solid var(--border);padding-top:20px;margin-top:50px}
+@media(max-width:700px){.sg,.tg{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="eyebrow">Cost Model · GPS / Telematics · Mid-Tier (Tier 2) · July 2026</div>
+    <h1>Cost to Break-Even</h1>
+    <p class="sub">What it actually costs Kasper — in hardware, installation, data, and working capital — to deploy the 424-device fleet needed to cover fixed costs.</p>
+    <div class="meta-row">
+      <div class="mi"><span>Basis</span><span>Tier 2 · LVCAN200 (mid-tier)</span></div>
+      <div class="mi"><span>Break-even fleet</span><span>424 devices</span></div>
+      <div class="mi"><span>Capex only (no SIM year)</span><span>AED 225,992</span></div>
+      <div class="mi"><span>Capex + 1yr SIM (du confirmed)</span><span style="color:var(--green)">608 × 424 = AED 257,792</span></div>
+      <div class="mi"><span>Peak cash need</span><span style="color:var(--red)">AED 92,479</span></div>
+    </div>
+  </div>
+
+  <!-- 1: PER-DEVICE COST -->
+  <section>
+    <div class="sl">01 — Per-device cost, mid-tier</div>
+    <h2>What one Tier 2 device costs to deploy and run</h2>
+    <p>Two cost types, kept separate: <strong>capex</strong> — spent once, at install — and <strong>recurring</strong> — spent every month the device stays active. Data/SIM cost is confirmed at <strong>AED 120/device/year (AED 10/month)</strong>.</p>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Capex (one-time, at install)</th><th>Cost</th></tr></thead>
+        <tbody>
+          <tr><td>Hardware — FMC130 + LVCAN200 + accessories</td><td>AED 408.00</td></tr>
+          <tr><td>Installation labour</td><td>AED 100.00</td></tr>
+          <tr><td>SIM activation (one-time)</td><td>AED 25.00</td></tr>
+          <tr style="border-top:1px solid var(--border2)"><td><strong>Total capex / device</strong></td><td><strong style="color:#1570ef">AED 533.00</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tw">
+      <table>
+        <thead><tr><th>Recurring (per month, per active device)</th><th>Cost</th><th>Annualised</th></tr></thead>
+        <tbody>
+          <tr><td>Data / SIM — confirmed rate</td><td>AED 10.00</td><td>AED 120.00 / yr</td></tr>
+          <tr><td>Platform (Wialon, estimate pending)</td><td>AED 5.50</td><td>AED 66.00 / yr</td></tr>
+          <tr><td>Support & warranty reserve</td><td>AED 6.50</td><td>AED 78.00 / yr</td></tr>
+          <tr style="border-top:1px solid var(--border2)"><td><strong>Total recurring cash cost / device</strong></td><td><strong style="color:var(--amber)">AED 22.00</strong></td><td><strong style="color:var(--amber)">AED 264.00 / yr</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cl">
+      <strong>All-in Year 1 cost per device: AED 797</strong> — AED 533 capex + AED 264 in recurring cash costs over the first 12 months. Against Tier 2's AED 1,060 Day-1 collection (AED 960 subscription + AED 100 install fee), that's a Year 1 cash profit of <strong>AED 263/device</strong>, before the Year 2 renewal — which costs only AED 264 (no capex) against AED 960 revenue.
+    </div>
+  </section>
+
+  <!-- 2: FLEET-WIDE COST -->
+  <section>
+    <div class="sl">02 — Fleet-wide cost, 424 devices</div>
+    <h2>Scaling the per-device cost to the break-even fleet</h2>
+    <div class="sg">
+      <div class="sc"><span class="v h">AED 172,992</span><span class="lb">Hardware — 424 × AED 408</span></div>
+      <div class="sc"><span class="v a">AED 42,400</span><span class="lb">Installation — 424 × AED 100</span></div>
+      <div class="sc"><span class="v b">AED 10,600</span><span class="lb">SIM activation — 424 × AED 25</span></div>
+      <div class="sc"><span class="v g">AED 225,992</span><span class="lb">Total deployment capex</span></div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Cost category</th><th>Per device</th><th>× 424 devices</th><th>Frequency</th></tr></thead>
+        <tbody>
+          <tr><td>Hardware</td><td>AED 408</td><td>AED 172,992</td><td>One-time</td></tr>
+          <tr><td>Installation</td><td>AED 100</td><td>AED 42,400</td><td>One-time</td></tr>
+          <tr><td>SIM activation</td><td>AED 25</td><td>AED 10,600</td><td>One-time</td></tr>
+          <tr style="background:#eff4ff"><td><strong>Total capex — fleet</strong></td><td><strong>AED 533</strong></td><td><strong style="color:#1570ef">AED 225,992</strong></td><td>One-time</td></tr>
+          <tr><td>Data / SIM (recurring)</td><td>AED 120 / yr</td><td>AED 50,880 / yr</td><td>Annual, at scale</td></tr>
+          <tr><td>Platform + support (recurring)</td><td>AED 144 / yr</td><td>AED 61,056 / yr</td><td>Annual, at scale</td></tr>
+          <tr style="background:#fffbeb"><td><strong>Total recurring — full fleet, steady state</strong></td><td><strong>AED 264 / yr</strong></td><td><strong style="color:var(--amber)">AED 111,936 / yr</strong></td><td>Annual, at scale</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cl w">
+      <strong>Read this carefully:</strong> AED 225,992 is what the fleet costs to <em>build</em>, not what Kasper needs in the bank. Clients pay AED 1,060/device upfront on Day 1 — ahead of the AED 533 Kasper spends per device. The real funding question is the timing gap while fixed overhead runs every month and the fleet is still ramping. See section 04.
+    </div>
+  </section>
+
+  <!-- 2b: CAPITAL INCLUDING 1-YEAR DATA -->
+  <section>
+    <div class="sl">02b — Capital required including one full year of data</div>
+    <h2>Hardware + install + 12 months of SIM, not just activation</h2>
+    <p>Section 01 separated capex (one-time) from recurring cost (monthly). But if the planning question is "how much cash do we need to put a device in the field and keep its data connection alive for a full year" — the right unit is hardware + installation + <strong>12 months of SIM</strong>, not just the AED 25 one-time activation fee.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Rate used</th><th>Hardware</th><th>Install</th><th>SIM — 12 months</th><th>Capital / device</th><th>× 424 devices</th></tr></thead>
+        <tbody>
+          <tr style="background:#f0fdf4"><td><strong>du confirmed rate</strong> — AED 100/yr</td><td>AED 408</td><td>AED 100</td><td>AED 100</td><td><strong>AED 608</strong></td><td><strong style="color:var(--green)">AED 257,792</strong></td></tr>
+          <tr><td>Modeled buffer rate — AED 120/yr</td><td>AED 408</td><td>AED 100</td><td>AED 120</td><td><strong>AED 628</strong></td><td><strong style="color:var(--amber)">AED 266,272</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cl g">
+      <strong>608 × 424 = AED 257,792</strong> — capital required to hardware, install, and keep 424 mid-tier devices connected for a full first year, at the confirmed du M2M rate (AED 100/device/year, MOQ 50). Use <strong>AED 266,272</strong> instead if budgeting on the AED 120/year modeled buffer rate used elsewhere in this study (the AED 20 gap is headroom in case the confirmed MOQ-50 rate isn't held at scale). Platform and support costs (AED 5.50 + AED 6.50/device/month) are deliberately excluded here — they're software-side recurring opex, not capital tied up in the physical device.
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Tier</th><th>Hardware</th><th>Install</th><th>SIM / yr (modeled)</th><th>Capital / device</th><th>× 424 devices</th></tr></thead>
+        <tbody>
+          <tr><td>Tier 1 — FMC130</td><td>AED 203</td><td>AED 80</td><td>AED 120</td><td>AED 403</td><td>AED 170,872</td></tr>
+          <tr style="background:#eff4ff"><td><strong>Tier 2 — LVCAN200 (mid, used above)</strong></td><td>AED 408</td><td>AED 100</td><td>AED 120</td><td><strong>AED 628</strong></td><td><strong>AED 266,272</strong></td></tr>
+          <tr><td>Tier 3 — ALLCAN300</td><td>AED 591</td><td>AED 120</td><td>AED 120</td><td>AED 831</td><td>AED 352,344</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted2)">If the 424-device fleet were an even blend of all three tiers instead of pure mid-tier, capital required would land between AED 170,872 and AED 352,344 depending on mix — mid-tier is the reasonable planning midpoint.</p>
+  </section>
+
+  <!-- 3: CFO SCENARIOS -->
+  <section>
+    <div class="sl">03 — Financial scenarios (CFO lens)</div>
+    <h2>Six scenarios worth stress-testing before committing capital</h2>
+    <div class="tw">
+      <table>
+        <thead><tr><th>#</th><th>Scenario</th><th>Why it matters</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#1570ef">01</td><td><strong>Platform cost lands above AED 5.50/device</strong></td><td>Every AED 1 shift in Wialon/Navixy pricing moves break-even by ~11 devices. Still unconfirmed.</td></tr>
+          <tr><td style="color:var(--amber)">02</td><td><strong>Tier mix skews toward Tier 3</strong></td><td>Tier 3 costs AED 591 to deploy vs AED 408 for Tier 2 — capex rises faster than revenue.</td></tr>
+          <tr><td style="color:var(--red)">03</td><td><strong>Billing slips off annual-upfront</strong></td><td>The whole self-funding thesis depends on Day-1 cash &gt; Day-1 cost. Monthly billing breaks it.</td></tr>
+          <tr><td style="color:var(--green)">04</td><td><strong>Renewal rate below ~85%</strong></td><td>Churn means paying deployment capex again without the high-margin Year 2 ever landing.</td></tr>
+          <tr><td style="color:var(--blue)">05</td><td><strong>Ramp slower than 35 devices/month</strong></td><td>Bear case (150 devices by Month 12) pushes break-even past Month 24 — funding need roughly doubles.</td></tr>
+          <tr><td style="color:#1570ef">06</td><td><strong>SIRA dual-device requirement</strong></td><td>A client needing SIRA hardware alongside Kasper's device doubles capex on that install without doubling revenue.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cl w">
+      <strong>Practical read:</strong> confirm the Wialon quote and lock annual-upfront (or minimum quarterly PDC) into every contract — those two items are the ones that actually break the model.
+    </div>
+  </section>
+
+  <!-- 3b: CTO SCENARIOS -->
+  <section>
+    <div class="sl">03b — Technical & operational scenarios (CTO lens)</div>
+    <h2>What can go wrong on the hardware, network, and platform side</h2>
+    <p>The financial model assumes every device installs cleanly, stays connected, and keeps working for 12+ months. As CTO, here's what actually threatens that assumption — none of these show up in the P&amp;L until they happen.</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>#</th><th>Scenario</th><th>Risk</th></tr></thead>
+        <tbody>
+          <tr><td style="color:#1570ef">01</td><td><strong>Hardware supply chain / lead time</strong></td><td>Teltonika units are ordered in MOQ-50 batches to hold landed cost — a supply delay stalls the ramp directly; single-vendor dependency with no backup source qualified.</td></tr>
+          <tr><td style="color:var(--red)">02</td><td><strong>du single-network coverage gaps</strong></td><td>Construction sites are exactly where dead zones happen. Every device that needs Onomondo's multi-network failover costs AED 20/mo instead of AED 8.33–10 — a 2–2.4× SIM cost increase on affected units.</td></tr>
+          <tr><td style="color:var(--amber)">03</td><td><strong>2G/3G network sunset</strong></td><td>UAE carriers are phasing down legacy bands. Confirm FMC130's supported bands cover du/e&'s 5-year roadmap — a mid-life forced hardware swap would wipe out Year 2+ margins on affected devices.</td></tr>
+          <tr><td style="color:var(--blue)">04</td><td><strong>No OTA update infrastructure yet</strong></td><td>Firmware bugs or config changes at 400+ devices need remote push capability. Without it, every fix means a truck roll — reinstall-level cost on a "recurring" opex line.</td></tr>
+          <tr><td style="color:var(--green)">05</td><td><strong>Device failure / DOA rate not modeled</strong></td><td>No warranty-replacement buffer stock or failure-rate assumption exists in the financial model. Even a 3–5% annual failure rate on 424 devices is 13–21 replacement units/year — AED 5,300–8,600 in unbudgeted hardware.</td></tr>
+          <tr><td style="color:#1570ef">06</td><td><strong>Installation quality control</strong></td><td>No certified-installer program yet. A bad install (loose OBD connection, wrong wiring on CAN adapters) causes intermittent data or false readings — drives support tickets and reinstall visits that aren't priced in.</td></tr>
+          <tr><td style="color:var(--amber)">07</td><td><strong>Wialon vs custom-build timing risk</strong></td><td>If the Wialon quote comes back high and custom build is chosen, the 4–6 month dev timeline delays activation of every device queued behind it — direct hit to the ramp schedule, not just a cost line.</td></tr>
+          <tr><td style="color:var(--red)">08</td><td><strong>Data security & residency</strong></td><td>Live location + engine-hour data on client equipment is sensitive. If custom-built and hosted outside UAE (DigitalOcean/AWS region choice), confirm this doesn't violate client data-residency expectations before scaling past pilot.</td></tr>
+          <tr><td style="color:var(--blue)">09</td><td><strong>Backend scalability untested</strong></td><td>No load test yet for Codec 8 Extended ingestion at 400–500 concurrent devices. AWS/DigitalOcean sizing in the feasibility study is an estimate, not a benchmark — confirm before the fleet outgrows a single small instance.</td></tr>
+          <tr><td style="color:var(--green)">10</td><td><strong>Device theft / tamper on unattended equipment</strong></td><td>GPS units on parked construction equipment are a known theft target. No tamper-alert or anti-theft mounting spec defined yet — theft losses aren't in the capex-replacement model.</td></tr>
+          <tr><td style="color:#1570ef">11</td><td><strong>Support team doesn't scale linearly</strong></td><td>AED 16,000/month salary line implies a very small team. Ticket volume (coverage complaints, install issues, billing questions) tends to scale faster than headcount at this budget past ~200–300 active devices.</td></tr>
+          <tr><td style="color:var(--amber)">12</td><td><strong>Third-party platform lock-in</strong></td><td>If launching on Wialon/Navixy, confirm data export rights and contract terms up front — switching to custom-build later is much harder if historical tracking data isn't portable.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cl r">
+      <strong>Highest-priority technical unknowns to close before scaling past the pilot batch:</strong> (1) confirmed failure/warranty-replacement rate from Teltonika, (2) a load test of the ingestion pipeline at realistic Tier-3 CAN-data volumes, and (3) a certified-installer process — these three are cheap to fix at 10–50 devices and expensive to fix at 400+.
+    </div>
+  </section>
+
+  <!-- 4: WORKING CAPITAL / CASH SIMULATION -->
+  <section>
+    <div class="sl">04 — Working capital simulation</div>
+    <h2>Peak funding need: AED 92,479 at Month 13</h2>
+    <p>Total capex (AED 225,992) overstates the real ask. A month-by-month cash simulation — fixed costs (AED 20,333/mo) plus recurring per-device opex running continuously, against Day-1 collections from new installs and, from Month 13 on, renewal cash from the first cohort — gives the actual number that needs to be in the bank.</p>
+    <div class="sg">
+      <div class="sc"><span class="v r">−AED 92,479</span><span class="lb">Peak cumulative deficit — Month 13</span></div>
+      <div class="sc"><span class="v a">Month 20</span><span class="lb">Cumulative cash turns positive</span></div>
+      <div class="sc"><span class="v g">+AED 46,033</span><span class="lb">Cumulative position — Month 24</span></div>
+      <div class="sc"><span class="v h">+AED 90,877</span><span class="lb">Cumulative position — Month 36</span></div>
+    </div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Month</th><th>New devices</th><th>Fleet size</th><th>Cash in</th><th>Capex out</th><th>Recurring out</th><th>Net (after AED 20,333 fixed)</th><th>Cumulative</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>10</td><td>10</td><td>10,600</td><td>5,330</td><td>220</td><td>−15,283</td><td>−15,283</td></tr>
+          <tr><td>3</td><td>35</td><td>80</td><td>37,100</td><td>18,655</td><td>1,760</td><td>−3,648</td><td>−21,809</td></tr>
+          <tr><td>6</td><td>35</td><td>185</td><td>37,100</td><td>18,655</td><td>4,070</td><td>−5,958</td><td>−37,373</td></tr>
+          <tr><td>9</td><td>35</td><td>290</td><td>37,100</td><td>18,655</td><td>6,380</td><td>−8,268</td><td>−59,867</td></tr>
+          <tr><td>12</td><td>35</td><td>395</td><td>37,100</td><td>18,655</td><td>8,690</td><td>−10,578</td><td>−89,291</td></tr>
+          <tr style="background:#fff1f0"><td><strong>13</strong></td><td>35</td><td>430</td><td>45,260</td><td>18,655</td><td>9,460</td><td>−3,188</td><td><strong style="color:var(--red)">−92,479 (peak)</strong></td></tr>
+          <tr><td>16</td><td>35</td><td>535</td><td>65,660</td><td>18,655</td><td>11,770</td><td>14,902</td><td>−45,463</td></tr>
+          <tr style="background:#f0fdf4"><td><strong>20</strong></td><td>35</td><td>675</td><td>65,660</td><td>18,655</td><td>14,850</td><td>11,822</td><td><strong style="color:var(--green)">+6,445 (turns positive)</strong></td></tr>
+          <tr><td>24</td><td>35</td><td>815</td><td>65,660</td><td>18,655</td><td>17,930</td><td>8,742</td><td>+46,033</td></tr>
+          <tr><td>36</td><td>35</td><td>1,235</td><td>65,660</td><td>18,655</td><td>27,170</td><td>−498</td><td>+90,877</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted2)">Model assumptions: 10 devices Month 1, +35/month thereafter, 100% Tier 2, AED 20,333/month fixed costs, 85% renewal rate per cohort at its Month-13 anniversary. Renewal cash = AED 960 (no install fee on renewal). This is a cash simulation, not the accrual break-even used elsewhere in the study — it answers "how much cash do we need," not "when does monthly revenue cross monthly fixed cost on paper."</p>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Funding scenario</th><th>Amount</th><th>Covers</th></tr></thead>
+        <tbody>
+          <tr><td>Bare minimum</td><td>AED 92,500</td><td>Exact cash trough — zero margin for slippage</td></tr>
+          <tr style="background:#eff4ff"><td><strong>Recommended</strong></td><td><strong style="color:#1570ef">AED 120,000–150,000</strong></td><td>Peak deficit + 30–60% buffer for ramp slippage, mix drift, or platform cost coming in high</td></tr>
+          <tr><td>Conservative</td><td>AED 200,000+</td><td>Bear-case protection — 150 devices by Month 12, break-even past Month 24</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- 5: SELL VS LEASE -->
+  <section>
+    <div class="sl">05 — Alternative model</div>
+    <h2>Sell the device instead of leasing it — three pricing scenarios</h2>
+    <p>Selling recovers capex at the point of sale instead of spreading it over 12 months, removing hardware-financing risk. The trade-off is a lower monthly fee, which needs more devices to cover the same fixed costs. All three use the AED 533 Tier 2 cost basis and the confirmed AED 10/month (AED 120/yr) data cost.</p>
+    <div class="tg">
+      <div class="tc t1">
+        <div class="tn">A — Budget / Volume</div>
+        <div class="tp">AED 599</div>
+        <div class="tier-row"><span>Kasper cost</span><span>AED 533</span></div>
+        <div class="tier-row"><span>Profit at sale</span><span style="color:var(--green)">AED 66</span></div>
+        <div class="tier-row"><span>Monthly service fee</span><span>AED 60</span></div>
+        <div class="tier-row"><span>Monthly contribution</span><span>AED 38</span></div>
+        <div class="tier-row"><span>Break-even devices</span><span style="color:var(--amber)">535</span></div>
+        <div class="tier-row"><span>2-yr profit / device</span><span style="color:#1570ef"><strong>AED 978</strong></span></div>
+      </div>
+      <div class="tc t2">
+        <div class="tn">B — Market-Matched</div>
+        <div class="tp">AED 799</div>
+        <div class="tier-row"><span>Kasper cost</span><span>AED 533</span></div>
+        <div class="tier-row"><span>Profit at sale</span><span style="color:var(--green)">AED 266</span></div>
+        <div class="tier-row"><span>Monthly service fee</span><span>AED 45</span></div>
+        <div class="tier-row"><span>Monthly contribution</span><span>AED 23</span></div>
+        <div class="tier-row"><span>Break-even devices</span><span style="color:var(--red)">884</span></div>
+        <div class="tier-row"><span>2-yr profit / device</span><span style="color:#1570ef"><strong>AED 818</strong></span></div>
+      </div>
+      <div class="tc t3">
+        <div class="tn">C — Premium Hardware</div>
+        <div class="tp">AED 999</div>
+        <div class="tier-row"><span>Kasper cost</span><span>AED 533</span></div>
+        <div class="tier-row"><span>Profit at sale</span><span style="color:var(--green)">AED 466</span></div>
+        <div class="tier-row"><span>Monthly service fee</span><span>AED 30</span></div>
+        <div class="tier-row"><span>Monthly contribution</span><span>AED 8</span></div>
+        <div class="tier-row"><span>Break-even devices</span><span style="color:var(--red)">2,542</span></div>
+        <div class="tier-row"><span>2-yr profit / device</span><span style="color:#1570ef"><strong>AED 658</strong></span></div>
+      </div>
+    </div>
+    <div class="cl g">
+      <strong>Scenario A is the closest match to lease economics</strong> (AED 978 vs AED 959 two-year profit/device) while removing hardware-financing risk entirely. B and C bank more Day-1 cash but need 884–2,542 devices to cover fixed costs, because the thin recurring fee is what actually compounds — the device-sale profit is one-time.
+    </div>
+  </section>
+
+  <!-- VERDICT -->
+  <section>
+    <div class="sl">06 — Bottom line</div>
+    <div class="verdict">
+      <div class="vi">◈</div>
+      <div><div class="vl">Recommendation</div><div class="vt">Raise AED 120,000–150,000, not AED 226,000</div></div>
+    </div>
+    <p>Deploying the 424-device mid-tier break-even fleet costs AED 225,992 in hardware, installation, and SIM activation — but annual upfront billing means clients fund most of that themselves on Day 1. The actual cash Kasper needs on hand is the peak of the funding gap between fixed overhead and the ramp: <strong>AED 92,479 at Month 13</strong>, before renewals start layering in. A raise of AED 120,000–150,000 covers that trough with a working margin of safety, without over-capitalising a business that's designed to fund itself.</p>
+  </section>
+
+  <div class="footer">Kasper Technologies · afzl · July 2026 · Basis: Tier 2 / LVCAN200 · Data cost confirmed AED 120/device/year · Companion to kasper-feasibility-v5.html and kasper-financial-model.html</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dozr Dashboard - Internal</title>
+<meta name="description" content="Internal launcher for Dozr staff tools - Ops, Fleet, and Marketplace.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<header class="launcher-header">
+  <div class="eyebrow">Internal</div>
+  <h1>Dozr Dashboard</h1>
+  <p>One entry point for Kasper/Dozr staff tools. Pick a system below.</p>
+</header>
+
+<main class="launcher-main" id="main-content">
+  <h2 class="sr-only">Internal systems</h2>
+  <div class="launcher-grid">
+
+    <a class="launcher-card" href="../ops/index.html">
+      <div class="icon-box" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+      </div>
+      <h3>Ops Dashboard</h3>
+      <p>Vendors, jobs on the 13-stage pipeline, RFQ assignment, escalations, and billing.</p>
+      <span class="status-chip" data-tone="ok">Live</span>
+    </a>
+
+    <a class="launcher-card" href="../fleet-v2/index.html">
+      <div class="icon-box" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+      </div>
+      <h3>Fleet</h3>
+      <p>Live asset map, fuel, maintenance, geofences, utilisation, cost &amp; ROI, and reports.</p>
+      <span class="status-chip" data-tone="ok">Live</span>
+    </a>
+
+    <a class="launcher-card" href="../marketplace/index.html">
+      <div class="icon-box" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      </div>
+      <h3>Marketplace</h3>
+      <p>The public-facing client site - browse, request a quote, and track a job. Opens the live site, not an admin view.</p>
+      <span class="status-chip" data-tone="ok">Live</span>
+    </a>
+
+    <div class="launcher-card" data-disabled="true">
+      <div class="icon-box" aria-hidden="true">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2"><rect x="3" y="11" width="18" height="10" rx="2"></rect><path d="M7 11V8a5 5 0 0 1 10 0v3"></path></svg>
+      </div>
+      <h3>Vendor OS</h3>
+      <p>Vendor portal, driver job cards, and onboarding. Deferred - being built separately.</p>
+      <span class="status-chip" data-tone="neutral">Not started</span>
+    </div>
+
+  </div>
+</main>
+
+</body>
+</html>

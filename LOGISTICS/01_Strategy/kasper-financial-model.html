@@ -713,17 +713,17 @@ svg.ramp-chart {
         <div class="ctrl-group">
           <div class="ctrl-label">
             <span>Tier 2 hardware + accessories</span>
-            <span class="ctrl-val t2" id="lbl-hw2">AED 406</span>
+            <span class="ctrl-val t2" id="lbl-hw2">AED 408</span>
           </div>
-          <input type="range" class="t2" id="hw-t2" min="300" max="700" step="10" value="406">
+          <input type="range" class="t2" id="hw-t2" min="300" max="700" step="10" value="408">
         </div>
 
         <div class="ctrl-group">
           <div class="ctrl-label">
             <span>Tier 3 hardware + accessories</span>
-            <span class="ctrl-val t3" id="lbl-hw3">AED 589</span>
+            <span class="ctrl-val t3" id="lbl-hw3">AED 591</span>
           </div>
-          <input type="range" class="t3" id="hw-t3" min="400" max="900" step="10" value="589">
+          <input type="range" class="t3" id="hw-t3" min="400" max="900" step="10" value="591">
         </div>
       </div>
 
@@ -1069,8 +1069,7 @@ const DEFAULTS = {
   m1: 30, m2: 40,
   hw1: 203, hw2: 408, hw3: 591,
   sal: 16000, off: 1333, plat: 800, oh: 2200,
-  rampStart: 40, rampGrowth: 35,
-  installation charge: 0
+  rampStart: 40, rampGrowth: 35
 };
 
 function fmt(n, prefix='AED ') { return prefix + Math.round(n).toLocaleString(); }
@@ -1095,7 +1094,6 @@ function getVals() {
     oh: +document.getElementById('fix-oh').value,
     rampStart: +document.getElementById('ramp-start').value,
     rampGrowth: +document.getElementById('ramp-growth').value,
-    installation charge: +document.getElementById('installation charge').value,
   };
 }
 
@@ -1169,9 +1167,9 @@ function update() {
   const gm3y2 = ((v.p3 - o3.y2)/v.p3)*100;
 
   // Net contribution over 12 months
-  const nc1 = (v.p1 * 12) + v.installation charge - v.hw1 - INSTALL.t1 - (o1.y2 * 12);
-  const nc2 = (v.p2 * 12) + v.installation charge - v.hw2 - INSTALL.t2 - (o2.y2 * 12);
-  const nc3 = (v.p3 * 12) + v.installation charge - v.hw3 - INSTALL.t3 - (o3.y2 * 12);
+  const nc1 = (v.p1 * 12) - v.hw1 - INSTALL.t1 - (o1.y2 * 12);
+  const nc2 = (v.p2 * 12) - v.hw2 - INSTALL.t2 - (o2.y2 * 12);
+  const nc3 = (v.p3 * 12) - v.hw3 - INSTALL.t3 - (o3.y2 * 12);
 
   // Payback
   const pb1 = calcPayback(v.hw1, INSTALL.t1, v.p1, SIM.t1, SUPPORT.t1);
@@ -1408,8 +1406,7 @@ function resetAll() {
       m1: 'mix-t1', m2: 'mix-t2',
       hw1: 'hw-t1', hw2: 'hw-t2', hw3: 'hw-t3',
       sal: 'fix-sal', off: 'fix-off', plat: 'fix-plat', oh: 'fix-oh',
-      rampStart: 'ramp-start', rampGrowth: 'ramp-growth',
-      installation charge: 'installation charge'
+      rampStart: 'ramp-start', rampGrowth: 'ramp-growth'
     };
     if (map[k]) document.getElementById(map[k]).value = v;
   });

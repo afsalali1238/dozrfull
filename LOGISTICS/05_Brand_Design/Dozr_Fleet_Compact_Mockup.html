@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dozr Fleet — Compact Mockup (Fleet Map)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#141518; --yellow:#FFC400; --yellow-tint:#FFF6D6; --yellow-dark:#E6AF00;
+    --canvas:#F6F6F3; --surface:#FFFFFF; --slate:#5B5F66; --line:#E8E8E3;
+    --green:#1F9A6D; --error:#D64545;
+    --r-btn:10px; --r-card:16px; --r-pill:999px;
+    --font-head:'Space Grotesk',sans-serif; --font-body:'Hanken Grotesk',sans-serif; --font-mono:'Space Mono',monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:var(--font-body); background:var(--canvas); color:var(--ink); font-size:13px; line-height:1.4;}
+  .note{background:var(--ink); color:var(--yellow-tint); font-family:var(--font-mono); font-size:11px; padding:8px 16px; letter-spacing:.02em;}
+  .app{display:grid; grid-template-columns:188px 1fr; min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{background:var(--surface); border-right:1px solid var(--line); padding:16px 12px; display:flex; flex-direction:column;}
+  .logo{display:flex; align-items:center; gap:8px; font-family:var(--font-head); font-weight:700; font-size:14px; padding:4px 8px 20px;}
+  .logo .mark{width:22px; height:22px; border-radius:6px; background:var(--ink); display:flex; align-items:center; justify-content:center;}
+  .logo .mark svg{width:12px; height:12px;}
+  .nav{display:flex; flex-direction:column; gap:1px;}
+  .nav a{font-size:12.5px; color:var(--slate); text-decoration:none; padding:8px 10px; border-radius:8px; display:flex; align-items:center; gap:8px; font-weight:500; position:relative;}
+  .nav a.active{background:var(--yellow-tint); color:var(--ink); font-weight:600;}
+  .nav a.active::before{content:""; position:absolute; left:-12px; top:8px; bottom:8px; width:3px; background:var(--yellow); border-radius:0 3px 3px 0;}
+  .nav a:hover:not(.active){background:var(--canvas); color:var(--ink);}
+
+  /* Top bar */
+  .topbar{height:48px; display:flex; align-items:center; justify-content:space-between; padding:0 20px; border-bottom:1px solid var(--line); background:var(--surface); gap:12px;}
+  .search{flex:1; max-width:260px; position:relative;}
+  .search input{width:100%; font-size:12.5px; padding:7px 10px 7px 30px; border:1px solid var(--line); border-radius:var(--r-btn); background:var(--canvas); font-family:var(--font-body); color:var(--ink);}
+  .search input::placeholder{color:#9A9CA1;}
+  .search svg{position:absolute; left:9px; top:50%; transform:translateY(-50%); width:14px; height:14px; opacity:.5;}
+  .topbar-right{display:flex; align-items:center; gap:8px;}
+  .chip{font-family:var(--font-mono); font-size:10.5px; padding:4px 10px; border-radius:var(--r-pill); display:inline-flex; align-items:center; gap:5px; white-space:nowrap;}
+  .chip.live{background:var(--yellow-tint); color:#8a6a00;}
+  .chip.live .dot{width:5px; height:5px; border-radius:50%; background:var(--green);}
+  .chip.alert{background:#FCE9E9; color:#a23434;}
+  .btn{font-family:var(--font-body); font-weight:600; font-size:12px; padding:7px 12px; border-radius:var(--r-btn); border:none; cursor:pointer;}
+  .btn-primary{background:var(--ink); color:var(--yellow);}
+
+  .content{padding:16px 20px 32px;}
+
+  /* KPI row */
+  .kpis{display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px;}
+  .kpi{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); padding:12px 14px;}
+  .kpi .label{font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--slate);}
+  .kpi .value{font-family:var(--font-head); font-size:21px; font-weight:700; margin-top:4px; display:flex; align-items:baseline; gap:3px;}
+  .kpi .value small{font-size:12px; font-weight:500; color:var(--slate);}
+  .kpi .meta{font-size:10.5px; color:var(--slate); margin-top:2px;}
+  .kpi.warn .value{color:#a23434;}
+
+  /* Main grid */
+  .grid{display:grid; grid-template-columns:220px 1fr 240px; gap:10px; margin-bottom:10px;}
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:var(--r-card); overflow:hidden;}
+  .card-head{padding:11px 14px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between;}
+  .card-head h2{font-family:var(--font-head); font-size:13px; font-weight:600;}
+  .card-head .count{font-size:11px; color:var(--slate); font-weight:500;}
+
+  /* Asset list */
+  .asset-list{max-height:420px; overflow-y:auto;}
+  .asset-row{padding:9px 14px; border-bottom:1px solid var(--line); cursor:pointer; display:flex; flex-direction:column; gap:3px;}
+  .asset-row.selected{background:var(--yellow-tint);}
+  .asset-row:last-child{border-bottom:none;}
+  .asset-top{display:flex; align-items:center; gap:6px;}
+  .status-dot{width:6px; height:6px; border-radius:50%; flex-shrink:0;}
+  .status-dot.op{background:var(--green);} .status-dot.idle{background:var(--yellow-dark);} .status-dot.alert{background:var(--error);} .status-dot.off{background:#9A9CA1;}
+  .asset-name{font-size:12.5px; font-weight:600;}
+  .asset-meta{font-family:var(--font-mono); font-size:10px; color:var(--slate); padding-left:12px;}
+  .fuel-bar{height:3px; border-radius:2px; background:var(--line); margin-top:2px; margin-left:12px; overflow:hidden;}
+  .fuel-bar span{display:block; height:100%; background:var(--green); border-radius:2px;}
+  .sites-head{padding:10px 14px 4px; font-family:var(--font-mono); font-size:9.5px; text-transform:uppercase; letter-spacing:.06em; color:var(--slate); border-top:1px solid var(--line);}
+  .site-row{padding:6px 14px; display:flex; justify-content:space-between; font-size:12px;}
+  .site-row span:last-child{color:var(--slate); font-family:var(--font-mono); font-size:10.5px;}
+
+  /* Map */
+  .map-toolbar{padding:8px 12px; display:flex; gap:6px;}
+  .seg{font-size:11px; font-weight:600; padding:5px 10px; border-radius:var(--r-pill); border:1px solid var(--line); background:var(--surface); cursor:pointer; color:var(--slate);}
+  .seg.active{background:var(--ink); color:var(--yellow); border-color:var(--ink);}
+  .map-canvas{height:260px; background:var(--yellow-tint); margin:0 12px 12px; border-radius:12px; position:relative; display:flex; align-items:center; justify-content:center;}
+  .map-canvas svg{opacity:.35;}
+  .map-legend{position:absolute; bottom:8px; left:8px; background:rgba(255,255,255,.9); border-radius:var(--r-pill); padding:4px 10px; font-size:10px; display:flex; gap:8px; color:var(--slate);}
+  .map-legend b{color:var(--ink);}
+
+  /* Detail panel */
+  .detail-body{padding:12px 14px;}
+  .asset-title{font-family:var(--font-head); font-size:14px; font-weight:600;}
+  .asset-sub{font-size:11px; color:var(--slate); margin-top:2px;}
+  .status-chips{display:flex; gap:5px; margin-top:8px; flex-wrap:wrap;}
+  .status-chips .chip{background:var(--canvas); color:var(--ink); border:1px solid var(--line);}
+  .kv-grid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:14px;}
+  .kv .label{font-family:var(--font-mono); font-size:9px; text-transform:uppercase; color:var(--slate); letter-spacing:.05em;}
+  .kv .val{font-family:var(--font-head); font-size:16px; font-weight:700; margin-top:2px;}
+  .kv .sub{font-size:10px; color:var(--slate);}
+
+  /* Alerts */
+  .tabs{display:flex; gap:2px; padding:4px 14px 0;}
+  .tab{font-size:11.5px; font-weight:600; padding:8px 10px; color:var(--slate); border-bottom:2px solid transparent; cursor:pointer;}
+  .tab.active{color:var(--ink); border-color:var(--yellow);}
+  .alert-row{display:flex; align-items:center; gap:10px; padding:9px 14px; border-top:1px solid var(--line);}
+  .alert-row .status-dot{margin-top:1px;}
+  .alert-text{flex:1;}
+  .alert-title{font-size:12px; font-weight:600;}
+  .alert-sub{font-family:var(--font-mono); font-size:10px; color:var(--slate); margin-top:1px;}
+  .alert-live{font-family:var(--font-mono); font-size:9.5px; color:#9A9CA1;}
+</style>
+</head>
+<body>
+
+<div class="note">MOCKUP — compact/sleek direction, Dozr brand tokens only. Fleet Map screen. Not wired, for review.</div>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo">
+      <span class="mark"><svg viewBox="0 0 32 32" fill="none"><path d="M12 6c-2 0-3.2 1.3-3.2 3.4V18.5h4.4V11c0-1.1.5-1.7 1.5-1.7H17V6z" fill="var(--yellow)"/><path d="M14.5 14.5 21.5 18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/><circle cx="22.5" cy="20.5" r="2.6" fill="var(--yellow)"/></svg></span>
+      dozr fleet
+    </div>
+    <nav class="nav">
+      <a href="#" class="active">Fleet Map</a>
+      <a href="#">Fuel</a>
+      <a href="#">Maintenance</a>
+      <a href="#">Geofences</a>
+      <a href="#">Utilisation</a>
+      <a href="#">Timesheet</a>
+      <a href="#">Alerts Center</a>
+      <a href="#">Cost &amp; ROI</a>
+      <a href="#">Reports</a>
+    </nav>
+  </aside>
+
+  <div>
+    <header class="topbar">
+      <div class="search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <input placeholder="Search assets, actions…">
+      </div>
+      <div class="topbar-right">
+        <span class="chip live"><span class="dot"></span>Live sync</span>
+        <span class="chip alert">2 alerts</span>
+        <button class="btn btn-primary">+ Add Asset</button>
+      </div>
+    </header>
+
+    <div class="content">
+      <div class="kpis">
+        <div class="kpi"><div class="label">Active Assets</div><div class="value">3<small>/8</small></div><div class="meta">2 idle · 1 offline</div></div>
+        <div class="kpi"><div class="label">Engine Hrs Today</div><div class="value">18.6<small>h</small></div><div class="meta">↑12% vs yesterday</div></div>
+        <div class="kpi"><div class="label">Fuel Today</div><div class="value">501<small>L</small></div><div class="meta">AED 1,503 at 3.00/L</div></div>
+        <div class="kpi warn"><div class="label">Active Alerts</div><div class="value">2</div><div class="meta">2 critical · 0 warning</div></div>
+        <div class="kpi"><div class="label">Maint Due</div><div class="value">6</div><div class="meta">1 overdue</div></div>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="card-head"><h2>Fleet</h2><span class="count">8 assets</span></div>
+          <div class="asset-list">
+            <div class="asset-row"><div class="asset-top"><span class="status-dot op"></span><span class="asset-name">CAT 320 Excavator</span></div><div class="asset-meta">KSP-001 · EXCAVA</div><div class="fuel-bar"><span style="width:62%"></span></div></div>
+            <div class="asset-row"><div class="asset-top"><span class="status-dot alert"></span><span class="asset-name">JCB 3CX Backhoe</span></div><div class="asset-meta">KSP-002 · BACKHO</div><div class="fuel-bar"><span style="width:17%;background:var(--error)"></span></div></div>
+            <div class="asset-row"><div class="asset-top"><span class="status-dot op"></span><span class="asset-name">Komatsu WA320 Loader</span></div><div class="asset-meta">KSP-003 · LOADER</div><div class="fuel-bar"><span style="width:78%"></span></div></div>
+            <div class="asset-row"><div class="asset-top"><span class="status-dot op"></span><span class="asset-name">MAN TGX 18.500 Truck</span></div><div class="asset-meta">KSP-004 · TRUCK</div><div class="fuel-bar"><span style="width:55%"></span></div></div>
+            <div class="asset-row selected"><div class="asset-top"><span class="status-dot idle"></span><span class="asset-name">Liebherr LTM 1060 Crane</span></div><div class="asset-meta">KSP-005 · CRANE</div><div class="fuel-bar"><span style="width:31%;background:var(--yellow-dark)"></span></div></div>
+            <div class="asset-row"><div class="asset-top"><span class="status-dot op"></span><span class="asset-name">Volvo EC220E Excavator</span></div><div class="asset-meta">KSP-006 · EXCAVA</div><div class="fuel-bar"><span style="width:70%"></span></div></div>
+          </div>
+          <div class="sites-head">Sites</div>
+          <div class="site-row"><span>Al Quoz Industrial Area</span><span>2</span></div>
+          <div class="site-row"><span>Jebel Ali Port</span><span>3</span></div>
+          <div class="site-row"><span>Dubai Creek Harbour</span><span>2</span></div>
+          <div class="site-row"><span>Abu Dhabi KIZAD</span><span>1</span></div>
+        </div>
+
+        <div class="card">
+          <div class="map-toolbar">
+            <span class="seg active">Map</span>
+            <span class="seg">Satellite</span>
+            <span class="seg">+ Geofence</span>
+            <span class="seg">Route Replay</span>
+          </div>
+          <div class="map-canvas">
+            <svg width="240" viewBox="0 0 240 100"><path d="M10 60 C60 20,100 80,140 40 S220 10,230 50" stroke="var(--yellow-dark)" stroke-width="10" fill="none" stroke-linecap="round"/></svg>
+            <div class="map-legend"><span><b>●</b> Active</span><span>Idle</span><span>Alert</span><span>Offline</span></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="detail-body">
+            <div class="asset-sub" style="font-family:var(--font-mono); font-size:10px;">KSP-005 · FMC130 · AED 150/mo</div>
+            <div class="asset-title">Liebherr LTM 1060 Crane</div>
+            <div class="asset-sub">Liebherr · Dubai Creek Harbour</div>
+            <div class="status-chips">
+              <span class="chip">OPERATING</span>
+              <span class="chip">IGN ON</span>
+              <span class="chip" style="color:#a23434; border-color:#f0c8c8;">MAINT DUE</span>
+            </div>
+            <div class="kv-grid">
+              <div class="kv"><div class="label">Engine Hours</div><div class="val">3,102</div><div class="sub">+7.5h today</div></div>
+              <div class="kv"><div class="label">RPM</div><div class="val">1,380</div><div class="sub">Operating</div></div>
+              <div class="kv"><div class="label">Fuel Rate</div><div class="val">18.2<small style="font-size:10px;font-weight:500;">L/h</small></div><div class="sub">112L today</div></div>
+              <div class="kv"><div class="label">Engine Load</div><div class="val">55%</div><div class="sub">Normal</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="tabs">
+          <span class="tab active">Active Alerts</span>
+          <span class="tab">Event Log</span>
+          <span class="tab">Fuel Events</span>
+        </div>
+        <div class="alert-row"><span class="status-dot alert"></span><div class="alert-text"><div class="alert-title">Fuel 18% — low</div><div class="alert-sub">KSP-002 · JCB 3CX Backhoe</div></div><span class="alert-live">live</span></div>
+        <div class="alert-row"><span class="status-dot alert"></span><div class="alert-text"><div class="alert-title">DTC SPN:110/FMI:3</div><div class="alert-sub">KSP-006 · Volvo EC220E Excavator</div></div><span class="alert-live">live</span></div>
+        <div class="alert-row"><span class="status-dot idle"></span><div class="alert-text"><div class="alert-title">Service OVERDUE — Engine Oil &amp; Filter</div><div class="alert-sub">KSP-006 · Volvo EC220E Excavator</div></div><span class="alert-live">live</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

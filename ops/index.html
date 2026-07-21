@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ops Dashboard — Dozr</title>
+<meta name="description" content="Kasper/Dozr internal operations dashboard — vendors, jobs, RFQs, and billing.">
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+<div class="app-shell">
+  <header class="app-header">
+    <a class="logo" href="index.html" aria-label="Dozr Ops home">
+      <span aria-hidden="true"><svg width="20" height="20" viewBox="0 0 32 32" fill="none"><path d="M12 6c-2 0-3.2 1.3-3.2 3.4V18.5h4.4V11c0-1.1.5-1.7 1.5-1.7H17V6z" fill="var(--yellow)"/><path d="M14.5 14.5 21.5 18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/><circle cx="22.5" cy="20.5" r="2.6" fill="var(--yellow)"/><path d="M6.5 24H18" stroke="var(--yellow)" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <span>dozr ops</span>
+    </a>
+    <span class="badge-internal">Internal</span>
+    <a href="../dashboard/index.html" style="color:rgba(255,255,255,.6);font-size:12px;text-decoration:none;">&larr; Dozr Dashboard</a>
+
+    <nav role="tablist" aria-label="Ops dashboard sections" class="top-nav">
+      <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" type="button">Overview</button>
+      <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
+      <button role="tab" id="tab-jobs" aria-controls="panel-jobs" aria-selected="false" type="button">Jobs</button>
+      <button role="tab" id="tab-rfqs" aria-controls="panel-rfqs" aria-selected="false" type="button">RFQs</button>
+      <button role="tab" id="tab-escalations" aria-controls="panel-escalations" aria-selected="false" type="button">Escalations</button>
+      <button role="tab" id="tab-billing" aria-controls="panel-billing" aria-selected="false" type="button">Billing</button>
+    </nav>
+
+    <span class="live-pill"><span class="dot" aria-hidden="true"></span>Updated <span id="last-updated">—</span></span>
+  </header>
+
+  <main class="app-main" id="main-content">
+    <h1 class="sr-only">Dozr Ops — internal operations dashboard</h1>
+
+    <!-- OVERVIEW -->
+    <section class="tabpanel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
+      <section class="summary-grid" id="overview-summary" aria-label="Key metrics"></section>
+      <div class="split-layout">
+        <section class="panel" aria-labelledby="escalations-heading">
+          <div class="panel-header"><h2 id="escalations-heading">Open escalations</h2></div>
+          <div class="panel-body no-pad" id="escalations-list"></div>
+        </section>
+        <section class="panel" aria-labelledby="checklist-heading">
+          <div class="panel-header"><h2 id="checklist-heading">Daily checklist — Morning</h2></div>
+          <div class="panel-body">
+            <ul id="daily-checklist" style="list-style:none;padding:0;margin:0;"></ul>
+          </div>
+        </section>
+      </div>
+    </section>
+
+    <!-- VENDORS -->
+    <section class="tabpanel" id="panel-vendors" role="tabpanel" aria-labelledby="tab-vendors" hidden>
+      <section class="panel" aria-labelledby="vendors-heading">
+        <div class="panel-header">
+          <h2 id="vendors-heading">All vendors</h2>
+          <button class="btn btn-primary btn-sm" type="button" disabled title="Onboarding flow ships with the real backend - not wired up on mock data">+ Onboard vendor</button>
+        </div>
+        <div class="panel-body no-pad table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">Vendor roster with plan, job volume, and status</caption>
+            <thead>
+              <tr>
+                <th scope="col">ID</th><th scope="col">Company</th><th scope="col">Plan</th>
+                <th scope="col">Jobs (30d)</th><th scope="col">On-time</th><th scope="col">Joined</th>
+                <th scope="col">Status</th><th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="vendors-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- JOBS -->
+    <section class="tabpanel" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs" hidden>
+      <section class="panel" aria-labelledby="jobs-heading">
+        <div class="panel-header">
+          <h2 id="jobs-heading">All jobs</h2>
+          <div class="filter-row">
+            <label class="field-label" for="job-status-filter">Stage</label>
+            <select id="job-status-filter"></select>
+          </div>
+        </div>
+        <div class="pipeline-strip" id="pipeline-strip" aria-label="13-stage job pipeline"></div>
+        <div class="panel-body no-pad table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">Active jobs with client, vendor, route, and pipeline stage</caption>
+            <thead>
+              <tr>
+                <th scope="col">Job</th><th scope="col">Client</th><th scope="col">Vendor</th>
+                <th scope="col">Route</th><th scope="col">Type</th><th scope="col">Stage</th>
+                <th scope="col">Price</th><th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="jobs-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- RFQS -->
+    <section class="tabpanel" id="panel-rfqs" role="tabpanel" aria-labelledby="tab-rfqs" hidden>
+      <div class="panel-header" style="padding:0 0 var(--space-2) 0;">
+        <h2>RFQ assignment</h2>
+        <button class="btn btn-primary btn-sm" type="button" disabled title="RFQ creation ships with the real backend - not wired up on mock data">+ New RFQ</button>
+      </div>
+      <div id="rfqs-list"></div>
+    </section>
+
+    <!-- ESCALATIONS -->
+    <section class="tabpanel" id="panel-escalations" role="tabpanel" aria-labelledby="tab-escalations" hidden>
+      <section class="summary-grid" id="escalations-summary" aria-label="Escalation metrics"></section>
+      <div class="split-layout">
+        <section class="panel" aria-labelledby="escalation-log-heading">
+          <div class="panel-header"><h2 id="escalation-log-heading">Escalation log</h2></div>
+          <div class="panel-body no-pad table-scroll">
+            <table class="data-table">
+              <caption class="sr-only">Escalation log with level, job, issue, owner, and status</caption>
+              <thead>
+                <tr><th scope="col">Level</th><th scope="col">Job</th><th scope="col">Issue</th><th scope="col">Owner</th><th scope="col">Time</th><th scope="col">Status</th></tr>
+              </thead>
+              <tbody id="escalations-tbody"></tbody>
+            </table>
+          </div>
+        </section>
+        <section class="panel" aria-labelledby="routing-rules-heading">
+          <div class="panel-header"><h2 id="routing-rules-heading">Routing rules</h2></div>
+          <div class="panel-body" id="routing-rules"></div>
+        </section>
+      </div>
+    </section>
+
+    <!-- BILLING -->
+    <section class="tabpanel" id="panel-billing" role="tabpanel" aria-labelledby="tab-billing" hidden>
+      <section class="summary-grid" id="billing-summary" aria-label="Billing metrics"></section>
+      <section class="panel" aria-labelledby="billing-heading">
+        <div class="panel-header"><h2 id="billing-heading">Invoices</h2></div>
+        <div class="panel-body no-pad table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">Client invoices with amount, dates, and payment status</caption>
+            <thead>
+              <tr>
+                <th scope="col">Invoice</th><th scope="col">Client</th><th scope="col">Amount</th>
+                <th scope="col">Issued</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="billing-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<script src="data/ops.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

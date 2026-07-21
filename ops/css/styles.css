@@ -1,0 +1,253 @@
+/* =================================================================
+   Dozr Ops — internal admin dashboard stylesheet
+   Brand source: LOGISTICS/05_Brand_Design/Dozr_Brand_Guidelines.html
+   Same token set as marketplace/css/styles.css and fleet-v2/css/styles.css.
+   Do not hardcode hex values in page markup — use these variables.
+   ================================================================= */
+
+:root {
+  --ink: #141518;
+  --yellow: #FFC400;
+  --yellow-tint: #FFF6D6;
+  --yellow-dark: #E6AF00;
+  --canvas: #F6F6F3;
+  --surface: #FFFFFF;
+  --slate: #5B5F66;
+  --line: #E8E8E3;
+  --green: #146447;
+  --green-tint: #E7F6EF;
+  --error: #A22424;
+  --error-tint: #FBEAEA;
+  --muted: #6B6E74; /* darkened from #8A8D93 - original failed WCAG AA (3.33:1) on white */
+
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'Space Mono', monospace;
+
+  --radius-button: 10px;
+  --radius-card: 16px;
+  --radius-pill: 999px;
+
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 700; letter-spacing: -.02em; margin: 0; }
+button, input, select, textarea { font-family: inherit; font-size: inherit; }
+a { color: inherit; }
+table { border-collapse: collapse; width: 100%; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+.skip-link {
+  position: absolute; left: -9999px; top: 0; background: var(--ink); color: #fff;
+  padding: 10px 16px; z-index: 100; border-radius: 0 0 8px 0;
+}
+.skip-link:focus { left: 0; }
+
+/* ---------------- Shell / header ---------------- */
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.app-header {
+  background: var(--ink);
+  color: #fff;
+  border-bottom: 1px solid var(--line);
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 12px var(--space-3);
+  flex-wrap: wrap;
+}
+.app-header .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: #fff; }
+.app-header .logo span { font-family: var(--font-heading); font-weight: 700; font-size: 17px; }
+.badge-internal {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  background: var(--yellow);
+  color: var(--ink);
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+}
+.app-header .top-nav {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+.app-header .top-nav button {
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,.7);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-radius: var(--radius-button);
+  cursor: pointer;
+}
+.app-header .top-nav button:hover { color: #fff; background: rgba(255,255,255,.08); }
+.app-header .top-nav button[aria-selected="true"] { color: var(--ink); background: var(--yellow); }
+.live-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-mono); font-size: 11px; color: rgba(255,255,255,.7);
+}
+.live-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+.app-main { flex: 1; padding: var(--space-4) var(--space-3); max-width: 1280px; margin: 0 auto; width: 100%; }
+.tabpanel[hidden] { display: none; }
+
+/* ---------------- Summary / KPI grid ---------------- */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+.summary-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-2);
+}
+.summary-card .label { font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--slate); }
+.summary-card .value { font-family: var(--font-heading); font-size: 26px; font-weight: 700; margin-top: 4px; }
+.summary-card .note { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* ---------------- Panels ---------------- */
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  margin-bottom: var(--space-3);
+  overflow: hidden;
+}
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-2);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+.panel-header h2 { font-size: 16px; }
+.panel-body { padding: var(--space-2); }
+.panel-body.no-pad { padding: 0; }
+
+/* ---------------- Status chips ---------------- */
+.status-chip {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.status-chip[data-tone="ok"] { background: var(--green-tint); color: var(--green); }
+.status-chip[data-tone="warn"] { background: var(--yellow-tint); color: var(--yellow-dark); }
+.status-chip[data-tone="error"] { background: var(--error-tint); color: var(--error); }
+.status-chip[data-tone="neutral"] { background: var(--line); color: var(--slate); }
+
+/* ---------------- Tables ---------------- */
+.data-table th, .data-table td {
+  text-align: left;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+  white-space: nowrap;
+}
+.data-table th {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--slate);
+  background: var(--canvas);
+}
+.data-table tbody tr:hover { background: var(--yellow-tint); }
+.table-scroll { overflow-x: auto; }
+.mono { font-family: var(--font-mono); font-size: 12px; }
+
+/* ---------------- Buttons ---------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 8px 16px;
+  border-radius: var(--radius-button);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+}
+.btn-primary { background: var(--yellow); color: var(--ink); }
+.btn-primary:hover { background: var(--yellow-dark); }
+.btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { background: var(--canvas); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+
+/* ---------------- Pipeline strip ---------------- */
+.pipeline-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--line);
+  background: var(--canvas);
+}
+.pipeline-step {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--muted);
+  padding: 4px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+.pipeline-step[data-active="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+/* ---------------- Filters ---------------- */
+.filter-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.filter-row select, .filter-row input[type="search"] {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button);
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+}
+.field-label { font-size: 12px; font-weight: 600; color: var(--slate); }
+
+/* ---------------- Two-column layout ---------------- */
+.split-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-3); }
+@media (max-width: 860px) { .split-layout { grid-template-columns: 1fr; } }
+
+.avatar-name { display: flex; align-items: center; gap: 8px; }
+.avatar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.avatar-dot[data-tone="ok"] { background: var(--green); }
+.avatar-dot[data-tone="warn"] { background: var(--yellow-dark); }
+.avatar-dot[data-tone="error"] { background: var(--error); }
+
+.empty-state { text-align: center; padding: var(--space-4); color: var(--muted); font-size: 13px; }
+
+@media (max-width: 720px) {
+  .app-header { padding: 10px 16px; }
+  .app-main { padding: var(--space-2); }
+}

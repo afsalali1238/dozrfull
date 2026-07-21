@@ -1,0 +1,648 @@
+KASPER VENDOR OS
+Full SaaS Build Specification · Antigravity Agent Guide · File Structure · Prompts · Access Flows
+Product:
+  Kasper Vendor OS — SaaS for UAE/GCC logistics SMEs
+IDE:
+  Google Antigravity (agent-first, VS Code fork, free in preview)
+Stack:
+  Vanilla JS · HTML · Supabase · 360dialog WhatsApp · jsPDF · Telr · Vercel
+Date:
+  April 2026  ·  Kasper Technologies FZ-LLC  ·  kasperlogistics.vercel.app
+Section 1 — What We Are Building
+The product, the users, the problem we solve
+The one-line pitch
+Kasper Vendor OS
+A mobile-first SaaS portal that lets UAE logistics and equipment rental SMEs receive bookings via WhatsApp, send professional quotes in 60 seconds, dispatch drivers with GPS tracking, collect digital proof of delivery, and get paid — all without leaving their phone.
+The problem we are solving
+The UAE has thousands of small fleet operators — companies with 1 to 50 trucks, cranes, or pieces of heavy equipment. They process hundreds of thousands of AED in jobs every month. But their entire operation runs on WhatsApp voice notes, shared Excel files, and handwritten paper delivery notes.
+Pain point
+What happens today vs. what Kasper Vendor OS does
+Quoting
+Today: 30–60 mins of back-and-forth WhatsApp messages, manual Excel price calc, PDF emailed from phone. Vendor OS: Type a price, tap Send. Professional VAT-compliant PDF sent in 10 seconds.
+Driver dispatch
+Today: Phone call + WhatsApp voice note. No confirmation. Driver forgets the address. Vendor OS: Tap assign driver → driver gets WhatsApp with deep link to full job card.
+Live tracking
+Today: Client calls "where is my truck?" Driver calls back with a verbal location. Vendor OS: Client has live GPS map link. Driver phone pushes location every 10 seconds.
+Proof of delivery
+Today: Paper delivery note. Often lost, disputed, or never signed. Invoice delayed 30 days. Vendor OS: Driver photos cargo, client signs on phone. ePOD generated instantly. Invoice auto-sent.
+Invoicing & payment
+Today: Word doc invoice emailed. No payment link. Chased by phone 30–60 days later. Vendor OS: Invoice + Telr payment link auto-sent on ePOD completion. Target: 5-day collection.
+Cash flow visibility
+Today: Owner has no idea what is outstanding until they check WhatsApp and count manually. Vendor OS: Dashboard shows revenue, outstanding invoices, and on-time rate in real time.
+The three users — their experience must be designed separately
+Every job in Kasper Vendor OS involves exactly three people. Each has a completely different relationship with technology and a different level of digital literacy.
+User
+Who they are
+Their digital literacy
+Their interface in Vendor OS
+Vendor
+The truck/crane company owner. Has 1–50 vehicles. Pays the monthly SaaS subscription.
+Medium. Uses WhatsApp heavily. Comfortable with phone apps. Never used a TMS system.
+vendor.html — Full PWA portal. Bookmarked on home screen. 4-tab bottom nav: RFQs, Active Jobs, Fleet, Payments.
+Driver
+The person physically driving the truck. Often South Asian, Arabic, or East African. Varied literacy.
+Low. Uses WhatsApp for messages. Uncomfortable with passwords or app installs. Cracked screen, slow phone.
+driver.html — Zero login. WhatsApp link with job_code in URL. One screen. Big buttons. Start Trip, Mark Delivered, Sign.
+Client
+The company that hired the truck. Could be a construction firm, retailer, port operator. Usually a procurement officer.
+Medium-high. Used to SaaS portals. Expects professional experience. Approves on phone or desktop.
+approve.html, track.html — No login. Job code in URL. Professional UI. Approve/decline quote, track live, sign ePOD, pay.
+Section 2 — The Complete Job Lifecycle
+Every step from first WhatsApp to final payment, with who does what
+Phase 1 — Enquiry capture
+1
+Client sends enquiry
+Client scans vendor's QR code or taps WhatsApp link (wa.me pre-fill). Message includes: vehicle type, date, pickup, destination, cargo, name, phone.
+2
+System captures it
+WhatsApp webhook (360dialog) fires → Supabase function creates job record with status="enquiry". job_code auto-generated: KSP-XXXX.
+3
+Client gets confirmation
+Auto-reply: "Your enquiry KSP-0042 is received. You'll get a quote within 2 hours." Sent via WhatsApp API.
+4
+Vendor gets notified
+WhatsApp notification to vendor: "New enquiry from Emirates Steel — 40ft flatbed, Khor Fakkan → Dubai, Apr 30. Tap to view."
+5
+Fallback (Phase 1 MVP)
+If API not ready: vendor manually enters enquiry in portal. wa.me deep link still sends client the confirmation.
+Phase 2 — Quoting
+1
+Vendor opens portal
+Taps notification → opens vendor.html PWA (bookmarked on home screen). Sees new RFQ at top of list.
+2
+Vendor prices the job
+One input: "Your Price (AED)". Optional: notes. Taps "Send Quote".
+3
+PDF generated
+jsPDF generates quote PDF client-side: job details, price ex-VAT, 5% VAT, total inc-VAT, vendor TRN, 48h validity, payment terms.
+4
+Quote delivered
+PDF uploaded to Supabase Storage. WhatsApp API sends client: PDF link + "Tap Approve or Decline". Email copy via Resend.
+5
+Client receives quote
+Opens WhatsApp. Taps PDF link. Reviews. Taps "✓ Approve" or "✗ Decline" button (links to approve.html or decline.html).
+Phase 3 — Confirmation & dispatch
+1
+Client approves
+approve.html loads with job_code from URL. Client taps confirm. Supabase updates status="accepted".
+2
+PO generated
+System auto-generates PO PDF: all job details, agreed price, vendor bank details, reference number. Sent to both client and vendor via WhatsApp.
+3
+Vendor assigns driver
+Vendor sees PO in Active Jobs tab. Taps "Assign Driver". Selects from their fleet roster. Confirms.
+4
+Driver notified
+WhatsApp sent to driver: "New job KSP-0042. Tap to open." Link: driver.html?job=KSP-0042. No password. No app download.
+5
+Job status updates
+Supabase status → "assigned". Vendor dashboard updates. Client gets WhatsApp: "Your driver Mohammed is assigned. Track live: [link]"
+Phase 4 — Execution & delivery
+1
+Driver opens job
+Taps WhatsApp link → driver.html loads with full job card pre-populated. No typing. No login.
+2
+Driver starts trip
+Taps "Start Trip" → browser GPS activates → location pushed to Supabase every 10 seconds via REST API.
+3
+Client tracks live
+Client's tracking link (track.html?job=KSP-0042) shows Leaflet map with live driver pin. Updates every 10s. Shows ETA.
+4
+GPS degrades gracefully
+If signal lost >5 mins: amber banner shows "GPS lost – last seen 6 mins ago." Driver can type manual location update.
+5
+Delivery confirmed
+Driver taps "Mark Delivered". Takes photo of cargo. Supabase Storage uploads image. Status → "delivered".
+Phase 5 — ePOD & payment
+1
+Driver signs ePOD
+Canvas signature pad on driver.html. Driver signs with finger. Timestamp + GPS coordinates captured.
+2
+Client signs ePOD
+Client receives WhatsApp link. Opens track.html. Signs on their device. "Accepted by [client name] at [time]" captured.
+3
+Invoice auto-generated
+jsPDF creates invoice: references PO number, delivery note ID, VAT-compliant line items, Telr payment link embedded.
+4
+Invoice delivered
+WhatsApp + email to client. Status → "invoiced". Vendor dashboard shows outstanding amount.
+5
+Payment collected
+Client taps Telr link. Pays by card or Apple Pay. Telr webhook fires → Supabase status → "paid". Vendor receipt sent.
+6
+LPO / bank transfer alt
+Client uploads LPO in portal. Triggers 30-day reminder cycle. Or vendor marks manual bank transfer received.
+Section 3 — File Structure
+Every file in the project, who accesses it, and what it does
+The project is a single-repo static site deployed on Vercel. No build step. No framework. Pure HTML + vanilla JS + Supabase calls. This matches your existing KASLO codebase exactly.
+File / Folder
+Who sees it
+What it does
+kasper-vendor-os/
+Project root — deploys to Vercel as static site
+  index.html
+Public
+Landing page. Product features, pricing plans, "Sign up free" CTA, WhatsApp contact button.
+  vendor.html
+Vendor
+Main SaaS portal. PWA. 4-tab bottom nav: RFQs, Active Jobs, Fleet, Payments. Requires vendor auth (Supabase session).
+  driver.html
+Driver
+Driver job card. No login. Reads ?job=KSP-XXXX from URL. Start Trip, GPS, Mark Delivered, ePOD signature.
+  track.html
+Client
+Client live tracking page. No login. Reads ?job=KSP-XXXX. Live Leaflet map, job status timeline, client ePOD signature.
+  approve.html
+Client
+Quote approval page. No login. Reads ?job=KSP-XXXX. Shows quote PDF preview, Approve / Decline buttons.
+  decline.html
+Client
+Quote declined confirmation. Notifies vendor via Supabase update. Offers alternative: "Contact us to adjust the price."
+  book.html
+Client
+Client-facing booking / enquiry form. Linked from vendor's WhatsApp or QR code. Creates enquiry record in Supabase.
+  onboard.html
+Vendor
+First-time setup wizard. Collect company name, TRN, logo, bank details, first 3 drivers. Completes vendor profile.
+  ops.html
+Kasper admin
+Kasper internal ops dashboard. See all vendors, all jobs, assign RFQs, approve vendors, manage billing.
+  404.html
+Public
+Custom 404. Links back to homepage.
+  js/
+Shared JavaScript modules
+  js/supabase.js
+All pages
+Supabase client init + helper functions (get, post, patch, upload, subscribe). Single source of truth for all DB calls.
+  js/pdf.js
+Vendor / System
+jsPDF quote + PO + invoice + delivery note generators. Uploads to Supabase Storage. Returns public URL.
+  js/whatsapp.js
+All pages
+wa.me deep link builder + 360dialog API wrapper. send(to, template, params). Handles both free deep links and paid API.
+  js/gps.js
+Driver / Track pages
+GPS push (driver side) and GPS subscribe (client tracking side). Supabase realtime channel. 10s interval.
+  js/auth.js
+Vendor pages
+Supabase Auth helpers. requireVendorAuth() redirects to login if no session. getVendorId() returns current vendor UUID.
+  css/app.css
+All pages
+Global styles. CSS variables for dark theme (matches KASLO). Typography, cards, buttons, badges, modals, animations.
+  supabase/
+Database migrations and edge functions
+  supabase/migrations/001_vendors.sql
+Backend
+vendors table. id, company_name, owner_name, phone, whatsapp, email, trn, bank_iban, logo_url, plan, created_at.
+  supabase/migrations/002_jobs.sql
+Backend
+jobs table. All fields: job_code, vendor_id, client details, route, status pipeline, pricing, documents, GPS, ePOD.
+  supabase/migrations/003_drivers.sql
+Backend
+vendor_drivers table. Linked to vendors. name, phone, plate, vehicle_type, active status.
+  supabase/migrations/004_rls.sql
+Backend
+Row Level Security policies. vendor_id = auth.uid() on all tables. Public read for job tracking (by job_code only).
+  supabase/migrations/005_rfqs.sql
+Backend
+vendor_rfqs table. Manages multi-vendor quoting for Kasper marketplace jobs. Links to jobs and vendors.
+  public/
+Static assets
+  public/manifest.json
+PWA
+Web app manifest. name, icons, theme_color, display: standalone. Enables "Add to Home Screen" on iOS and Android.
+  public/sw.js
+PWA
+Service worker. Caches app shell for offline access. Driver app works offline — GPS queued and pushed on reconnect.
+  public/icons/
+PWA
+App icons in all required sizes (192×192, 512×512, maskable). Used by manifest.json.
+  vercel.json
+Deploy
+Vercel routing config. 404 → 404.html. All routes → respective HTML files. No framework needed.
+  .env.example
+Dev setup
+Example env vars: SUPABASE_URL, SUPABASE_ANON_KEY, RESEND_API_KEY, TELR_KEY, DIALOG360_KEY. Never commit .env.
+  AGENTS.md
+Antigravity
+Antigravity agent rules file. Defines conventions, patterns, forbidden actions. Read by all agents automatically.
+Section 4 — Database Schema
+Every Supabase table, its fields, and why they exist
+Table 1: vendors — the root SaaS tenant
+One row per company that signs up for Kasper Vendor OS. Every other table references vendor_id. RLS ensures complete isolation.
+Field
+Type · Purpose
+id
+UUID · Primary key. Matches auth.uid() from Supabase Auth. This is the multi-tenancy anchor.
+company_name
+TEXT · Display name. Appears on all PDF documents.
+owner_name
+TEXT · Main contact person name.
+phone
+TEXT · UAE phone number. Used for OTP login.
+whatsapp
+TEXT · Business WhatsApp number. Messages sent FROM this number via 360dialog.
+email
+TEXT · Invoice copies and system notifications sent here via Resend.
+trn
+TEXT · UAE Tax Registration Number. Required on all VAT invoices by FTA.
+bank_name / bank_iban
+TEXT · Printed on invoices for bank transfer payments.
+logo_url
+TEXT · Supabase Storage URL. Embedded in PDF headers.
+plan
+TEXT · starter | growth | pro. Controls feature access and API rate limits.
+wa_api_key
+TEXT · Vendor's 360dialog API key (if on Growth+). Encrypted at rest.
+active
+BOOLEAN · Kasper ops can deactivate a vendor without deleting data.
+created_at
+TIMESTAMPTZ · Auto-set on insert.
+Table 2: jobs — the core transaction record
+One row per job. Covers the entire lifecycle from enquiry to payment. Status is a pipeline string.
+Field
+Type · Purpose
+id
+UUID · Primary key.
+job_code
+TEXT · Human-readable ID: KSP-XXXX. Auto-generated. Used in all WhatsApp messages and PDF headers.
+vendor_id
+UUID FK → vendors.id · Multi-tenancy key. RLS: WHERE vendor_id = auth.uid().
+status
+TEXT · Pipeline: enquiry → quoted → accepted → rejected → assigned → in_transit → delivered → epod_pending → invoiced → paid
+service_type
+TEXT · logistics | crane | equipment | other. Changes which fields are shown in the UI.
+origin / destination
+TEXT · Pickup and delivery addresses. Shown on GPS map and all documents.
+pickup_date / return_date
+DATE · Job schedule. Used for driver availability and invoice date.
+cargo_type / equipment_type
+TEXT · What is being transported or rented.
+client_name / client_phone / client_email / client_company
+TEXT · Client contact info. Captured from book.html or entered by vendor.
+quoted_price / vendor_price
+NUMERIC · Kasper charges client quoted_price. Vendor receives vendor_price. NEVER expose vendor_price to client.
+driver_id
+UUID FK → vendor_drivers.id · Set when vendor assigns driver.
+driver_name / driver_phone / vehicle_plate
+TEXT · Denormalised for performance. Also used in PDF.
+gps_lat / gps_lng / gps_updated_at
+NUMERIC / TIMESTAMPTZ · Live location from driver phone. Updated every 10s.
+quote_pdf_url / po_pdf_url / invoice_pdf_url / epod_pdf_url
+TEXT · Supabase Storage URLs for all generated documents.
+epod_driver_sig / epod_client_sig
+TEXT · Base64 canvas signature images. Stored as data URLs.
+epod_photo_url
+TEXT · Delivery photo uploaded by driver.
+payment_method
+TEXT · telr | lpo | bank_transfer | cash
+payment_ref / paid_at
+TEXT / TIMESTAMPTZ · Telr transaction ID or bank reference. Timestamp of payment confirmation.
+notes
+TEXT · Free-form notes from enquiry form or vendor.
+created_at / updated_at
+TIMESTAMPTZ · Auto-managed. updated_at triggers via Supabase function.
+Table 3: vendor_drivers
+Field
+Type · Purpose
+id
+UUID · Primary key.
+vendor_id
+UUID FK → vendors.id · RLS anchor.
+name
+TEXT · Full name as it appears on ePOD.
+phone
+TEXT · Used to generate WhatsApp deep link to driver.html.
+plate
+TEXT · Vehicle plate number. On all PDF documents.
+vehicle_type
+TEXT · 40ft Flatbed | Low-bed | Box Truck | Crane | etc.
+active
+BOOLEAN · Is this driver currently on a job? Updated when job assigned/completed.
+created_at
+TIMESTAMPTZ
+Table 4: vendor_rfqs — for Kasper marketplace quoting
+Field
+Type · Purpose
+id
+UUID
+job_id
+UUID FK → jobs.id · The Kasper marketplace job being quoted on.
+vendor_id
+UUID FK → vendors.id · Which vendor submitted this quote.
+vendor_price
+NUMERIC · What the vendor offered. NOT shown to client.
+vendor_notes
+TEXT · Any notes with the quote (e.g. "toll included").
+status
+TEXT · sent | quoted | accepted | rejected
+quoted_at / responded_at
+TIMESTAMPTZ
+Section 5 — Access, Auth & Security
+How each user type gets in, and how data stays isolated
+Vendor authentication — full Supabase Auth
+Vendors are real SaaS users. They have accounts, sessions, and their data is completely isolated from other vendors at the database level.
+1
+Sign up
+Vendor visits vendor.html → redirected to onboard.html. Enters phone number → Supabase sends OTP via SMS → enters OTP → authenticated. auth.users record created. vendor_id = auth.uid().
+2
+First-time setup
+onboard.html wizard: company name, TRN, logo upload, bank details, add first 3 drivers. Completion creates vendors table row.
+3
+Login (returning)
+Phone OTP again. Session stored in localStorage. Supabase manages token refresh. Session valid 7 days. Phone re-OTP if expired.
+4
+Session check
+Every vendor page calls requireVendorAuth() on load. If no valid session → redirect to login. No page loads without auth.
+5
+RLS enforcement
+Every Supabase query automatically filters by vendor_id = auth.uid(). Vendor A cannot read Vendor B's data even with a direct REST call.
+6
+Logout
+Clears Supabase session. Clears localStorage. Redirects to index.html.
+Driver access — zero-friction link auth
+Drivers must not be blocked by passwords. They get a pre-authenticated WhatsApp link. The link IS the authentication.
+1
+Link generated
+When vendor assigns driver, system generates: driver.html?job=KSP-0042&t=[signed_token]
+2
+Token contents
+Supabase Edge Function generates a signed JWT containing: job_id, vendor_id, driver_id, expires_in: 24h.
+3
+Page load
+driver.html extracts job code and token from URL. Calls Supabase Edge Function to validate token. If valid, loads job data.
+4
+What driver can do
+Read their job details. Push GPS location. Upload delivery photo. Sign ePOD. Mark delivered. NOTHING else.
+5
+What driver cannot do
+Read other jobs. Read other vendor data. Change prices. Access any other page with their token.
+6
+Token expiry
+After 24 hours, the link shows "This link has expired. Contact your employer for a new link." Vendor regenerates from portal.
+Client access — job code URL auth (read-only)
+Clients have no account. Their "authentication" is knowing the job code. This is appropriate for read-only tracking and signing.
+1
+approve.html
+URL: approve.html?job=KSP-0042&sig=[hash]. Client taps WhatsApp link. Page loads job details. Approve / Decline buttons.
+2
+track.html
+URL: track.html?job=KSP-0042. No secret needed — tracking is intentionally public for the job code holder.
+3
+RLS for public access
+Supabase policy: jobs SELECT allowed WHERE job_code = [param] AND (status != 'draft'). No auth token required for read-only tracking fields.
+4
+ePOD signing
+Client signature on track.html is POST only (no read beyond their job). Token in URL prevents CSRF. Stored as base64 in jobs table.
+5
+What client cannot do
+See prices (quoted_price and vendor_price are excluded from public SELECT policy). See other jobs. Modify any field except their own signature.
+Kasper ops access — internal admin
+ops.html is the internal Kasper dashboard. Only accessible with a special Kasper admin role set in Supabase Auth metadata.
+Feature in ops.html
+Description
+All vendors view
+See every vendor company, their plan, job count, last active date. Activate / deactivate.
+All jobs view
+Filter by date, status, vendor, service type. Override any job status. Download any document.
+RFQ assignment
+When a new enterprise client job comes in, ops selects 3–5 vendors and sends them the RFQ. Sets their prices and deadlines.
+Vendor onboarding
+Approve pending vendor registrations. Set plan tier. Trigger welcome WhatsApp.
+Billing overview
+See MRR, churn, overdue accounts. (Phase 2: Stripe integration for billing).
+Section 6 — Antigravity Build Guide
+How to set up the agent, what prompts to use, in what order
+What Antigravity is and why it's perfect for this project
+Antigravity is Google's new agent-first IDE (released November 2025, free in preview). It is a VS Code fork where AI agents autonomously plan, write code, run terminal commands, and test in the browser. You give it a mission. It builds across multiple files without you clicking through every step.
+It connects to: your file system (creates/edits files), your terminal (runs npm commands, starts servers), and your browser (tests pages, validates output). For Kasper Vendor OS — which is vanilla JS with no build step — this is ideal. No Webpack config to debug. No framework abstraction. The agent writes HTML, runs a local server, opens the page in the browser, tests it, and iterates.
+Setup steps before running any agent
+1
+Install Antigravity
+Download from antigravity.google/download. Free with personal Google account. Install on Mac, Windows, or Linux.
+2
+Open the project
+File → Open Folder → select kasper-vendor-os/ (this repo). All files visible in Explorer panel.
+3
+Read the AGENTS.md
+Antigravity auto-reads AGENTS.md in the project root. This file tells agents your conventions, stack, and forbidden patterns.
+4
+Set up .env
+Copy .env.example to .env. Fill in your Supabase URL and anon key from supabase.co. Do NOT fill in paid API keys yet — Phase 1 uses free tools only.
+5
+Switch to Agent view
+In Antigravity, click "Agent Manager" (robot icon). This is the asynchronous agent interface where you assign missions.
+6
+Choose model
+Use Gemini 3 Pro (Planning) for architecture and complex logic tasks. Use Gemini 3 Fast for UI and CSS tasks. Claude Sonnet available as alternative.
+The build sequence — 6 agent missions in order
+Run these missions in sequence. Each mission builds on the previous. Do NOT skip ahead. Each mission should be a separate agent task in Antigravity Agent Manager.
+Mission 1 — Foundation (Week 1)
+PASTE THIS INTO ANTIGRAVITY AGENT MANAGER — MISSION 1
+Read AGENTS.md and all files in supabase/migrations/ before doing anything. Then complete these tasks in order:
+
+1. Run the SQL files in supabase/migrations/ against the Supabase project (credentials in .env). Verify all 5 tables exist with correct columns and RLS policies.
+2. Create css/app.css with the full dark theme CSS from the design tokens in AGENTS.md (background #0e0f0f, gold #F59E0B, teal #00D4C8). Include: CSS variables, base typography (DM Sans + Space Mono), card components, button variants, badge system, modal overlay, bottom nav, loading states, and input styles.
+3. Create js/supabase.js with: Supabase client init from .env values, helper functions get(query), post(table, data), patch(query, data), upload(bucket, path, file), subscribe(table, filter, callback).
+4. Create js/auth.js with: requireVendorAuth() function that checks Supabase session and redirects to onboard.html if none, getVendorId() that returns current auth.uid(), logout() function.
+5. Verify by opening css/app.css in browser — the CSS variables should be visible in DevTools.
+
+Do NOT create any page HTML yet. Foundation only.
+Mission 2 — Vendor portal (Week 2)
+PASTE THIS INTO ANTIGRAVITY AGENT MANAGER — MISSION 2
+Read AGENTS.md, css/app.css, js/supabase.js, and js/auth.js before starting. Then build vendor.html.
+
+vendor.html requirements:
+- Mobile-first PWA. Dark theme matching css/app.css exactly.
+- Calls requireVendorAuth() on load. Redirects to onboard.html if no session.
+- 4-tab bottom navigation: 📡 RFQs, 🚛 Active Jobs, 🛻 Fleet, 💰 Payments
+- Tab 1 (RFQs): Load vendor_rfqs WHERE vendor_id=current WHERE status IN (sent,quoted,accepted,rejected). Show job details. For status=sent: show inline quote form (price input + notes + Send Quote button). On submit: update vendor_rfqs status to quoted, generate quote PDF via js/pdf.js (stub function for now), send WhatsApp via js/whatsapp.js deep link.
+- Tab 2 (Active Jobs): Load jobs WHERE vendor_id=current WHERE status IN (vendor_po_sent, assigned, in_transit, delivered, epod_pending). Show job cards with status badge, route, price, driver info, job timeline steps, document download pills. For vendor_po_sent: show "Assign Driver" button that opens driver assignment modal.
+- Tab 3 (Fleet): Load vendor_drivers WHERE vendor_id=current. Show driver cards with availability status (active job = on job, else available). 7-day availability mock grid. Add Driver modal with name/phone/plate/vehicle_type fields.
+- Tab 4 (Payments): Load jobs WHERE vendor_id=current WHERE status IN (invoiced, paid). Show settlement summary card (total earned, paid, outstanding). Per-job payment status. WhatsApp reminder button for outstanding invoices.
+- Auto-refresh every 15 seconds when tab is visible.
+- Test by running a local server (python -m http.server 8080) and opening vendor.html in browser. Verify all 4 tabs render without console errors.
+Mission 3 — Driver view (Week 2)
+PASTE THIS INTO ANTIGRAVITY AGENT MANAGER — MISSION 3
+Read AGENTS.md and js/supabase.js. Build driver.html.
+
+driver.html requirements:
+- Extract job_code from URL param: ?job=KSP-XXXX
+- If no job_code: show error "Invalid link. Contact your employer."
+- Load job from Supabase: SELECT fields needed for driver (origin, destination, cargo_type, client_name, client_phone, pickup_date, notes, status, gps_lat, gps_lng) WHERE job_code=[param]. IMPORTANT: Do NOT select vendor_price or quoted_price.
+- Display: Large job code header, route (origin → destination), cargo details, pickup date, client contact (tap to call), pickup notes.
+- "Start Trip" button: activates browser GPS. setInterval 10 seconds: PATCH jobs SET gps_lat, gps_lng, gps_updated_at WHERE job_code=[param]. Update status to in_transit.
+- "Mark Delivered" button (only visible after Start Trip): shows delivery screen with: photo capture (input[type=file] accept=image/*), canvas signature pad (draw with finger), "Confirm Delivery" button. On confirm: upload photo to Supabase Storage, save base64 signature, PATCH status to delivered, show "✓ Delivery confirmed" screen.
+- GPS must degrade gracefully: if geolocation denied, show amber banner and hide GPS-dependent features.
+- Test offline: disable network in DevTools after Start Trip. GPS pushes should queue and retry on reconnect (use navigator.onLine check).
+Mission 4 — Client views (Week 3)
+PASTE THIS INTO ANTIGRAVITY AGENT MANAGER — MISSION 4
+Read AGENTS.md, js/supabase.js, js/gps.js (create if missing). Build three client-facing pages.
+
+1. approve.html (?job=KSP-XXXX)
+- Load job by job_code from Supabase (public read policy — no auth needed).
+- Show: vendor company name and logo, job details (route, date, cargo), quote amount inc-VAT and ex-VAT (show quoted_price NOT vendor_price), document expiry countdown.
+- Large "✓ Approve Quote" button: PATCH status to accepted. Show success screen with tracking link.
+- "✗ Decline" link: goes to decline.html.
+- Professional UI. Client expects corporate quality.
+
+2. decline.html (?job=KSP-XXXX)
+- PATCH status to rejected. Show polite message. WhatsApp button to contact vendor directly.
+
+3. track.html (?job=KSP-XXXX)
+- Load job. Show status timeline (visual steps: Confirmed → Assigned → In Transit → Delivered → Invoiced → Paid).
+- Leaflet.js map (CDN): show live driver pin if status=in_transit AND gps_lat/lng exist. Subscribe to Supabase realtime on jobs WHERE job_code=[param] to update pin without page refresh.
+- GPS staleness: if gps_updated_at > 5 minutes ago, show amber "GPS signal lost" banner.
+- After delivery: show ePOD section. Client signature canvas. "Sign ePOD" button: saves base64 sig to epod_client_sig, triggers invoice generation (call js/pdf.js invoice function).
+- Payment section: show invoice PDF link + Telr payment link (hardcode example URL for MVP, replace with live key later).
+- Supabase realtime subscription: when status changes in DB, update timeline and map automatically without refresh.
+Mission 5 — PDF generation (Week 3)
+PASTE THIS INTO ANTIGRAVITY AGENT MANAGER — MISSION 5
+Read AGENTS.md. Create js/pdf.js using jsPDF from CDN (https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js).
+
+Implement four PDF generators. Each returns a blob URL and uploads to Supabase Storage. Each PDF must include: Kasper Vendor OS branding top-left, vendor company name and logo top-right, TRN number, document reference number, creation date.
+
+1. generateQuotePDF(job, vendor): Quote number, validity (48h from now), route details, cargo, line items (base price ex-VAT, 5% VAT amount, total inc-VAT), payment terms, "This quote is valid for 48 hours" footer.
+
+2. generatePOPDF(job, vendor): PO number (auto), job details, agreed price breakdown, vendor bank details (IBAN, bank name), expected delivery date, "This is an official Purchase Order" header.
+
+3. generateInvoicePDF(job, vendor): Invoice number, references PO number and delivery note, VAT-compliant line items, due date (30 days from delivery), Telr payment link as clickable text, FTA-required fields (TRN, VAT amount, tax period).
+
+4. generateEPODPDF(job, driverSig, clientSig, photoUrl): Proof of delivery document. Cargo condition, delivery timestamp, GPS coordinates, driver signature image, client signature image, delivery photo.
+
+Test: Call generateQuotePDF with mock data. PDF must open in browser. Check: VAT calculation is correct (price * 1.05), TRN appears on document, date is correct.
+Mission 6 — PWA + WhatsApp + Polish (Week 4)
+PASTE THIS INTO ANTIGRAVITY AGENT MANAGER — MISSION 6
+Read AGENTS.md and all existing files. Complete the MVP.
+
+1. PWA setup: Create public/manifest.json (name: Kasper Vendor OS, theme_color: #F59E0B, display: standalone, icons array). Create public/sw.js (cache-first strategy for app shell: vendor.html, css/app.css, js/*.js). Register service worker in vendor.html. Test: Chrome DevTools → Application → Service Workers must show "activated and running".
+
+2. WhatsApp deep links (js/whatsapp.js): Functions for all key notifications using wa.me links (no API key needed):
+   - sendQuoteLink(vendorPhone, jobCode, pdfUrl, price): opens WA with pre-filled quote message
+   - sendDriverLink(driverPhone, jobCode, signedToken): job assignment link
+   - sendTrackingLink(clientPhone, jobCode): live tracking link
+   - sendInvoiceLink(clientPhone, jobCode, invoiceUrl, amount): payment request
+   Each function generates correct wa.me/?phone=&text= URL and opens in new tab.
+
+3. onboard.html: Vendor first-time setup. Phone OTP via Supabase Auth. Form: company name, TRN (validate UAE TRN format: 15 digits), logo upload (Supabase Storage), bank name + IBAN. Add 3 drivers (name, phone, plate, vehicle type). On complete: INSERT vendors row. Redirect to vendor.html.
+
+4. Final cross-browser test: Open all pages in mobile viewport (375px). Check: all buttons tappable, no horizontal scroll, fonts readable, modals close on outside tap, all Supabase calls succeed with correct RLS.
+
+5. vercel.json: Configure routing so all HTML files are served correctly. Deploy command: vercel --prod. Verify live URL works.
+Section 7 — AGENTS.md Content
+The file that governs all Antigravity agent behaviour in this project
+AGENTS.md is a special file that Antigravity reads automatically before every agent task. It defines the rules, patterns, and constraints every agent must follow. This is how you maintain consistency across all six missions.
+The file below is the complete AGENTS.md to place in the project root. Every agent will read this before writing any code.
+Copy exactly as shown below into AGENTS.md in your project root.
+Antigravity agents read this file before every task. Anything written here constrains agent behaviour for the entire project.
+AGENTS.md — complete content
+KASPER VENDOR OS — AGENT RULES
+Project identity
+This is Kasper Vendor OS, a SaaS product for UAE logistics SMEs.
+Repo: kasper-vendor-os/  |  Deploy: Vercel  |  Live: vendor.kasperlogistics.vercel.app
+Stack (NEVER deviate from this)
+- Frontend: Vanilla JavaScript (ES6+). NO React. NO Vue. NO framework.
+- Styling: css/app.css only. CSS variables. NO Tailwind. NO external CSS libraries.
+- Database: Supabase (Postgres + Auth + Storage + Realtime). ONLY via js/supabase.js helpers.
+- PDF: jsPDF via CDN. Logic in js/pdf.js only.
+- Maps: Leaflet.js via CDN. GPS logic in js/gps.js only.
+- WhatsApp: wa.me deep links (Phase 1). 360dialog API (Phase 2). Logic in js/whatsapp.js only.
+- Deploy: Vercel. Static site. No build step. No bundler.
+Design tokens (use CSS variables from css/app.css)
+--bg: #0e0f0f  --surf: #161718  --surf2: #1c1e1f
+--gold: #F59E0B  --teal: #00D4C8  --green: #22C55E
+--red: #F43F5E  --amber: #FB923C  --text: #F0EDE8
+--text2: #9CA3AF  --border: rgba(255,255,255,0.07)
+Fonts: DM Sans (body), Space Mono (monospace/codes)
+File ownership rules
+- DB calls: ONLY through js/supabase.js helper functions. Never inline fetch() to Supabase.
+- Auth: ONLY through js/auth.js. Never duplicate auth logic in pages.
+- PDF: ONLY through js/pdf.js functions. Never inline jsPDF in pages.
+- WhatsApp: ONLY through js/whatsapp.js. Never inline wa.me construction in pages.
+- Styles: ONLY css/app.css. Never inline style= attributes except for dynamic values.
+Security rules (CRITICAL — never violate)
+- NEVER expose vendor_price to client-facing pages (approve.html, track.html).
+- NEVER expose vendor_price to driver-facing pages (driver.html).
+- NEVER query without vendor_id filter on vendor-authenticated pages.
+- NEVER trust URL params for auth. Always validate with Supabase session or signed token.
+- NEVER store Supabase service role key in any frontend file.
+- ALWAYS use Supabase anon key for frontend. Service role only in Edge Functions.
+UI/UX rules
+- Mobile-first: design for 375px viewport. Test at 375px before 1440px.
+- Bottom navigation on all portal pages: 4 tabs, sticky, icon + label.
+- All modals: slide up from bottom (not center screen). 85vh max height. Scrollable.
+- Loading states: every async operation shows a loading indicator. Never leave user waiting silently.
+- Error states: every fetch failure shows a human-readable error with a retry button.
+- Empty states: every list has an empty state with icon, title, and helpful text.
+- Buttons: minimum 44px touch target. Active state: scale(0.98). Disabled: opacity 0.45.
+Supabase conventions
+- Table names: plural, snake_case (vendors, jobs, vendor_drivers, vendor_rfqs)
+- Status values: enquiry→quoted→accepted→rejected→assigned→in_transit→delivered→epod_pending→invoiced→paid
+- Always use TIMESTAMPTZ for timestamps. Always UTC. Never local time in DB.
+- Realtime subscriptions: use Supabase channel, not polling. Unsubscribe on page unload.
+- Storage buckets: vendors/{vendor_id}/jobs/{job_code}/{document_type}.pdf
+PDF conventions
+- All monetary amounts: show ex-VAT + 5% VAT + total inc-VAT as separate line items.
+- All PDFs: include vendor TRN (required by UAE FTA), vendor company name, job_code, creation date.
+- Invoice numbering: INV-{job_code} e.g. INV-KSP-0042
+- Currency: always "AED" prefix. Format: AED 1,234.00
+Forbidden patterns
+- No alert() or confirm() — use custom modal components.
+- No document.write().
+- No jQuery or any library not explicitly listed in this file.
+- No placeholder data in production builds. All data from Supabase.
+- No console.log() in production code. Use console.error() only for actual errors.
+- No CSS animations that run continuously (performance on low-end phones).
+- No vendor-prefixed CSS — use standard properties + autoprefixer is not in the stack.
+Section 8 — Phase Plan & What NOT to Build Yet
+Boundaries for MVP vs Phase 2 vs Phase 3
+The most important rule for MVP
+Build only what a vendor needs to complete ONE full job: receive enquiry → send quote → assign driver → GPS track → ePOD → send invoice. Everything else is Phase 2.
+Feature
+Phase 1 MVP ✓
+Phase 2 ✗ (don't build yet)
+Phase 3 ✗
+WhatsApp notifications
+wa.me deep links (free, zero setup)
+360dialog API (AED 50/mo, needs approval)
+AI-powered auto-reply bot
+Quote flow
+Vendor types price, PDF generated, deep link sent
+Automated quote suggestions based on historical data
+Dynamic pricing engine with ML
+GPS tracking
+Browser geolocation → Supabase → Leaflet map
+Dedicated GPS device integration (OBD port)
+Predictive ETA with traffic data
+ePOD
+Canvas signature + photo upload
+Barcode scanning, temperature logging
+Blockchain-anchored proof of delivery
+Invoicing
+jsPDF client-side, Telr link
+Stripe billing, auto-reconciliation
+SAP / Xero integration
+Fleet management
+Manual driver list, basic availability
+Vehicle maintenance tracking, insurance reminders
+IoT sensor integration, fuel tracking
+Analytics
+Simple counts (jobs, revenue, on-time)
+Charts, trends, benchmarking vs industry
+Forecasting, demand prediction
+Arabic UI
+Arabic WhatsApp message templates only
+Full RTL Arabic portal UI
+Multi-language (Hindi, Urdu, Tagalog)
+Subscription billing
+Free for all vendors (demo/beta)
+Stripe subscription + webhook
+Usage-based pricing, annual plans
+Client portal
+approve.html + track.html (no login)
+Client login, full job history, document archive
+Procurement integration, PO auto-import
+The strategic conclusion
+Kasper already has the hardest parts built: GPS tracking, ePOD signatures, Supabase architecture, PWA structure, and the WhatsApp deep-link flow. Vendor OS is the same stack, restructured for self-service multi-tenancy. Antigravity is the right tool to build it fast — give it a mission, it writes across all files simultaneously. Focus agent time on the vendor portal and the PDF engine. Those are the two things that make a vendor open their wallet.
+Kasper Technologies FZ-LLC  ·  kasperlogistics.vercel.app  ·  April 2026  ·  Confidential  ·  Build with Antigravity
