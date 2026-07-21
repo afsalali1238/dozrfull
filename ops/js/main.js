@@ -164,8 +164,66 @@
   }
 
   /* ---------------- RFQs ---------------- */
+
+  function rfqAwaitingClientQuote(r) {
+    return r.quotesIn < r.sentTo.length && !r.quotedPrice;
+  }
+
+  function buildQuoteDocument(r) {
+    var today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+    return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\">" +
+      "<title>Quote " + r.code + " — Dozr</title>" +
+      "<style>" +
+      "body{font-family:'Hanken Grotesk',system-ui,sans-serif;color:#141518;max-width:680px;margin:40px auto;padding:0 24px;}" +
+      "h1{font-family:'Space Grotesk',system-ui,sans-serif;font-size:22px;margin-bottom:4px;}" +
+      ".mono{font-family:'Space Mono',monospace;font-size:12px;color:#5B5F66;}" +
+      "table{width:100%;border-collapse:collapse;margin-top:24px;}" +
+      "td{padding:10px 0;border-bottom:1px solid #E8E8E3;font-size:14px;}" +
+      "td:first-child{color:#5B5F66;width:40%;}" +
+      ".total{font-size:20px;font-weight:700;margin-top:24px;}" +
+      ".accent{color:#E6AF00;}" +
+      "</style></head><body>" +
+      "<h1>Dozr <span class=\"accent\">quote</span></h1>" +
+      "<div class=\"mono\">" + r.code + " · Issued " + today + "</div>" +
+      "<table>" +
+      "<tr><td>Client</td><td>" + r.client + (r.clientContact ? " (" + r.clientContact + ")" : "") + "</td></tr>" +
+      "<tr><td>Route</td><td>" + r.route + "</td></tr>" +
+      "<tr><td>Equipment</td><td>" + r.type + "</td></tr>" +
+      "<tr><td>Deadline</td><td>" + r.deadline + "</td></tr>" +
+      "</table>" +
+      "<div class=\"total\">AED " + Number(r.quotedPrice).toLocaleString("en-US") + "</div>" +
+      "<p class=\"mono\">This quote is valid for 48 hours from issue. Reply to confirm and we'll issue a PO.</p>" +
+      "</body></html>";
+  }
+
+  function downloadQuote(r) {
+    var html = buildQuoteDocument(r);
+    var blob = new Blob([html], { type: "text/html" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "Quote-" + r.code + ".html";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function showToast(message) {
+    var toast = document.getElementById("ops-toast");
+    if (!toast) {
+      toast = el("div", { id: "ops-toast", class: "ops-toast" });
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("visible");
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(function () { toast.classList.remove("visible"); }, 3200);
+  }
+
   function renderRfqs() {
     var wrap = document.getElementById("rfqs-list");
+    wrap.innerHTML = "";
     if (DATA.rfqs.length === 0) {
       wrap.appendChild(el("div", { class: "empty-state", text: "No open RFQs." }));
       return;
@@ -173,7 +231,7 @@
     DATA.rfqs.forEach(function (r) {
       var pending = r.sentTo.length - r.quotesIn;
       var tone = r.quotesIn === 0 ? "neutral" : (pending === 0 ? "ok" : "warn");
-      var card = el("div", { class: "panel" }, [
+      var card = el("div", { class: "panel", id: "rfq-card-" + r.code }, [
         el("div", { class: "panel-header" }, [
           el("div", {}, [
             el("span", { class: "mono", text: r.code + " " }),
@@ -184,13 +242,113 @@
         el("div", { class: "panel-body" }, [
           el("div", { class: "note", text: r.type + " · Deadline " + r.deadline }),
           el("div", { class: "note", style: "margin-top:6px;", text: "Sent to: " + r.sentTo.join(", ") }),
+          el("div", { class: "note", style: "margin-top:6px;", text: "Client contact: " + (r.clientContact || "—") + " · " + r.clientEmail }),
           el("div", { style: "margin-top:10px;display:flex;gap:8px;" }, [
             el("button", { class: "btn btn-primary btn-sm", type: "button", disabled: "disabled", title: "Not wired up on mock data - ships with the real backend", text: "Add vendor" }),
             el("button", { class: "btn btn-ghost btn-sm", type: "button", disabled: "disabled", title: "Not wired up on mock data - ships with the real backend", text: "Close RFQ" })
+          ]),
+          el("div", { class: "quote-form" }, [
+            el("label", { class: "field-label", for: "quote-price-" + r.code, text: "Quote price to client (AED)" }),
+            el("div", { class: "quote-form-row" }, [
+              el("input", { type: "number", min: "0", step: "50", id: "quote-price-" + r.code, class: "quote-price-input", value: r.quotedPrice || "" }),
+              el("button", { class: "btn btn-ghost btn-sm", type: "button", "data-action": "download", "data-code": r.code, text: "Download quote" }),
+              el("button", { class: "btn btn-primary btn-sm", type: "button", "data-action": "email", "data-code": r.code, text: "Send to client" })
+            ]),
+            el("div", { class: "quote-status", id: "quote-status-" + r.code, text: r.emailedAt ? ("Emailed to " + r.clientEmail + " · AED " + Number(r.quotedPrice).toLocaleString("en-US") + " · " + r.emailedAt) : "" })
           ])
         ])
       ]);
       wrap.appendChild(card);
+    });
+
+    wrap.addEventListener("click", function (e) {
+      var btn = e.target.closest("button[data-action]");
+      if (!btn) return;
+      var code = btn.getAttribute("data-code");
+      var r = DATA.rfqs.filter(function (x) { return x.code === code; })[0];
+      if (!r) return;
+      var input = document.getElementById("quote-price-" + code);
+      var price = parseFloat(input.value);
+      var statusEl = document.getElementById("quote-status-" + code);
+
+      if (!price || price <= 0) {
+        statusEl.textContent = "Enter a valid price before continuing.";
+        input.focus();
+        return;
+      }
+      r.quotedPrice = price;
+
+      if (btn.getAttribute("data-action") === "download") {
+        downloadQuote(r);
+        showToast("Quote downloaded for " + r.code + ".");
+      } else if (btn.getAttribute("data-action") === "email") {
+        r.emailedAt = "Just now";
+        statusEl.textContent = "Emailed to " + r.clientEmail + " · AED " + price.toLocaleString("en-US") + " · Just now";
+        showToast("Quote for " + r.code + " sent to " + r.clientEmail + " (simulated — no backend wired up yet).");
+        renderNotifications();
+      }
+    });
+  }
+
+  /* ---------------- Notifications ---------------- */
+  function renderNotifications() {
+    var bell = document.getElementById("notif-bell");
+    var badge = document.getElementById("notif-badge");
+    var list = document.getElementById("notif-list");
+    if (!bell) return;
+
+    var pending = DATA.rfqs.filter(rfqAwaitingClientQuote);
+    list.innerHTML = "";
+
+    if (pending.length === 0) {
+      badge.hidden = true;
+      list.appendChild(el("div", { class: "empty-state", style: "padding:16px;", text: "No quote requests waiting." }));
+      return;
+    }
+
+    badge.hidden = false;
+    badge.textContent = String(pending.length);
+    pending.forEach(function (r) {
+      var item = el("button", { type: "button", class: "notif-item", "data-code": r.code }, [
+        el("span", { class: "mono", text: r.code }),
+        el("span", { text: r.client + " — " + r.type })
+      ]);
+      list.appendChild(item);
+    });
+  }
+
+  function bindNotifications() {
+    var bell = document.getElementById("notif-bell");
+    var dropdown = document.getElementById("notif-dropdown");
+    if (!bell) return;
+
+    bell.addEventListener("click", function () {
+      var open = dropdown.hidden;
+      dropdown.hidden = !open;
+      bell.setAttribute("aria-expanded", String(open));
+    });
+
+    document.addEventListener("click", function (e) {
+      if (!dropdown.hidden && !e.target.closest(".notif-wrap")) {
+        dropdown.hidden = true;
+        bell.setAttribute("aria-expanded", "false");
+      }
+    });
+
+    dropdown.addEventListener("click", function (e) {
+      var item = e.target.closest(".notif-item");
+      if (!item) return;
+      var code = item.getAttribute("data-code");
+      dropdown.hidden = true;
+      bell.setAttribute("aria-expanded", "false");
+      var rfqTab = document.getElementById("tab-rfqs");
+      if (rfqTab) rfqTab.click();
+      var card = document.getElementById("rfq-card-" + code);
+      if (card) {
+        card.scrollIntoView({ behavior: "smooth", block: "center" });
+        card.style.outline = "2px solid var(--yellow)";
+        setTimeout(function () { card.style.outline = ""; }, 1600);
+      }
     });
   }
 
@@ -423,11 +581,13 @@
       return;
     }
     bindTabs();
+    bindNotifications();
     renderOverview();
     renderVendors();
     renderJobs();
     renderRfqs();
     renderEscalations();
     renderBilling();
+    renderNotifications();
   });
 })();

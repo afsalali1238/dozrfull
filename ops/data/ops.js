@@ -200,16 +200,16 @@ window.DOZR_OPS = {
   ],
 
   rfqs: [
-    { code: "RFQ-2201", client: "Meraas", route: "Bluewaters Island", type: "Crane, 80t, 2 days", deadline: "Today 18:00", sentTo: ["Emirates Crane Services", "Sharjah Rigging & Lift", "Dubai Boom Lift Rentals"], quotesIn: 1 },
-    { code: "RFQ-2200", client: "RAK Properties", route: "Ras Al Khaimah → Dubai", type: "40ft Flatbed", deadline: "Tomorrow 10:00", sentTo: ["Al Maha Heavy Transport", "Northern Emirates Trucking"], quotesIn: 0 },
-    { code: "RFQ-2199", client: "Deyaar", route: "Business Bay site", type: "Boom Lift, 5 days", deadline: "22 Jul 09:00", sentTo: ["Dubai Boom Lift Rentals"], quotesIn: 1 },
-    { code: "RFQ-2198", client: "Aldar", route: "Abu Dhabi KIZAD", type: "Excavator, 1 day", deadline: "22 Jul 14:00", sentTo: ["Gulf Flatbed Co.", "Khor Fakkan Logistics"], quotesIn: 0 },
-    { code: "RFQ-2197", client: "Dubai Investments Park", route: "DIP → Al Quoz", type: "Low-bed", deadline: "23 Jul 12:00", sentTo: ["Gulf Flatbed Co.", "Al Maha Heavy Transport", "Northern Emirates Trucking"], quotesIn: 2 },
-    { code: "RFQ-2196", client: "Nakheel", route: "Deira Islands", type: "Crane, 40t", deadline: "23 Jul 17:00", sentTo: ["Emirates Crane Services"], quotesIn: 0 },
-    { code: "RFQ-2195", client: "RAK Ceramics", route: "RAK Industrial Zone", type: "Crane, 50t", deadline: "24 Jul 10:00", sentTo: ["Ras Al Khaimah Crane Co.", "Sharjah Rigging & Lift"], quotesIn: 1 },
-    { code: "RFQ-2194", client: "Fujairah Port Authority", route: "Fujairah Port site", type: "Flatbed, port cargo", deadline: "24 Jul 15:00", sentTo: ["Fujairah Marine Logistics"], quotesIn: 0 },
-    { code: "RFQ-2193", client: "Dubai South Authority", route: "Dubai South → Al Maktoum Airport", type: "Box Truck, 3 days", deadline: "25 Jul 09:00", sentTo: ["Dubai South Freight Partners", "Northern Emirates Trucking"], quotesIn: 2 },
-    { code: "RFQ-2192", client: "Al Ain Farms", route: "Al Ain agricultural site", type: "Excavator, 1 week", deadline: "25 Jul 12:00", sentTo: ["Al Ain Construction Equipment"], quotesIn: 0 }
+    { code: "RFQ-2201", client: "Meraas", clientContact: "Yousef Al Ali", clientEmail: "yousef.alali@meraas.ae", route: "Bluewaters Island", type: "Crane, 80t, 2 days", deadline: "Today 18:00", sentTo: ["Emirates Crane Services", "Sharjah Rigging & Lift", "Dubai Boom Lift Rentals"], quotesIn: 1, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2200", client: "RAK Properties", clientContact: "Hind Al Zaabi", clientEmail: "hind.alzaabi@rakproperties.ae", route: "Ras Al Khaimah → Dubai", type: "40ft Flatbed", deadline: "Tomorrow 10:00", sentTo: ["Al Maha Heavy Transport", "Northern Emirates Trucking"], quotesIn: 0, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2199", client: "Deyaar", clientContact: "Marwan Saleh", clientEmail: "marwan.saleh@deyaar.ae", route: "Business Bay site", type: "Boom Lift, 5 days", deadline: "22 Jul 09:00", sentTo: ["Dubai Boom Lift Rentals"], quotesIn: 1, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2198", client: "Aldar", clientContact: "Mariam Khoury", clientEmail: "mariam.khoury@aldar.ae", route: "Abu Dhabi KIZAD", type: "Excavator, 1 day", deadline: "22 Jul 14:00", sentTo: ["Gulf Flatbed Co.", "Khor Fakkan Logistics"], quotesIn: 0, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2197", client: "Dubai Investments Park", clientContact: "Salem Al Marzouqi", clientEmail: "salem.almarzouqi@dip.ae", route: "DIP → Al Quoz", type: "Low-bed", deadline: "23 Jul 12:00", sentTo: ["Gulf Flatbed Co.", "Al Maha Heavy Transport", "Northern Emirates Trucking"], quotesIn: 2, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2196", client: "Nakheel", clientContact: "Omar Suleiman", clientEmail: "omar.suleiman@nakheel.com", route: "Deira Islands", type: "Crane, 40t", deadline: "23 Jul 17:00", sentTo: ["Emirates Crane Services"], quotesIn: 0, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2195", client: "RAK Ceramics", clientContact: "Bilal Farooq", clientEmail: "bilal.farooq@rakceramics.com", route: "RAK Industrial Zone", type: "Crane, 50t", deadline: "24 Jul 10:00", sentTo: ["Ras Al Khaimah Crane Co.", "Sharjah Rigging & Lift"], quotesIn: 1, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2194", client: "Fujairah Port Authority", clientContact: "Salim Al Kaabi", clientEmail: "salim.alkaabi@fpa.gov.ae", route: "Fujairah Port site", type: "Flatbed, port cargo", deadline: "24 Jul 15:00", sentTo: ["Fujairah Marine Logistics"], quotesIn: 0, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2193", client: "Dubai South Authority", clientContact: "Huda Al Marzooqi", clientEmail: "huda.almarzooqi@dubaisouth.ae", route: "Dubai South → Al Maktoum Airport", type: "Box Truck, 3 days", deadline: "25 Jul 09:00", sentTo: ["Dubai South Freight Partners", "Northern Emirates Trucking"], quotesIn: 2, quotedPrice: null, emailedAt: null },
+    { code: "RFQ-2192", client: "Al Ain Farms", clientContact: "Zayed Al Nuaimi", clientEmail: "zayed.alnuaimi@alainfarms.ae", route: "Al Ain agricultural site", type: "Excavator, 1 week", deadline: "25 Jul 12:00", sentTo: ["Al Ain Construction Equipment"], quotesIn: 0, quotedPrice: null, emailedAt: null }
   ],
 
   /* Full escalation log + routing rules, from
