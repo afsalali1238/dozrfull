@@ -10,6 +10,32 @@ Scope for this round: the **Marketplace** product only (client-facing
 equipment rental + freight booking). Vendor OS and Fleet/Telematics get the
 same process, later â€” see "Later" section at the bottom.
 
+## Live surfaces as of 2026-07-21 (read this before assuming a phase is unstarted)
+
+The phase checklist below is the original Marketplace-only plan and is still
+accurate for Marketplace itself, but three more surfaces exist now and
+aren't phase-tracked above - they're logged chronologically further down
+this file instead. Quick index so this doesn't get missed again:
+
+- `dashboard/` - internal launcher (Ops / Fleet / Marketplace links, disabled
+  "Vendor OS - Not started" card). See "Ops expansion + new launcher" below.
+- `ops/` - live internal Ops Dashboard: Overview, Vendors, Jobs, RFQs,
+  Escalations, Billing tabs + job-detail/vendor-detail drill-downs. Mock
+  data only, no backend. See "New surface: Kasper internal ops dashboard"
+  and later correction/expansion entries below.
+- `fleet-v2/` - Fleet/Telematics rebuild, all 9 screens complete. See
+  "Correction (2026-07-21): the section above was stale" below.
+- **Vendor OS** (vendor-facing portal + onboarding, driver job cards) -
+  confirmed still not started, being built separately by afzl. This is
+  where vendor CRUD (add vendor) and any equipment/asset master with
+  images + availability toggle belong - see "Figma review" entry below
+  (Category/Brand/Unit/Item Master pattern) for the reference IA and the
+  explicit "backlog item, not scheduled" call already made on this.
+- `ops/index.html`'s "+ Onboard vendor" button already exists in the UI but
+  is disabled pending a real backend - it's the natural hook point once
+  Vendor OS/catalog-admin work actually starts.
+
+
 ## Phase 0 â€” Foundation
 
 - [x] Docs reorganized (LOGISTICS/01-05 + Archive)
