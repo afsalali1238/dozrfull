@@ -519,6 +519,24 @@ h1, h2, h3, h4 {
   outline-offset: 2px;
   border-radius: 4px;
 }
+/* Enabled state - staff entry point to the internal dashboard (Ops, Fleet).
+   Not a real login; ops/dashboard have no auth guard yet, this is
+   navigation only. Kept visually distinct from customer-facing CTAs. */
+.nav-auth[href] {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ink);
+  cursor: pointer;
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button);
+  text-decoration: none;
+}
+.nav-auth[href]:hover { border-color: var(--ink); background: var(--yellow-tint); }
 .search-summary {
   background: var(--yellow-tint);
   border: 1px solid var(--line);
