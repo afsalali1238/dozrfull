@@ -350,6 +350,42 @@ Only the Kasper-internal admin view was in scope for this pass.
 and confirming the reconstructed 13-stage names against the real ops manual
 table.
 
+## Full-workflow audit (2026-07-21, fourth pass) - client journey has a real gap
+
+afzl asked for an expert review of every user's workflow (not just a page
+inventory) to confirm every step actually exists, not just every page. Two
+findings held up under scrutiny; both explicitly deferred by afzl, not
+fixed - logged here so this doesn't get lost:
+
+- **`quote-approval.html` has no Decline path.** Only "Approve Quote" and
+  "Ask a question" exist (`marketplace/js/quote-approval.js`). A client who
+  wants to say no has nowhere to click. The original spec
+  (`vendor_os_brief.txt` Section 3) has a dedicated `decline.html` -
+  Marketplace never built an equivalent, on either page.
+- **`tracking.html`'s status timeline stops at "Arrived on site."** It never
+  shows ePOD signing or an invoice/payment step, even though `index.html`'s
+  feature showcase and `about.html`'s value grid both explicitly promise
+  "Prove delivery: driver + client sign on the phone" and "Get paid faster:
+  invoice auto-generated on delivery." The Ops dashboard already models the
+  full 13-stage pipeline through `Paid & Closed` (`ops/data/ops.js`
+  `pipeline` array) - the client-facing side just never surfaces the last
+  5 stages. This is a real inconsistency between what the site claims and
+  what a client can actually do on it, not a cosmetic gap.
+
+**Status: acknowledged, not scheduled.** afzl chose "not now, just note it"
+over building any of the three options offered (Decline path only / all
+three / defer). Next session that touches Marketplace's client flow should
+either close this gap or get an explicit call that it's staying out of
+scope - don't silently continue building around it.
+
+Everything else audited clean: Client discovery/quote-request (index,
+browse, freight, equipment-detail) complete. Vendor/Driver correctly
+confirmed out of scope (afzl's own call, being built separately). Kasper Ops
+staff journey (Overview/Vendors/Jobs/RFQs/Escalations/Billing + drill-downs)
+matches the Operations Manual, including the stages tracking.html is
+missing. Fleet's 9 screens confirmed complete (prior pass). All 21 pages
+across the site verified with zero broken relative links.
+
 ## Ops expansion + new launcher (2026-07-21, second pass)
 
 afzl asked for the dead "Open"/vendor-row actions to be wired up, plus a
