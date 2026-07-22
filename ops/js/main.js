@@ -211,6 +211,170 @@
     });
   }
 
+  /* ---------------- Assets (central equipment page) ---------------- */
+  // Lists every equipment/vehicle row across all vendors, regardless of
+  // which vendor's detail page it was added from. Uses a foreign-table
+  // select to pull the vendor's name in the same query.
+  async function renderAssets() {
+    var tbody = document.getElementById("assets-tbody");
+    if (!tbody || typeof supabaseClient === "undefined") return;
+    var result = await supabaseClient
+      .from("equipment")
+      .select("*, vendors(name)")
+      .order("created_at", { ascending: false });
+    tbody.innerHTML = "";
+    if (result.error) {
+      tbody.appendChild(el("tr", {}, [el("td", { colspan: "8", class: "empty-state", text: "Could not load assets - try refreshing." })]));
+      console.error("renderAssets:", result.error);
+      return;
+    }
+    if (result.data.length === 0) {
+      tbody.appendChild(el("tr", {}, [el("td", { colspan: "8", class: "empty-state", text: "No equipment added yet. Use \"+ Add asset\" above." })]));
+      return;
+    }
+    result.data.forEach(function (eq) {
+      var imageUrl = (eq.images && eq.images[0]) || null;
+      var thumbCell = el("td", { class: "asset-thumb-cell" }, [
+        imageUrl ? el("img", { src: imageUrl, alt: eq.name }) : el("div", { class: "equipment-thumb-placeholder", text: "—" })
+      ]);
+
+      var availSelect = el("select", { class: "availability-select", "data-tone": eq.availability_status }, [
+        el("option", { value: "available", text: "Available" }),
+        el("option", { value: "on_job", text: "On job" }),
+        el("option", { value: "maintenance", text: "Maintenance" })
+      ]);
+      availSelect.value = eq.availability_status;
+      availSelect.disabled = !eq.active;
+      availSelect.addEventListener("change", async function () {
+        var newStatus = availSelect.value;
+        availSelect.disabled = true;
+        var res = await supabaseClient.from("equipment").update({ availability_status: newStatus }).eq("id", eq.id);
+        availSelect.disabled = false;
+        if (res.error) { showToast("Could not update availability - try again."); availSelect.value = eq.availability_status; return; }
+        eq.availability_status = newStatus;
+        availSelect.setAttribute("data-tone", newStatus);
+        showToast(eq.name + " marked " + newStatus.replace("_", " ") + ".");
+      });
+
+      var statusChip = el("span", { class: "status-chip", "data-tone": eq.active ? "ok" : "neutral", text: eq.active ? "Active" : "Off" });
+      var toggleBtn = el("button", {
+        class: "btn btn-ghost btn-sm", type: "button", "data-id": eq.id, text: eq.active ? "Turn off" : "Reactivate"
+      });
+      toggleBtn.addEventListener("click", async function () {
+        var newActive = !eq.active;
+        toggleBtn.disabled = true;
+        var res = await supabaseClient.from("equipment").update({ active: newActive }).eq("id", eq.id);
+        toggleBtn.disabled = false;
+        if (res.error) { showToast("Could not update - try again."); return; }
+        eq.active = newActive;
+        statusChip.setAttribute("data-tone", newActive ? "ok" : "neutral");
+        statusChip.textContent = newActive ? "Active" : "Off";
+        toggleBtn.textContent = newActive ? "Turn off" : "Reactivate";
+        availSelect.disabled = !newActive;
+        showToast(eq.name + (newActive ? " reactivated." : " turned off."));
+      });
+
+      var row = el("tr", {}, [
+        thumbCell,
+        el("td", { text: eq.name }),
+        el("td", { text: eq.category }),
+        el("td", { text: (eq.vendors && eq.vendors.name) || "—" }),
+        el("td", { class: "mono", text: eq.plate_or_asset_id || "—" }),
+        el("td", {}, [availSelect]),
+        el("td", {}, [statusChip]),
+        el("td", {}, [toggleBtn])
+      ]);
+      tbody.appendChild(row);
+    });
+  }
+
+  async function populateVendorSelect(selectEl) {
+    selectEl.innerHTML = "";
+    var result = await supabaseClient.from("vendors").select("id, name").order("name");
+    if (result.error || result.data.length === 0) {
+      selectEl.appendChild(el("option", { value: "", text: "No vendors yet - onboard one first" }));
+      return;
+    }
+    result.data.forEach(function (v) {
+      selectEl.appendChild(el("option", { value: v.id, text: v.name }));
+    });
+  }
+
+  function bindAssetModal() {
+    var overlay = document.getElementById("asset-modal-overlay");
+    var openBtn = document.getElementById("add-asset-btn");
+    if (!overlay || !openBtn) return;
+    var closeBtn = document.getElementById("asset-modal-close");
+    var cancelBtn = document.getElementById("asset-modal-cancel");
+    var form = document.getElementById("asset-form");
+    var errorEl = document.getElementById("asset-form-error");
+    var submitBtn = document.getElementById("asset-form-submit");
+    var vendorSelect = document.getElementById("af-vendor");
+
+    function openModal() {
+      overlay.hidden = false;
+      errorEl.hidden = true;
+      form.reset();
+      populateVendorSelect(vendorSelect);
+      document.getElementById("af-name").focus();
+    }
+    function closeModal() { overlay.hidden = true; }
+
+    openBtn.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !overlay.hidden) closeModal(); });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      errorEl.hidden = true;
+      var name = document.getElementById("af-name").value.trim();
+      var vendorId = vendorSelect.value;
+      if (!name) { errorEl.textContent = "Name / description is required."; errorEl.hidden = false; return; }
+      if (!vendorId) { errorEl.textContent = "Pick a vendor - onboard one first if the list is empty."; errorEl.hidden = false; return; }
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Adding...";
+
+      var images = [];
+      var file = document.getElementById("af-image").files[0];
+      if (file) {
+        var path = vendorId + "/" + Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        var upload = await supabaseClient.storage.from("equipment-images").upload(path, file);
+        if (upload.error) {
+          errorEl.textContent = "Image upload failed: " + upload.error.message;
+          errorEl.hidden = false;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Add asset";
+          return;
+        }
+        images.push(supabaseClient.storage.from("equipment-images").getPublicUrl(path).data.publicUrl);
+      }
+
+      var payload = {
+        vendor_id: vendorId,
+        category: document.getElementById("af-category").value,
+        name: name,
+        plate_or_asset_id: document.getElementById("af-plate").value.trim() || null,
+        availability_status: document.getElementById("af-availability").value,
+        notes: document.getElementById("af-notes").value.trim() || null,
+        images: images
+      };
+      var result = await supabaseClient.from("equipment").insert(payload);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add asset";
+      if (result.error) {
+        errorEl.textContent = result.error.message || "Could not add asset - try again.";
+        errorEl.hidden = false;
+        return;
+      }
+      closeModal();
+      showToast(name + " added to Assets.");
+      renderAssets();
+    });
+  }
+
   /* ---------------- Jobs ---------------- */
   function renderJobs() {
     var total = DATA.pipeline.length;
@@ -248,6 +412,79 @@
         });
       });
     }
+  }
+
+  /* ---------------- Jobs kanban ---------------- */
+  // Groups the 13-stage pipeline (see DATA.pipeline) into 6 kanban columns -
+  // 13 columns is unusable as a board. The detailed stage still shows on
+  // each card and in job-detail's full pipeline strip.
+  var KANBAN_COLUMNS = [
+    { title: "Enquiry & Quoting", stages: [0, 1, 2] },
+    { title: "Approved & Dispatch Prep", stages: [3, 4, 5] },
+    { title: "In Transit", stages: [6, 7] },
+    { title: "Delivered & ePOD", stages: [8, 9] },
+    { title: "Invoiced", stages: [10, 11] },
+    { title: "Paid & Closed", stages: [12] }
+  ];
+
+  function renderJobsKanban() {
+    var board = document.getElementById("jobs-kanban");
+    if (!board) return;
+    board.innerHTML = "";
+    KANBAN_COLUMNS.forEach(function (col) {
+      var jobsInCol = DATA.jobs.filter(function (j) { return col.stages.indexOf(j.stage) !== -1; });
+      var column = el("div", { class: "kanban-column" }, [
+        el("div", { class: "kanban-column-header" }, [
+          el("span", { text: col.title }),
+          el("span", { class: "kanban-count", text: String(jobsInCol.length) })
+        ])
+      ]);
+      jobsInCol.forEach(function (j) {
+        var card = el("a", {
+          class: "kanban-card",
+          href: "job-detail.html?job=" + encodeURIComponent(j.code),
+          "data-flagged": String(!!j.flagged)
+        }, [
+          el("span", { class: "mono", text: j.code + " · " + DATA.pipeline[j.stage] }),
+          el("div", { class: "kanban-client", text: j.client }),
+          el("div", { class: "kanban-route", text: j.vendor + " · " + j.route }),
+          el("div", { class: "kanban-price", text: j.price })
+        ]);
+        column.appendChild(card);
+      });
+      board.appendChild(column);
+    });
+  }
+
+  function bindJobsViewToggle() {
+    var tableBtn = document.getElementById("jobs-view-table");
+    var kanbanBtn = document.getElementById("jobs-view-kanban");
+    var tableView = document.getElementById("jobs-table-view");
+    var kanbanView = document.getElementById("jobs-kanban-view");
+    var pipelineStrip = document.getElementById("pipeline-strip");
+    var filterLabel = document.getElementById("job-status-filter-label");
+    var filterSelect = document.getElementById("job-status-filter");
+    if (!tableBtn || !kanbanBtn) return;
+
+    tableBtn.addEventListener("click", function () {
+      tableBtn.setAttribute("aria-pressed", "true");
+      kanbanBtn.setAttribute("aria-pressed", "false");
+      tableView.hidden = false;
+      kanbanView.hidden = true;
+      pipelineStrip.hidden = false;
+      filterLabel.hidden = false;
+      filterSelect.hidden = false;
+    });
+    kanbanBtn.addEventListener("click", function () {
+      kanbanBtn.setAttribute("aria-pressed", "true");
+      tableBtn.setAttribute("aria-pressed", "false");
+      kanbanView.hidden = false;
+      tableView.hidden = true;
+      pipelineStrip.hidden = true;
+      filterLabel.hidden = true;
+      filterSelect.hidden = true;
+      renderJobsKanban();
+    });
   }
 
   /* ---------------- RFQs ---------------- */
@@ -578,14 +815,76 @@
   }
 
   /* ---------------- Vendor detail page ---------------- */
-  function renderVendorDetailPage() {
+  // Two data sources: mock demo vendors (DATA.vendors, ids like "V-014")
+  // and real Supabase vendors (uuid ids, added via "+ Onboard vendor" or
+  // bridged in from equipment-add on a demo vendor). Mock vendors get the
+  // full existing layout (jobs history, docs); live Supabase vendors get a
+  // simpler company-details panel since that history isn't modeled for
+  // them yet. Both get the equipment panel - resolveVendorSupabaseId()
+  // already handles either id shape.
+  async function renderVendorDetailPage() {
     var id = qsParam("id");
-    var vendor = DATA.vendors.filter(function (v) { return v.id === id; })[0];
+    var mockVendor = DATA.vendors.filter(function (v) { return v.id === id; })[0];
     var root = document.getElementById("vendor-detail-root");
-    if (!vendor) {
+
+    if (mockVendor) {
+      renderMockVendorDetail(mockVendor, root);
+      return;
+    }
+
+    if (!id || typeof supabaseClient === "undefined") {
       root.appendChild(el("div", { class: "empty-state", text: id ? "No vendor found for " + id + "." : "No vendor specified." }));
       return;
     }
+
+    var result = await supabaseClient.from("vendors").select("*").eq("id", id).maybeSingle();
+    if (result.error || !result.data) {
+      root.appendChild(el("div", { class: "empty-state", text: "No vendor found for " + id + "." }));
+      return;
+    }
+    renderLiveVendorDetail(result.data, root);
+  }
+
+  function renderLiveVendorDetail(vendor, root) {
+    document.getElementById("vendor-detail-title").textContent = vendor.name;
+    var tone = vendor.active ? "ok" : "neutral";
+
+    var summary = el("section", { class: "summary-grid" }, [
+      el("div", { class: "summary-card" }, [el("div", { class: "label", text: "Status" }), el("div", {}, [el("span", { class: "status-chip", "data-tone": tone, text: vendor.active ? "Active" : "Deactivated" })])]),
+      el("div", { class: "summary-card" }, [el("div", { class: "label", text: "Plan" }), el("div", { class: "value", style: "font-size:18px;", text: vendor.plan })]),
+      el("div", { class: "summary-card" }, [el("div", { class: "label", text: "Joined" }), el("div", { class: "value", style: "font-size:18px;", text: vendor.joined_at || "—" })])
+    ]);
+
+    var infoPanel = el("section", { class: "panel" }, [
+      el("div", { class: "panel-header" }, [el("h2", { text: "Company details" })]),
+      el("div", { class: "panel-body" }, [
+        el("div", { style: "margin-bottom:6px;", text: "Contact: " + (vendor.contact_name || "—") }),
+        el("div", { style: "margin-bottom:6px;", text: "Phone: " + (vendor.phone || "—") }),
+        el("div", { style: "margin-bottom:6px;", text: "Email: " + (vendor.email || "—") }),
+        el("div", { style: "margin-bottom:6px;", text: "Trade license: " + (vendor.trade_license_no || "—") + (vendor.trade_license_expiry ? " · expires " + vendor.trade_license_expiry : "") }),
+        el("div", { text: "Insurance expiry: " + (vendor.insurance_expiry || "—") })
+      ])
+    ]);
+
+    var equipmentPanel = el("section", { class: "panel" }, [
+      el("div", { class: "panel-header" }, [
+        el("h2", { text: "Equipment / vehicles" }),
+        el("button", { class: "btn btn-primary btn-sm", type: "button", id: "add-equipment-btn" }, [document.createTextNode("+ Add equipment")])
+      ]),
+      el("div", { class: "panel-body", id: "vendor-equipment" }, [
+        el("div", { class: "empty-state", text: "Loading..." })
+      ])
+    ]);
+
+    root.appendChild(summary);
+    root.appendChild(infoPanel);
+    root.appendChild(equipmentPanel);
+
+    loadEquipmentForVendor(vendor);
+    bindEquipmentModal(vendor);
+  }
+
+  function renderMockVendorDetail(vendor, root) {
     document.getElementById("vendor-detail-title").textContent = vendor.name;
 
     var tone = !vendor.active ? (vendor.plan === "Pending" ? "neutral" : "error") : (vendor.docsExpiring ? "warn" : "ok");
@@ -855,6 +1154,9 @@
     bindTabs();
     bindNotifications();
     bindVendorModal();
+    bindAssetModal();
+    bindJobsViewToggle();
+    renderAssets();
     renderOverview();
     renderVendors();
     renderJobs();

@@ -27,6 +27,7 @@
     <nav role="tablist" aria-label="Ops dashboard sections" class="top-nav">
       <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" type="button">Overview</button>
       <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
+      <button role="tab" id="tab-assets" aria-controls="panel-assets" aria-selected="false" type="button">Assets</button>
       <button role="tab" id="tab-jobs" aria-controls="panel-jobs" aria-selected="false" type="button">Jobs</button>
       <button role="tab" id="tab-rfqs" aria-controls="panel-rfqs" aria-selected="false" type="button">RFQs</button>
       <button role="tab" id="tab-billing" aria-controls="panel-billing" aria-selected="false" type="button">Billing</button>
@@ -83,18 +84,45 @@
       </section>
     </section>
 
+    <!-- ASSETS -->
+    <section class="tabpanel" id="panel-assets" role="tabpanel" aria-labelledby="tab-assets" hidden>
+      <section class="panel" aria-labelledby="assets-heading">
+        <div class="panel-header">
+          <h2 id="assets-heading">All equipment / vehicles</h2>
+          <button class="btn btn-primary btn-sm" type="button" id="add-asset-btn">+ Add asset</button>
+        </div>
+        <div class="panel-body no-pad table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">All equipment and vehicles across vendors, with availability and status</caption>
+            <thead>
+              <tr>
+                <th scope="col">Photo</th><th scope="col">Name</th><th scope="col">Category</th>
+                <th scope="col">Vendor</th><th scope="col">Plate / ID</th><th scope="col">Availability</th>
+                <th scope="col">Status</th><th scope="col">Action</th>
+              </tr>
+            </thead>
+            <tbody id="assets-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
     <!-- JOBS -->
     <section class="tabpanel" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs" hidden>
       <section class="panel" aria-labelledby="jobs-heading">
         <div class="panel-header">
           <h2 id="jobs-heading">All jobs</h2>
-          <div class="filter-row">
-            <label class="field-label" for="job-status-filter">Stage</label>
+          <div class="filter-row" style="gap:12px;align-items:center;">
+            <div class="view-toggle" role="group" aria-label="Jobs view">
+              <button type="button" class="view-toggle-btn" id="jobs-view-table" aria-pressed="true">Table</button>
+              <button type="button" class="view-toggle-btn" id="jobs-view-kanban" aria-pressed="false">Kanban</button>
+            </div>
+            <label class="field-label" for="job-status-filter" id="job-status-filter-label">Stage</label>
             <select id="job-status-filter"></select>
           </div>
         </div>
         <div class="pipeline-strip" id="pipeline-strip" aria-label="13-stage job pipeline"></div>
-        <div class="panel-body no-pad table-scroll">
+        <div class="panel-body no-pad table-scroll" id="jobs-table-view">
           <table class="data-table">
             <caption class="sr-only">Active jobs with client, vendor, route, and pipeline stage</caption>
             <thead>
@@ -106,6 +134,9 @@
             </thead>
             <tbody id="jobs-tbody"></tbody>
           </table>
+        </div>
+        <div class="panel-body no-pad" id="jobs-kanban-view" hidden>
+          <div class="kanban-board" id="jobs-kanban"></div>
         </div>
       </section>
     </section>
@@ -218,6 +249,70 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost btn-sm" id="vendor-modal-cancel">Cancel</button>
         <button type="submit" class="btn btn-primary btn-sm" id="vendor-form-submit">Add vendor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD ASSET MODAL -->
+<div class="modal-overlay" id="asset-modal-overlay" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="asset-modal-title">
+    <div class="modal-header">
+      <h2 id="asset-modal-title">Add equipment / vehicle</h2>
+      <button type="button" class="modal-close" id="asset-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <form id="asset-form" class="modal-form" novalidate>
+      <div class="field-group">
+        <label class="field-label" for="af-vendor">Vendor *</label>
+        <select id="af-vendor" name="vendor_id" required>
+          <option value="">Loading vendors...</option>
+        </select>
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label class="field-label" for="af-category">Category *</label>
+          <select id="af-category" name="category" required>
+            <option value="excavator">Excavator</option>
+            <option value="wheel-loader">Wheel Loader</option>
+            <option value="crane">Crane</option>
+            <option value="flatbed">Flatbed Truck</option>
+            <option value="low-bed">Low-bed Trailer</option>
+            <option value="box-truck">Box Truck</option>
+            <option value="boom-lift">Boom Lift</option>
+            <option value="scissor-lift">Scissor Lift</option>
+            <option value="generator">Generator</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="af-availability">Availability</label>
+          <select id="af-availability" name="availability_status">
+            <option value="available">Available</option>
+            <option value="on_job">On job</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="af-name">Name / description *</label>
+        <input type="text" id="af-name" name="name" placeholder="e.g. Crane, 60t" required>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="af-plate">Plate / asset ID</label>
+        <input type="text" id="af-plate" name="plate_or_asset_id" placeholder="e.g. DXB-A-12345">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="af-image">Photo</label>
+        <input type="file" id="af-image" name="image" accept="image/*">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="af-notes">Notes</label>
+        <textarea id="af-notes" name="notes" rows="2"></textarea>
+      </div>
+      <p class="modal-error" id="asset-form-error" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="asset-modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="asset-form-submit">Add asset</button>
       </div>
     </form>
   </div>

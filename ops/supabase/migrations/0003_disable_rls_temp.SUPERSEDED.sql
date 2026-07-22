@@ -1,0 +1,5 @@
+-- SUPERSEDED — do not run.
+-- Duplicated 0003_temp_open_access.sql (same fix, written independently
+-- without knowing that file already existed and had already been run).
+-- Kept only so the file history makes sense; the storage-policy portion of
+-- this file was still needed and now lives in 0005_temp_open_storage.sql.
