@@ -1,0 +1,12 @@
+# Dozr Marketplace - public site.
+# ops/ is the internal staff dashboard and already sets
+# <meta name="robots" content="noindex, nofollow"> on every page - repeating
+# that intent here too, in case ops/ ever ends up reachable under this same
+# domain once deployed.
+
+User-agent: *
+Allow: /
+Disallow: /ops/
+Disallow: /*/_archive/
+
+Sitemap: https://REPLACE-WITH-REAL-DOMAIN/sitemap.xml

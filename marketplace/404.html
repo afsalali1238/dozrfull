@@ -3,14 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sign in - Dozr</title>
-<meta name="description" content="Sign in to your Dozr account to request quotes and track your bookings.">
-<meta property="og:type" content="website">
-<meta property="og:title" content="Sign in - Dozr">
-<meta property="og:description" content="Sign in to your Dozr account to request quotes and track your bookings.">
-<meta property="og:image" content="assets/hero-poster.jpg"> <!-- TODO: make absolute (https://...) once a real domain is live - relative paths don't reliably resolve for WhatsApp/social link previews -->
-<meta property="og:url" content="login.html">
-<meta name="twitter:card" content="summary_large_image">
+<title>Page not found - Dozr</title>
+<meta name="description" content="This page doesn't exist on Dozr - find equipment, freight booking, or contact us from the links below.">
+<meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
@@ -37,35 +32,28 @@
     </nav>
     <button class="nav-toggle" type="button" data-nav-toggle aria-expanded="false">Menu</button>
     <div class="nav-client-auth" data-client-auth>
-      <a class="nav-signin-link" href="login.html" aria-current="page">Sign in</a>
+      <a class="nav-signin-link" href="login.html">Sign in</a>
     </div>
     <a class="nav-auth" href="../ops/login.html" title="Internal staff access - Ops Dashboard">Staff sign in</a>
   </div>
 </header>
 
 <main id="main-content">
-  <div class="auth-shell">
-    <div class="auth-card">
-      <div class="eyebrow eyebrow-dot">Welcome back</div>
-      <h1>Sign in to Dozr</h1>
-      <p class="text-muted">Track your quotes and bookings in one place.</p>
-
-      <form class="form-stack" id="login-form" novalidate>
-        <div>
-          <label class="field-label" for="loginEmail">Email</label>
-          <input class="input-control" id="loginEmail" name="email" type="email" autocomplete="username" required>
-        </div>
-        <div>
-          <label class="field-label" for="loginPassword">Password</label>
-          <input class="input-control" id="loginPassword" name="password" type="password" autocomplete="current-password" required>
-        </div>
-        <button class="btn btn-primary btn-full" type="submit" style="margin-top:6px;">Sign in</button>
-      </form>
-
-      <p class="auth-switch">New to Dozr? <a href="contact.html">Get in touch</a> and we'll set up your account.</p>
-      <p class="auth-note">Mock sign-in for this preview build - any email/password continues through. Real account verification lands with the backend, per ROADMAP.md.</p>
+  <div class="page-hero">
+    <div class="container">
+      <div class="eyebrow hero-eyebrow">404</div>
+      <h1>That page moved, or never existed.</h1>
+      <p>The link you followed might be out of date. Try one of these instead.</p>
     </div>
   </div>
+
+  <section class="container section-lg" style="max-width:640px">
+    <div style="display:flex;gap:12px;flex-wrap:wrap">
+      <a class="btn btn-primary" href="index.html">Back to home</a>
+      <a class="btn btn-secondary" href="browse.html">Browse equipment</a>
+      <a class="btn btn-secondary" href="contact.html">Contact us</a>
+    </div>
+  </section>
 </main>
 
 <footer class="site-footer">
@@ -83,14 +71,5 @@
 </footer>
 <script src="js/main.js" defer></script>
 <script src="js/auth.js" defer></script>
-<script>
-document.getElementById("login-form").addEventListener("submit", function (e) {
-  e.preventDefault();
-  var email = document.getElementById("loginEmail").value.trim();
-  var name = email.split("@")[0].replace(/[._-]/g, " ") || "there";
-  dozrSaveSession(name.charAt(0).toUpperCase() + name.slice(1), email);
-  window.location.href = "index.html";
-});
-</script>
 </body>
 </html>

@@ -129,7 +129,8 @@
         stage: row.stage,
         price: row.price,
         flagged: row.flagged,
-        vertical: row.vertical
+        vertical: row.vertical,
+        vendorCost: row.vendor_cost
       };
     });
     return LIVE_JOBS;
@@ -151,7 +152,7 @@
   }
 
   /* ---------------- Enquiries summary (lives at the top of the Kanban tab) ---------------- */
-  // Was its own tab; merged into Kanban since "Enquiry Received" is already
+  // Was its own tab; merged into Kanban since "Quote Requested" is already
   // the first Kanban column - a separate list of the same jobs was
   // redundant (afzl's call, 2026-07-22).
   function renderEnquiries() {
@@ -623,21 +624,13 @@
   }
 
   /* ---------------- Jobs kanban ---------------- */
-  // Groups the 13-stage pipeline (see DATA.pipeline) into 6 kanban columns -
-  // 13 columns is unusable as a board. Each card's stage <select> is the
+  // One column per pipeline stage (see DATA.pipeline) - grouping into
+  // fewer columns made sense at 13 stages (unusable as a board otherwise),
+  // but the pipeline was simplified to 7 stages 2026-07-22, so each stage
+  // fits directly as its own column now. Each card's stage <select> is the
   // editable source of truth (afzl's call: staff move jobs manually, no
-  // automatic progression, no drag-and-drop for v1). Changing it writes
-  // straight to Supabase (jobs table, 2026-07-22) and updates LIVE_JOBS in
-  // memory - it does persist now, unlike the first pass at this.
-  var KANBAN_COLUMNS = [
-    { title: "Enquiry & Quoting", stages: [0, 1, 2] },
-    { title: "Approved & Dispatch Prep", stages: [3, 4, 5] },
-    { title: "In Transit", stages: [6, 7] },
-    { title: "Delivered & ePOD", stages: [8, 9] },
-    { title: "Invoiced", stages: [10, 11] },
-    { title: "Paid & Closed", stages: [12] }
-  ];
-
+  // automatic progression, no drag-and-drop). Changing it writes straight
+  // to Supabase (jobs table) and updates LIVE_JOBS in memory.
   function refreshAllJobViews() {
     renderJobs();
     renderJobsKanban();
@@ -652,11 +645,11 @@
     var visibleJobs = LIVE_JOBS.filter(function (j) {
       return jobsVerticalFilter === "all" || jobVertical(j) === jobsVerticalFilter;
     });
-    KANBAN_COLUMNS.forEach(function (col) {
-      var jobsInCol = visibleJobs.filter(function (j) { return col.stages.indexOf(j.stage) !== -1; });
+    DATA.pipeline.forEach(function (stageName, stageIdx) {
+      var jobsInCol = visibleJobs.filter(function (j) { return j.stage === stageIdx; });
       var column = el("div", { class: "kanban-column" }, [
         el("div", { class: "kanban-column-header" }, [
-          el("span", { text: col.title }),
+          el("span", { text: (stageIdx + 1) + " · " + stageName }),
           el("span", { class: "kanban-count", text: String(jobsInCol.length) })
         ])
       ]);
@@ -771,7 +764,18 @@
         el("td", { text: inv.issued }),
         el("td", { text: inv.due }),
         el("td", {}, [el("span", { class: "status-chip", "data-tone": tone, text: inv.status })]),
-        el("td", {}, [el("button", { class: "btn btn-ghost btn-sm", type: "button", disabled: "disabled", title: "Not wired up on mock data - ships with the real backend", text: inv.status === "Paid" ? "Receipt" : "Remind" })])
+        el("td", {}, [
+          el("button", {
+            class: "btn btn-ghost btn-sm", type: "button", disabled: "disabled",
+            "aria-describedby": "billing-action-note-" + inv.ref,
+            title: "Not wired up on mock data - ships with the real backend",
+            text: inv.status === "Paid" ? "Receipt" : "Remind"
+          }),
+          // A hover title alone isn't discoverable via keyboard/touch (flagged
+          // in the 2026-07-22 UI/UX audit) - this small visible label makes
+          // the "why is this greyed out" reason visible without hovering.
+          el("div", { id: "billing-action-note-" + inv.ref, class: "note", style: "margin-top:3px;white-space:normal;", text: "Not available yet" })
+        ])
       ]);
       tbody.appendChild(row);
     });
@@ -779,10 +783,10 @@
 
   /* ---------------- Reports ---------------- */
   // Computed from LIVE_JOBS, not stored separately - stays consistent with
-  // Enquiries/Kanban automatically. "Confirmed" = stage >= 3 (Quote
-  // Approved onward - the client has committed). Revenue only sums jobs
-  // with a real AED price ("Quote pending"/"RFQ open"/"—" are skipped).
-  // No profit figure - see the note in the Reports panel for why.
+  // Enquiries/Kanban automatically. "Confirmed" = stage >= 2 (Approved
+  // onward, in the 7-stage pipeline - the client has committed). Revenue
+  // only sums jobs with a real AED price ("Quote pending"/"RFQ open"/"—"
+  // are skipped). No profit figure - see the note in the Reports panel.
   function parseAedPrice(priceStr) {
     if (!priceStr) return null;
     var match = String(priceStr).match(/[\d,]+(\.\d+)?/);
@@ -790,23 +794,56 @@
     return parseFloat(match[0].replace(/,/g, ""));
   }
 
+  // Stage numbers reference the 7-stage pipeline: 0 Quote Requested,
+  // 1 Quote Sent, 2 Approved, 3 Work Completed, 4 Invoiced,
+  // 5 Payment Received, 6 Vendor Paid.
   function renderReports() {
     var summaryEl = document.getElementById("reports-summary");
     if (!summaryEl) return;
     summaryEl.innerHTML = "";
 
     var totalEnquiries = LIVE_JOBS.length;
-    var confirmed = LIVE_JOBS.filter(function (j) { return j.stage >= 3; }).length;
-    var totalRevenue = LIVE_JOBS.reduce(function (sum, j) {
+
+    var confirmedJobs = LIVE_JOBS.filter(function (j) { return j.stage >= 2; });
+    var confirmedValue = confirmedJobs.reduce(function (sum, j) {
       var price = parseAedPrice(j.price);
       return price ? sum + price : sum;
     }, 0);
 
+    // Receivables: invoiced, client hasn't paid yet.
+    var receivableJobs = LIVE_JOBS.filter(function (j) { return j.stage === 4; });
+    var receivablesValue = receivableJobs.reduce(function (sum, j) {
+      var price = parseAedPrice(j.price);
+      return price ? sum + price : sum;
+    }, 0);
+
+    // Payables: client has paid Dozr, Dozr hasn't paid the vendor yet.
+    // Only sums jobs where vendor_cost has actually been entered - see
+    // job-detail.html's Financials panel; jobs missing it are called out
+    // in the note rather than silently treated as zero.
+    var payableJobs = LIVE_JOBS.filter(function (j) { return j.stage === 5; });
+    var payableJobsWithCost = payableJobs.filter(function (j) { return j.vendorCost !== null && j.vendorCost !== undefined; });
+    var payablesValue = payableJobsWithCost.reduce(function (sum, j) { return sum + j.vendorCost; }, 0);
+    var payablesMissingCost = payableJobs.length - payableJobsWithCost.length;
+
+    // Profit: client price minus vendor cost, only for jobs where both are
+    // known. Unlike the old version, this is now real where data exists -
+    // previously always "—" since vendor_cost didn't exist at all.
+    var jobsWithBothFigures = LIVE_JOBS.filter(function (j) {
+      return j.vendorCost !== null && j.vendorCost !== undefined && parseAedPrice(j.price) !== null;
+    });
+    var profitValue = jobsWithBothFigures.reduce(function (sum, j) { return sum + (parseAedPrice(j.price) - j.vendorCost); }, 0);
+
     [
-      { label: "Total enquiries", value: String(totalEnquiries), note: "All jobs, any stage" },
-      { label: "Confirmed", value: String(confirmed), note: "Quote approved or later" },
-      { label: "Total revenue", value: "AED " + totalRevenue.toLocaleString("en-US"), note: "Sum of client-facing job prices" },
-      { label: "Profit", value: "—", note: "Needs vendor cost per job - not tracked yet" }
+      { label: "Enquiries received", value: String(totalEnquiries), note: "All jobs, any stage" },
+      { label: "Confirmed work", value: String(confirmedJobs.length), note: "AED " + confirmedValue.toLocaleString("en-US") + " · Approved or later" },
+      { label: "Receivables", value: "AED " + receivablesValue.toLocaleString("en-US"), note: receivableJobs.length + " job(s) invoiced, awaiting client payment" },
+      { label: "Payables", value: "AED " + payablesValue.toLocaleString("en-US"), note: payablesMissingCost > 0
+        ? payableJobs.length + " job(s) pending vendor payout · vendor cost missing on " + payablesMissingCost
+        : payableJobs.length + " job(s) pending vendor payout" },
+      { label: "Profit", value: jobsWithBothFigures.length > 0 ? "AED " + profitValue.toLocaleString("en-US") : "—", note: jobsWithBothFigures.length > 0
+        ? "Based on " + jobsWithBothFigures.length + " job(s) with vendor cost entered"
+        : "Needs vendor cost entered per job (job-detail.html) - none yet" }
     ].forEach(function (item) {
       summaryEl.appendChild(el("div", { class: "summary-card" }, [
         el("div", { class: "label", text: item.label }),
@@ -821,7 +858,7 @@
     ["logistics", "equipment"].forEach(function (v) {
       var jobsInVertical = LIVE_JOBS.filter(function (j) { return jobVertical(j) === v; });
       var enquiries = jobsInVertical.length;
-      var confirmedInVertical = jobsInVertical.filter(function (j) { return j.stage >= 3; }).length;
+      var confirmedInVertical = jobsInVertical.filter(function (j) { return j.stage >= 2; }).length;
       var revenue = jobsInVertical.reduce(function (sum, j) {
         var price = parseAedPrice(j.price);
         return price ? sum + price : sum;
@@ -898,6 +935,58 @@
       el("div", { class: "summary-card" }, [el("div", { class: "label", text: "Price" }), el("div", { class: "value", style: "font-size:16px;", text: job.price })])
     ]);
 
+    // Vendor cost is staff-entered here (not on the enquiry form - it isn't
+    // known until a vendor is confirmed) and only editable for jobs that
+    // exist in Supabase (liveRow). Feeds Reports' Payables/Profit figures,
+    // which were blocked without this (added 2026-07-22).
+    var financialsPanel = el("section", { class: "panel" }, [
+      el("div", { class: "panel-header" }, [el("h2", { text: "Financials" })]),
+      el("div", { class: "panel-body", id: "job-financials" })
+    ]);
+    var finBody = financialsPanel.querySelector("#job-financials");
+    finBody.appendChild(el("div", { style: "margin-bottom:10px;font-size:13px;", text: "Client price: " + job.price }));
+    if (liveRow) {
+      var hasCost = liveRow.vendor_cost !== null && liveRow.vendor_cost !== undefined;
+      var clientPriceNum = parseAedPrice(job.price);
+      var costNote = el("div", { class: "note", style: "width:100%;margin-top:6px;", text: hasCost
+        ? (clientPriceNum !== null ? "Profit on this job: AED " + (clientPriceNum - liveRow.vendor_cost).toLocaleString("en-US") : "Vendor cost saved - add a client price to see profit.")
+        : "Not yet entered - what Dozr owes the vendor for this job. Feeds Reports' Payables and Profit figures." });
+      var costInput = el("input", {
+        type: "number", min: "0", step: "1", id: "job-vendor-cost",
+        style: "width:140px;border:1px solid var(--line);border-radius:var(--radius-button);padding:8px 10px;font-size:13px;background:var(--canvas);color:var(--ink);"
+      });
+      if (hasCost) costInput.value = String(liveRow.vendor_cost);
+      var saveCostBtn = el("button", { class: "btn btn-primary btn-sm", type: "button", text: "Save" });
+      saveCostBtn.addEventListener("click", async function () {
+        var raw = costInput.value.trim();
+        var val = raw === "" ? null : parseFloat(raw);
+        saveCostBtn.disabled = true;
+        saveCostBtn.textContent = "Saving...";
+        var res = await supabaseClient.from("jobs").update({ vendor_cost: val }).eq("id", liveRow.id);
+        saveCostBtn.disabled = false;
+        saveCostBtn.textContent = "Save";
+        if (res.error) { showToast("Could not save vendor cost - try again."); return; }
+        liveRow.vendor_cost = val;
+        showToast("Vendor cost saved.");
+        if (val !== null && clientPriceNum !== null) {
+          costNote.textContent = "Profit on this job: AED " + (clientPriceNum - val).toLocaleString("en-US");
+        } else if (val !== null) {
+          costNote.textContent = "Vendor cost saved - add a client price to see profit.";
+        } else {
+          costNote.textContent = "Not yet entered - what Dozr owes the vendor for this job. Feeds Reports' Payables and Profit figures.";
+        }
+      });
+      var costRow = el("div", { class: "row-inline" }, [
+        el("label", { class: "field-label", for: "job-vendor-cost", text: "Vendor cost (AED)" }),
+        costInput,
+        saveCostBtn
+      ]);
+      finBody.appendChild(costRow);
+      finBody.appendChild(costNote);
+    } else {
+      finBody.appendChild(el("div", { class: "empty-state", text: "Vendor cost isn't editable for this job - it isn't in the live system yet." }));
+    }
+
     var docsPanel = el("section", { class: "panel" }, [
       el("div", { class: "panel-header" }, [el("h2", { text: "Documents" })]),
       el("div", { class: "panel-body", id: "job-docs" })
@@ -907,7 +996,7 @@
       docsBody.appendChild(el("div", { class: "empty-state", text: "No documents generated yet." }));
     } else {
       job.documents.forEach(function (d) {
-        docsBody.appendChild(el("div", { style: "display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--line);" }, [
+        docsBody.appendChild(el("div", { class: "row-split" }, [
           el("span", { text: d.label }),
           el("span", { class: "mono", text: d.ref })
         ]));
@@ -920,14 +1009,15 @@
     ]);
     var timelineBody = timelinePanel.querySelector("#job-timeline");
     (job.timeline || []).forEach(function (t) {
-      timelineBody.appendChild(el("div", { style: "display:flex;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);" }, [
-        el("span", { class: "mono", style: "color:var(--slate);min-width:110px;flex-shrink:0;", text: t.time }),
+      timelineBody.appendChild(el("div", { class: "row-flow" }, [
+        el("span", { class: "mono row-flow-time", text: t.time }),
         el("span", { text: t.note })
       ]));
     });
 
     root.appendChild(strip);
     root.appendChild(summary);
+    root.appendChild(financialsPanel);
     root.appendChild(docsPanel);
     root.appendChild(timelinePanel);
   }

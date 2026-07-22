@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Placeholder sitemap - domain isn't final yet (repo not deployed, see
+  ROADMAP.md). Replace REPLACE-WITH-REAL-DOMAIN with the real Vercel/custom
+  domain before this matters for search engines. quote-approval.html and
+  tracking.html are intentionally excluded - they're per-booking pages
+  shared via WhatsApp link, not meant to be crawled/indexed.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/index.html</loc><priority>1.0</priority></url>
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/browse.html</loc><priority>0.9</priority></url>
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/freight.html</loc><priority>0.9</priority></url>
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/equipment-detail.html</loc><priority>0.6</priority></url>
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/about.html</loc><priority>0.5</priority></url>
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/contact.html</loc><priority>0.5</priority></url>
+  <url><loc>https://REPLACE-WITH-REAL-DOMAIN/login.html</loc><priority>0.3</priority></url>
+</urlset>

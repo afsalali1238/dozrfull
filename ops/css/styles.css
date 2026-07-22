@@ -14,9 +14,9 @@
   --surface: #FFFFFF;
   --slate: #5B5F66;
   --line: #E8E8E3;
-  --green: #146447;
+  --green: #146447; /* darkened from brand doc's #1F9A6D - that fails WCAG AA text contrast on white (3.56:1, needs 4.5:1); this hits 7.13:1 */
   --green-tint: #E7F6EF;
-  --error: #A22424;
+  --error: #A22424; /* darkened from brand doc's #D64545 - that's borderline AA on white (4.38:1); this hits 7.46:1 */
   --error-tint: #FBEAEA;
   --muted: #6B6E74; /* darkened from #8A8D93 - original failed WCAG AA (3.33:1) on white */
 
@@ -249,6 +249,20 @@ table { border-collapse: collapse; width: 100%; }
 
 .avatar-name { display: flex; align-items: center; gap: 8px; }
 .avatar-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+/* ---------------- Row utilities (replace repeated inline styles in
+   JS-built rows - docs/timeline lists on job-detail, financials form) ---- */
+.row-split {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.row-flow {
+  display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line);
+}
+.row-flow .row-flow-time {
+  font-family: var(--font-mono); color: var(--slate); min-width: 110px; flex-shrink: 0;
+}
+.row-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .avatar-dot[data-tone="ok"] { background: var(--green); }
 .avatar-dot[data-tone="warn"] { background: var(--yellow-dark); }
 .avatar-dot[data-tone="error"] { background: var(--error); }

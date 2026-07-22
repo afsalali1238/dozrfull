@@ -2,22 +2,21 @@ window.DOZR_OPS = {
   orgName: "Dozr Ops",
   lastUpdated: "21 Jul 2026 09:10",
 
-  /* The 13-stage job pipeline, per LOGISTICS/04_Operations/Kasper_Operations_Manual.docx
-     Part 1. Every job record's `stage` field is an index into this array. */
+  /* Simplified from 13 stages to 7 (afzl's call, 2026-07-22 - the 13-stage
+     version was "too much", most of it wasn't backed by real tracking
+     anyway). Every job record's `stage` field is an index into this array.
+     Vendor-side quote collection, PO issuance, driver assignment, and
+     transit tracking now live as notes/fields on the job instead of their
+     own stages. "Vendor Paid" is last but optional - not every job needs a
+     vendor payout, staff can leave a job at "Payment Received" if so. */
   pipeline: [
-    "Enquiry Received",
-    "RFQ Sent to Vendors",
-    "Quote Received",
-    "Quote Approved",
-    "PO Issued",
-    "Driver Assigned",
-    "Dispatched",
-    "In Transit",
-    "Delivered",
-    "ePOD Signed",
-    "Invoice Generated",
-    "Payment Pending",
-    "Paid & Closed"
+    "Quote Requested",
+    "Quote Sent",
+    "Approved",
+    "Work Completed",
+    "Invoiced",
+    "Payment Received",
+    "Vendor Paid (if applicable)"
   ],
 
   /* Trimmed to 5 sample vendors (2026-07-22, afzl's call - keep just enough
@@ -47,25 +46,25 @@ window.DOZR_OPS = {
     { code: "DZR-J-1034", client: "Aldar", clientContact: "Mariam Khoury", vendor: "— unassigned", driver: "— unassigned", route: "Abu Dhabi KIZAD", type: "Excavator", stage: 0, price: "—", flagged: false,
       documents: [],
       timeline: [{ time: "Today 09:05", note: "Enquiry received, RFQ not yet sent" }] },
-    { code: "DZR-J-1033", client: "RAK Ceramics", clientContact: "Bilal Farooq", vendor: "Ras Al Khaimah Crane Co.", driver: "Anwar Sadiq", route: "RAK Industrial Zone", type: "Crane, 50t", stage: 4, price: "AED 5,600", flagged: false,
+    { code: "DZR-J-1033", client: "RAK Ceramics", clientContact: "Bilal Farooq", vendor: "Ras Al Khaimah Crane Co.", driver: "Anwar Sadiq", route: "RAK Industrial Zone", type: "Crane, 50t", stage: 2, price: "AED 5,600", flagged: false,
       documents: [{ label: "Quote", ref: "QTE-1033" }, { label: "PO", ref: "PO-1033" }],
       timeline: [
         { time: "Today 06:50", note: "Quote approved" },
         { time: "Today 07:10", note: "PO issued, awaiting driver assignment" }
       ] },
-    { code: "DZR-J-1039", client: "Petrofac", clientContact: "Layla Nasser", vendor: "Gulf Flatbed Co.", driver: "Hassan Ali", route: "Abu Dhabi → Ruwais", type: "Low-bed", stage: 6, price: "AED 6,750", flagged: true,
+    { code: "DZR-J-1039", client: "Petrofac", clientContact: "Layla Nasser", vendor: "Gulf Flatbed Co.", driver: "Hassan Ali", route: "Abu Dhabi → Ruwais", type: "Low-bed", stage: 2, price: "AED 6,750", flagged: true,
       documents: [{ label: "Quote", ref: "QTE-1039" }, { label: "PO", ref: "PO-1039" }],
       timeline: [
         { time: "Yesterday", note: "PO issued, driver assigned" },
         { time: "Today 07:15", note: "Escalation L1: driver running 25 min late" }
       ] },
-    { code: "DZR-J-1032", client: "Fujairah Port Authority", clientContact: "Salim Al Kaabi", vendor: "Fujairah Marine Logistics", driver: "Imran Sheikh", route: "Fujairah Port site", type: "Flatbed, port cargo", stage: 9, price: "AED 7,100", flagged: false,
+    { code: "DZR-J-1032", client: "Fujairah Port Authority", clientContact: "Salim Al Kaabi", vendor: "Fujairah Marine Logistics", driver: "Imran Sheikh", route: "Fujairah Port site", type: "Flatbed, port cargo", stage: 3, price: "AED 7,100", flagged: false,
       documents: [{ label: "Quote", ref: "QTE-1032" }, { label: "PO", ref: "PO-1032" }],
       timeline: [
         { time: "Yesterday", note: "Delivered" },
         { time: "Today 06:00", note: "ePOD signed by client" }
       ] },
-    { code: "DZR-J-1020", client: "Meraas", clientContact: "Yousef Al Ali", vendor: "Emirates Crane Services", driver: "Sunil Perera", route: "Bluewaters Island", type: "Crane, 60t", stage: 12, price: "AED 6,200", flagged: false,
+    { code: "DZR-J-1020", client: "Meraas", clientContact: "Yousef Al Ali", vendor: "Emirates Crane Services", driver: "Sunil Perera", route: "Bluewaters Island", type: "Crane, 60t", stage: 5, price: "AED 6,200", flagged: false,
       documents: [{ label: "Quote", ref: "QTE-1020" }, { label: "PO", ref: "PO-1020" }, { label: "Invoice", ref: "INV-DZR-J-1020" }],
       timeline: [
         { time: "10 days ago", note: "Delivered and ePOD signed" },

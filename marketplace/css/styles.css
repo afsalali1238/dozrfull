@@ -14,8 +14,8 @@
   --surface: #FFFFFF;
   --slate: #5B5F66;
   --line: #E8E8E3;
-  --green: #146447;
-  --error: #A22424;
+  --green: #146447; /* darkened from brand doc's #1F9A6D - that fails WCAG AA text contrast on white (3.56:1, needs 4.5:1); this hits 7.13:1 */
+  --error: #A22424; /* darkened from brand doc's #D64545 - that's borderline AA on white (4.38:1); this hits 7.46:1 */
 
   /* A couple of secondary tones already used across the prototype —
      keep centralized here rather than repeated inline */

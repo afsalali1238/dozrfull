@@ -7,7 +7,27 @@
 document.addEventListener("DOMContentLoaded", () => {
   initMobileNav();
   initCategoryTabs();
+  markActiveNavLink();
 });
+
+/**
+ * Sets aria-current="page" on whichever site-nav link matches the current
+ * page, "false" on the rest. Previously every page hardcoded its own
+ * correct value in markup (9 pages x 5 links) - real drift risk flagged in
+ * the 2026-07-22 UI/UX audit (header markup duplicated across pages with
+ * no template mechanism). This makes the nav's active-link state the one
+ * thing that's computed instead of copy-pasted, without needing a build
+ * step or templating for the rest of the header.
+ */
+function markActiveNavLink() {
+  const links = document.querySelectorAll(".site-nav .links a[href]");
+  if (!links.length) return;
+  const currentPage = window.location.pathname.split("/").pop() || "index.html";
+  links.forEach((link) => {
+    const linkPage = link.getAttribute("href").split("#")[0].split("?")[0] || "index.html";
+    link.setAttribute("aria-current", linkPage === currentPage ? "page" : "false");
+  });
+}
 
 function initMobileNav() {
   const toggle = document.querySelector("[data-nav-toggle]");

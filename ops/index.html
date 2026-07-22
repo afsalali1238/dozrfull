@@ -11,7 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -37,7 +37,7 @@
   <main class="app-main" id="main-content">
     <h1 class="sr-only">Dozr Ops — internal operations dashboard</h1>
 
-    <!-- KANBAN (also the enquiries landing view - "Enquiry Received" is stage 1 of the pipeline below) -->
+    <!-- KANBAN (also the enquiries landing view - "Quote Requested" is stage 1 of the pipeline below) -->
     <section class="tabpanel" id="panel-kanban" role="tabpanel" aria-labelledby="tab-kanban">
       <section class="summary-grid" id="enquiries-summary" aria-label="Key metrics"></section>
       <section class="panel" aria-labelledby="kanban-heading">
@@ -58,7 +58,7 @@
             <select id="job-status-filter" hidden></select>
           </div>
         </div>
-        <div class="pipeline-strip" id="pipeline-strip" aria-label="13-stage job pipeline" hidden></div>
+        <div class="pipeline-strip" id="pipeline-strip" aria-label="7-stage job pipeline" hidden></div>
         <div class="panel-body no-pad table-scroll" id="jobs-table-view" hidden>
           <table class="data-table">
             <caption class="sr-only">Active jobs with client, vendor, route, and pipeline stage</caption>
@@ -163,7 +163,7 @@
           </table>
         </div>
       </section>
-      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records - "Revenue" sums the client-facing price on jobs with a confirmed AED amount. Profit isn't shown because vendor cost isn't tracked per job yet (jobs only carry the client price) - that needs a cost field before a real margin can be reported, not a guessed percentage. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
+      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records. Receivables = invoiced jobs the client hasn't paid yet. Payables = jobs the client has paid where Dozr hasn't paid the vendor yet - enter each job's vendor cost on its job detail page to include it here (until then it's called out as missing rather than treated as zero). Profit sums client price minus vendor cost, only for jobs where both are known. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
     </section>
   </main>
 </div>
@@ -235,7 +235,7 @@
       <button type="button" class="modal-close" id="job-modal-close" aria-label="Close">&times;</button>
     </div>
     <form id="job-form" class="modal-form" novalidate>
-      <p class="note" style="margin:0 0 12px;">For enquiries that come in over WhatsApp/phone - logs the job at "Enquiry Received" so it shows up on the board. Vendor and price get set later.</p>
+      <p class="note" style="margin:0 0 12px;">For enquiries that come in over WhatsApp/phone - logs the job at "Quote Requested" so it shows up on the board. Vendor and price get set later.</p>
       <div class="field-group">
         <label class="field-label" for="jf-client">Client name *</label>
         <input type="text" id="jf-client" name="client_name" required>
@@ -335,8 +335,8 @@
   </div>
 </div>
 
-<script src="js/supabase-client.js"></script>
-<script src="data/ops.js"></script>
-<script src="js/main.js"></script>
+<script src="js/supabase-client.js" defer></script>
+<script src="data/ops.js" defer></script>
+<script src="js/main.js" defer></script>
 </body>
 </html>

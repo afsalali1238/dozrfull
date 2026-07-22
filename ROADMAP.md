@@ -868,3 +868,151 @@ explanation, not discoverable via keyboard/touch; heavy use of inline
 `style=""` in JS-built ops rows vs. CSS classes (maintainability, not a
 token violation); header/footer markup duplicated verbatim across 7
 Marketplace pages with no template/include mechanism.
+
+## Pipeline simplified: 13 stages → 7, plus Payables/Receivables (2026-07-22)
+
+afzl looked at the Kanban screenshot and called the 13-stage pipeline "too
+much" - most of it wasn't backed by real tracking anyway (dispatch/transit/
+ePOD have no actual capture UI, confirmed in the earlier workflow audit).
+New 7-stage pipeline, replacing the old one everywhere:
+
+0. Quote Requested (was "Enquiry Received" - merged with RFQ Sent/Quote
+   Received, since those were internal pre-client-quote steps)
+1. Quote Sent
+2. Approved (was Quote Approved/PO Issued/Driver Assigned/Dispatched/In
+   Transit - scheduling and vendor assignment are now job notes/fields,
+   not separate stages)
+3. Work Completed (was Delivered/ePOD Signed)
+4. Invoiced (was Invoice Generated/Payment Pending)
+5. Payment Received (was Paid & Closed, split - see below)
+6. Vendor Paid (if applicable) - new, last stage, explicitly optional in
+   the dropdown label since not every job has a vendor payout to track
+
+Changed: `ops/data/ops.js` (`pipeline` array + all 5 mock jobs' `stage`
+values remapped), `ops/js/main.js` (`renderJobsKanban()` now builds one
+Kanban column per stage directly instead of grouping via the old
+`KANBAN_COLUMNS` array - 7 columns fits fine unlike 13), Reports'
+"Confirmed" threshold (`stage >= 3` → `stage >= 2` to match the new
+Approved index), the "+ New enquiry" modal copy, and a few comments.
+Added `ops/supabase/migrations/0009_pipeline_simplify_7_stage.sql` -
+drops the old 0-12 check constraint, remaps every existing row's `stage`
+value via a CASE expression, re-adds the constraint as 0-6. **Needs to be
+run in Supabase** (along with 0010 below) before the live Kanban board
+will match the new pipeline.
+
+**Reports also got real Receivables/Payables** (afzl's ask, same session).
+New summary cards: Enquiries received, Confirmed work (count + AED value),
+Receivables (AED - invoiced jobs awaiting client payment, stage 4),
+Payables (AED - jobs where the client's paid but the vendor hasn't been,
+stage 5), and Profit (now real where data exists, previously always "—").
+Payables and Profit both needed a vendor-cost-per-job figure that didn't
+exist anywhere in the schema - added `vendor_cost` (nullable numeric) to
+`jobs` via `ops/supabase/migrations/0010_jobs_vendor_cost.sql`, and a new
+editable "Financials" panel on `job-detail.html` where staff enter it once
+a vendor's price is confirmed (shows per-job profit immediately on save).
+Jobs missing a vendor cost are called out by count in Payables' note
+rather than silently treated as zero.
+
+**Still open:** neither of the two new migrations (0009, 0010) has been
+run yet - the ROADMAP/task list assumes they will be shortly after this
+entry. Vendor cost still has to be entered manually per job; nothing
+auto-populates it from a vendor's quote (RFQ workflow was removed
+entirely, not rebuilt with a vendor-cost capture step).
+
+Migrations 0009/0010 confirmed run by afzl same day.
+
+## UI/UX polish-tier backlog closed out (2026-07-22)
+
+The 4 items left over from the earlier audit, all fixed:
+
+- **Color-token drift documented, not reverted.** `--green`/`--error` in
+  both `ops/css/styles.css` and `marketplace/css/styles.css` are darker
+  than the brand doc's hex values, with no comment explaining why (unlike
+  `--muted`, which had one). Checked the actual contrast math: the brand
+  doc's green (#1F9A6D) fails WCAG AA text contrast on white (3.56:1,
+  needs 4.5:1) and its error (#D64545) is borderline (4.38:1) - the darker
+  in-use values (#146447, #A22424) hit 7.13:1 and 7.46:1. Both darkenings
+  were correct calls, just undocumented. Added the same style of comment
+  `--muted` already has to both files instead of "fixing" them back to
+  values that fail contrast.
+- **Billing's disabled Receipt/Remind buttons** relied on a hover `title`
+  only - not discoverable via keyboard or touch. Added a small visible
+  "Not available yet" label under each disabled button
+  (`ops/js/main.js renderBilling()`), wired via `aria-describedby` for
+  screen readers, so the reason is visible without hovering.
+- **Inline `style=""` attributes reduced** in the JS-built job-detail rows
+  (docs list, activity timeline) and the new Financials vendor-cost row -
+  these were the most-repeated patterns (the same `display:flex;
+  justify-content:space-between...` string appeared 3 times). Added
+  `.row-split`/`.row-flow`/`.row-inline` utility classes to
+  `ops/css/styles.css`, swapped into `ops/js/main.js`. Not every inline
+  style in the file was touched - just the duplicated structural ones,
+  which were the actual maintainability risk.
+- **Marketplace header markup duplication**: rather than a full templating
+  rewrite (would mean either a build step, which the stack explicitly
+  avoids, or a client-side fetch()'d partial, which adds a flash-of-
+  unstyled-nav risk on a static host), fixed the part that actually drifts
+  - each of 9 pages hardcoded its own nav link's `aria-current` value in
+  markup. Added `markActiveNavLink()` to `marketplace/js/main.js`
+  (computes the active link from `window.location.pathname` on load) and
+  set every page's nav links to a uniform `aria-current="false"` in
+  markup, so the "you are here" state is computed once instead of
+  copy-pasted 9 times. The header/footer HTML block itself is still
+  duplicated per page (accepted, low risk - it's static and hasn't
+  drifted) - only the actually-varying attribute was deduplicated.
+
+## Rated against thedaviddias/Front-End-Checklist, gaps fixed (2026-07-22)
+
+afzl asked for a rating against the real open-source Front-End-Checklist
+(385 rules). Filtered to what applies at this pre-launch, no-build-step
+stage: 5 of 8 relevant categories passed clean, 2 partial (Images, SEO),
+1 real miss (Security). Fixed all 5 flagged gaps:
+
+- **Misleading security comment fixed.** `ops/js/supabase-client.js`
+  claimed the anon key was safe because RLS controls access - true in
+  principle, false right now, since `0003_temp_open_access.sql` opened
+  every table to full anonymous read/write. Rewrote the comment to say so
+  plainly and point at what re-enabling real RLS would need, instead of
+  reading as "this is already secure."
+- **`defer` added** to all script tags (CDN + local) on `ops/index.html`,
+  `job-detail.html`, `vendor-detail.html`. **Left `login.html` alone on
+  purpose** - its inline auth-bypass script runs immediately after
+  `supabase-client.js` and depends on that synchronous order; deferring
+  one without the other would've broken it for a marginal gain neither
+  page actually needs (scripts already sit at the end of body).
+- **Open Graph tags added** to all 9 live Marketplace pages (`og:type`,
+  `og:title`, `og:description`, `og:image`, `og:url`, plus
+  `twitter:card`) - matters specifically here since the whole flow is
+  WhatsApp-native and links get shared constantly; without OG tags those
+  previews are blank. `og:image` points at `assets/hero-poster.jpg` with a
+  TODO comment to make it absolute once a real domain exists.
+- **`prefers-reduced-motion` on the hero video** - turned out to already
+  be handled (`marketplace/css/styles.css:298` hides `.hero-video` under
+  that media query, poster image shows through). No change needed;
+  flagged as a false-positive in the rating pass.
+- **Added `marketplace/robots.txt`** (allows the public site, disallows
+  `/ops/` and `/_archive/`, points at a sitemap), **`sitemap.xml`**
+  (7 crawlable pages - quote-approval.html/tracking.html excluded on
+  purpose, they're per-booking pages shared via WhatsApp link, not meant
+  to be indexed), and **`404.html`** (on-brand, links back to home/browse/
+  contact). All three use a `REPLACE-WITH-REAL-DOMAIN` placeholder since
+  there's no live domain yet.
+
+**Noticed in passing, not fixed:** `marketplace/index.html` has one
+unclosed `<div>` somewhere in the hero/stats section (div-balance check:
+51 open vs 50 close) - pre-existing, not touched by anything this
+session (only its `<head>` was edited), browsers likely auto-recover from
+it silently. Worth tracing properly in its own pass rather than a
+drive-by fix.
+
+## Unclosed div on index.html fixed (2026-07-22)
+
+Traced the div-balance mismatch flagged in the checklist pass: `index.html`
+line 55 opened `<div class="hero">` (wraps the eyebrow/h1/search-form/
+stats-row) but nothing ever closed it before `</section>` on line 87 -
+missing one `</div>`. Browsers were silently auto-closing it at the
+`</section>` boundary, which happened to look fine visually since section
+was next in the DOM anyway, but it was structurally wrong markup. Added
+the missing `</div>`, re-verified: 51/51 balanced. Swept all 10
+marketplace pages the same way - all balanced, this was isolated to
+index.html.
