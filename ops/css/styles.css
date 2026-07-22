@@ -358,3 +358,70 @@ table { border-collapse: collapse; width: 100%; }
   .app-header { padding: 10px 16px; }
   .app-main { padding: var(--space-2); }
 }
+
+/* ---------------- Modals (Add vendor / Add equipment) ---------------- */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(20, 21, 24, .55);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 300; padding: var(--space-3);
+}
+.modal-overlay[hidden] { display: none; }
+.modal-dialog {
+  background: var(--surface); border-radius: var(--radius-card);
+  width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto;
+  padding: var(--space-3); border: 1px solid var(--line);
+}
+.modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-2); }
+.modal-header h2 { font-size: 18px; }
+.modal-close {
+  background: none; border: none; font-size: 22px; line-height: 1;
+  cursor: pointer; color: var(--slate); padding: 4px 8px;
+}
+.modal-close:hover { color: var(--ink); }
+.modal-form .field-group { margin-bottom: 12px; }
+.modal-form label.field-label { display: block; margin-bottom: 6px; }
+.modal-form input,
+.modal-form select,
+.modal-form textarea {
+  width: 100%; border: 1px solid var(--line); border-radius: var(--radius-button);
+  padding: 9px 10px; font-size: 14px; background: var(--canvas); color: var(--ink);
+  font-family: inherit;
+}
+.modal-form input:focus-visible,
+.modal-form select:focus-visible,
+.modal-form textarea:focus-visible { outline: 2px solid var(--ink); outline-offset: 1px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: var(--space-2); }
+.modal-error {
+  color: var(--error); font-size: 13px; margin-top: 8px; padding: 8px 10px;
+  background: var(--error-tint); border-radius: var(--radius-button);
+}
+.modal-error[hidden] { display: none; }
+.field-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+/* Equipment list on vendor-detail */
+.equipment-card {
+  border: 1px solid var(--line); border-radius: var(--radius-card);
+  padding: var(--space-2); display: flex; gap: 12px; align-items: flex-start;
+  margin-bottom: 10px;
+}
+.equipment-thumb {
+  width: 64px; height: 64px; border-radius: 8px; object-fit: cover;
+  background: var(--canvas); flex-shrink: 0; border: 1px solid var(--line);
+}
+.equipment-thumb-placeholder {
+  width: 64px; height: 64px; border-radius: 8px; background: var(--canvas);
+  border: 1px solid var(--line); flex-shrink: 0; display: flex;
+  align-items: center; justify-content: center; color: var(--muted); font-size: 10px;
+  text-align: center;
+}
+.equipment-body { flex: 1; min-width: 0; }
+.equipment-title { font-weight: 600; margin-bottom: 2px; }
+.equipment-meta { font-size: 12px; color: var(--slate); margin-bottom: 8px; }
+.availability-select {
+  border: 1px solid var(--line); border-radius: var(--radius-button);
+  padding: 5px 8px; font-size: 12px; font-family: var(--font-mono);
+  background: var(--surface); color: var(--ink);
+}
+.availability-select[data-tone="available"] { border-color: var(--green); color: var(--green); }
+.availability-select[data-tone="on_job"] { border-color: var(--yellow-dark); color: var(--yellow-dark); }
+.availability-select[data-tone="maintenance"] { border-color: var(--error); color: var(--error); }

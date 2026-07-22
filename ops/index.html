@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body>
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -28,7 +29,6 @@
       <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
       <button role="tab" id="tab-jobs" aria-controls="panel-jobs" aria-selected="false" type="button">Jobs</button>
       <button role="tab" id="tab-rfqs" aria-controls="panel-rfqs" aria-selected="false" type="button">RFQs</button>
-      <button role="tab" id="tab-escalations" aria-controls="panel-escalations" aria-selected="false" type="button">Escalations</button>
       <button role="tab" id="tab-billing" aria-controls="panel-billing" aria-selected="false" type="button">Billing</button>
     </nav>
 
@@ -52,18 +52,12 @@
     <!-- OVERVIEW -->
     <section class="tabpanel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
       <section class="summary-grid" id="overview-summary" aria-label="Key metrics"></section>
-      <div class="split-layout">
-        <section class="panel" aria-labelledby="escalations-heading">
-          <div class="panel-header"><h2 id="escalations-heading">Open escalations</h2></div>
-          <div class="panel-body no-pad" id="escalations-list"></div>
-        </section>
-        <section class="panel" aria-labelledby="checklist-heading">
-          <div class="panel-header"><h2 id="checklist-heading">Daily checklist — Morning</h2></div>
-          <div class="panel-body">
-            <ul id="daily-checklist" style="list-style:none;padding:0;margin:0;"></ul>
-          </div>
-        </section>
-      </div>
+      <section class="panel" aria-labelledby="checklist-heading" style="max-width:520px;">
+        <div class="panel-header"><h2 id="checklist-heading">Daily checklist — Morning</h2></div>
+        <div class="panel-body">
+          <ul id="daily-checklist" style="list-style:none;padding:0;margin:0;"></ul>
+        </div>
+      </section>
     </section>
 
     <!-- VENDORS -->
@@ -71,7 +65,7 @@
       <section class="panel" aria-labelledby="vendors-heading">
         <div class="panel-header">
           <h2 id="vendors-heading">All vendors</h2>
-          <button class="btn btn-primary btn-sm" type="button" disabled title="Onboarding flow ships with the real backend - not wired up on mock data">+ Onboard vendor</button>
+          <button class="btn btn-primary btn-sm" type="button" id="add-vendor-btn">+ Onboard vendor</button>
         </div>
         <div class="panel-body no-pad table-scroll">
           <table class="data-table">
@@ -170,6 +164,66 @@
   </main>
 </div>
 
+<!-- ADD VENDOR MODAL -->
+<div class="modal-overlay" id="vendor-modal-overlay" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="vendor-modal-title">
+    <div class="modal-header">
+      <h2 id="vendor-modal-title">Onboard vendor</h2>
+      <button type="button" class="modal-close" id="vendor-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <form id="vendor-form" class="modal-form" novalidate>
+      <div class="field-group">
+        <label class="field-label" for="vf-name">Company name *</label>
+        <input type="text" id="vf-name" name="name" required>
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label class="field-label" for="vf-contact">Contact name</label>
+          <input type="text" id="vf-contact" name="contact_name">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="vf-phone">Phone</label>
+          <input type="tel" id="vf-phone" name="phone" placeholder="+971 5x xxx xxxx">
+        </div>
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label class="field-label" for="vf-email">Email</label>
+          <input type="email" id="vf-email" name="email">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="vf-plan">Plan</label>
+          <select id="vf-plan" name="plan">
+            <option value="standard">Standard</option>
+            <option value="verified">Verified</option>
+            <option value="premium">Premium</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label class="field-label" for="vf-trade-license">Trade license no.</label>
+          <input type="text" id="vf-trade-license" name="trade_license_no">
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="vf-trade-license-expiry">Trade license expiry</label>
+          <input type="date" id="vf-trade-license-expiry" name="trade_license_expiry">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="vf-insurance-expiry">Insurance expiry</label>
+        <input type="date" id="vf-insurance-expiry" name="insurance_expiry">
+      </div>
+      <p class="modal-error" id="vendor-form-error" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="vendor-modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="vendor-form-submit">Add vendor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/supabase-client.js"></script>
 <script src="data/ops.js"></script>
 <script src="js/main.js"></script>
 </body>

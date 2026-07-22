@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
   .login-shell {
     min-height: 100vh;
@@ -70,15 +71,42 @@
       <button class="btn btn-primary" type="submit" style="width:100%;justify-content:center;">Sign in</button>
     </form>
 
-    <p class="login-note">Mock sign-in for this preview build - any input (or none) continues through. Real Supabase auth lands with the backend, per ROADMAP.md.</p>
+    <p class="login-note" id="login-note">Auth is temporarily off for this build - any click continues through.</p>
+    <p class="login-note" id="login-error" role="alert" style="display:none;color:var(--error);"></p>
     <a class="login-back" href="../dashboard/index.html">&larr; Back to Dozr Dashboard</a>
   </div>
 </div>
 
+<script src="js/supabase-client.js"></script>
 <script>
-document.getElementById("login-form").addEventListener("submit", function (e) {
+// Auth temporarily disabled (2026-07-22, afzl's call - "sign in not needed
+// for now"). Clicking Sign in goes straight into the dashboard, no
+// credential check. The real Supabase auth call is preserved below,
+// commented out, so this flips back on by uncommenting it and removing
+// the direct redirect - ops/js/auth-guard.js also has its enforcement
+// disabled to match, same re-enable note there.
+document.getElementById("login-form").addEventListener("submit", async function (e) {
   e.preventDefault();
   window.location.href = "index.html";
+
+  /* Real auth - re-enable when staff sign-in is needed again:
+  var errEl = document.getElementById("login-error");
+  errEl.style.display = "none";
+  var email = document.getElementById("login-email").value.trim();
+  var password = document.getElementById("login-password").value;
+  var submitBtn = e.target.querySelector('button[type="submit"]');
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Signing in...";
+  var result = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+  if (result.error) {
+    errEl.textContent = result.error.message || "Sign in failed - check your email and password.";
+    errEl.style.display = "block";
+    submitBtn.disabled = false;
+    submitBtn.textContent = "Sign in";
+    return;
+  }
+  window.location.href = "index.html";
+  */
 });
 </script>
 </body>

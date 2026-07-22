@@ -68,22 +68,11 @@
       ]));
     });
 
-    var escList = document.getElementById("escalations-list");
-    if (DATA.overview.escalations.length === 0) {
-      escList.appendChild(el("div", { class: "empty-state", text: "No open escalations." }));
-    }
-    DATA.overview.escalations.forEach(function (e) {
-      var tone = e.level === "L2" ? "warn" : "neutral";
-      var row = el("div", { class: "panel-header" }, [
-        el("div", {}, [
-          el("span", { class: "status-chip", "data-tone": tone, text: e.level }),
-          el("span", { class: "mono", text: " " + e.job + " " }),
-          el("span", { text: e.issue })
-        ]),
-        el("div", { class: "note", text: e.owner + " · " + e.time })
-      ]);
-      escList.appendChild(row);
-    });
+    // "Open escalations" panel removed from Overview for v1 (2026-07-22,
+    // afzl's call - escalations not shown at all initially). DATA.overview.
+    // escalations still populated in ops/data/ops.js, just not rendered
+    // anywhere right now - same as the standalone Escalations tab, which
+    // was already dropped from the nav.
 
     var checklist = document.getElementById("daily-checklist");
     DATA.overview.dailyChecklist.forEach(function (item) {
@@ -121,6 +110,104 @@
         ])
       ]);
       tbody.appendChild(row);
+    });
+
+    loadLiveVendors();
+  }
+
+  /* ---------------- Live vendors (Supabase) ---------------- */
+  // Vendors added via "+ Onboard vendor" are real Supabase rows, appended
+  // below the demo/mock rows above. Mock rows stay as-is (jobs/RFQs still
+  // reference them by name, not id) - this is additive, not a migration.
+  function loadLiveVendors() {
+    var tbody = document.getElementById("vendors-tbody");
+    if (!tbody || typeof supabaseClient === "undefined") return;
+    supabaseClient
+      .from("vendors")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(function (result) {
+        if (result.error) { console.error("loadLiveVendors:", result.error); return; }
+        tbody.querySelectorAll('[data-live-vendor="1"]').forEach(function (r) { r.remove(); });
+        result.data.forEach(function (v) {
+          var tone = v.active ? "ok" : "neutral";
+          var row = el("tr", { "data-live-vendor": "1" }, [
+            el("td", { class: "mono", text: v.id.slice(0, 8) }),
+            el("td", {}, [el("div", { class: "avatar-name" }, [
+              el("span", { class: "avatar-dot", "data-tone": tone }),
+              el("a", { href: "vendor-detail.html?id=" + encodeURIComponent(v.id), text: v.name })
+            ])]),
+            el("td", { text: v.plan }),
+            el("td", { text: "—" }),
+            el("td", { text: "—" }),
+            el("td", { text: v.joined_at }),
+            el("td", {}, [el("span", { class: "status-chip", "data-tone": tone, text: v.active ? "Active" : "Deactivated" })]),
+            el("td", {}, [
+              el("a", { class: "btn btn-ghost btn-sm", href: "vendor-detail.html?id=" + encodeURIComponent(v.id), text: "View" })
+            ])
+          ]);
+          tbody.appendChild(row);
+        });
+      });
+  }
+
+  /* ---------------- Add vendor modal ---------------- */
+  function bindVendorModal() {
+    var overlay = document.getElementById("vendor-modal-overlay");
+    var openBtn = document.getElementById("add-vendor-btn");
+    if (!overlay || !openBtn) return;
+    var closeBtn = document.getElementById("vendor-modal-close");
+    var cancelBtn = document.getElementById("vendor-modal-cancel");
+    var form = document.getElementById("vendor-form");
+    var errorEl = document.getElementById("vendor-form-error");
+    var submitBtn = document.getElementById("vendor-form-submit");
+
+    function openModal() {
+      overlay.hidden = false;
+      errorEl.hidden = true;
+      form.reset();
+      document.getElementById("vf-name").focus();
+    }
+    function closeModal() { overlay.hidden = true; }
+
+    openBtn.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !overlay.hidden) closeModal(); });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      errorEl.hidden = true;
+      var name = document.getElementById("vf-name").value.trim();
+      if (!name) {
+        errorEl.textContent = "Company name is required.";
+        errorEl.hidden = false;
+        return;
+      }
+      var payload = {
+        name: name,
+        contact_name: document.getElementById("vf-contact").value.trim() || null,
+        phone: document.getElementById("vf-phone").value.trim() || null,
+        email: document.getElementById("vf-email").value.trim() || null,
+        plan: document.getElementById("vf-plan").value,
+        trade_license_no: document.getElementById("vf-trade-license").value.trim() || null,
+        trade_license_expiry: document.getElementById("vf-trade-license-expiry").value || null,
+        insurance_expiry: document.getElementById("vf-insurance-expiry").value || null
+      };
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Adding...";
+      var result = await supabaseClient.from("vendors").insert(payload).select().single();
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add vendor";
+      if (result.error) {
+        errorEl.textContent = result.error.message || "Could not add vendor - try again.";
+        errorEl.hidden = false;
+        return;
+      }
+      closeModal();
+      showToast(name + " added to vendors.");
+      loadLiveVendors();
     });
   }
 
@@ -563,10 +650,195 @@
       jobsWrap.appendChild(table);
     }
 
+    var equipmentPanel = el("section", { class: "panel" }, [
+      el("div", { class: "panel-header" }, [
+        el("h2", { text: "Equipment / vehicles" }),
+        el("button", { class: "btn btn-primary btn-sm", type: "button", id: "add-equipment-btn" }, [document.createTextNode("+ Add equipment")])
+      ]),
+      el("div", { class: "panel-body", id: "vendor-equipment" }, [
+        el("div", { class: "empty-state", text: "Loading..." })
+      ])
+    ]);
+
     root.appendChild(summary);
     root.appendChild(infoPanel);
     root.appendChild(docsPanel);
     root.appendChild(jobsPanel);
+    root.appendChild(equipmentPanel);
+
+    loadEquipmentForVendor(vendor);
+    bindEquipmentModal(vendor);
+  }
+
+  /* ---------------- Equipment (Supabase) ---------------- */
+  // Vendor rows added via "+ Onboard vendor" already have a real Supabase
+  // id (uuid). Legacy demo vendors (V-014 etc.) don't exist in Supabase yet
+  // - resolveVendorSupabaseId() finds-or-creates a matching row by name so
+  // equipment can still be attached to them without a separate migration.
+  var currentVendorSupabaseId = null;
+
+  function isUuid(str) {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str || "");
+  }
+
+  async function resolveVendorSupabaseId(vendor) {
+    if (isUuid(vendor.id)) return vendor.id;
+    var found = await supabaseClient.from("vendors").select("id").eq("name", vendor.name).maybeSingle();
+    if (found.data) return found.data.id;
+    var inserted = await supabaseClient.from("vendors").insert({
+      name: vendor.name,
+      phone: vendor.phone || null,
+      plan: "standard",
+      active: !!vendor.active
+    }).select("id").single();
+    if (inserted.error) { console.error("resolveVendorSupabaseId:", inserted.error); return null; }
+    return inserted.data.id;
+  }
+
+  function equipmentAvailabilityTone(status) {
+    return status; // status values already match CSS data-tone names
+  }
+
+  async function loadEquipmentForVendor(vendor) {
+    var wrap = document.getElementById("vendor-equipment");
+    if (!wrap || typeof supabaseClient === "undefined") return;
+    currentVendorSupabaseId = await resolveVendorSupabaseId(vendor);
+    if (!currentVendorSupabaseId) {
+      wrap.innerHTML = "";
+      wrap.appendChild(el("div", { class: "empty-state", text: "Could not load equipment - try refreshing." }));
+      return;
+    }
+    var result = await supabaseClient
+      .from("equipment")
+      .select("*")
+      .eq("vendor_id", currentVendorSupabaseId)
+      .order("created_at", { ascending: false });
+    wrap.innerHTML = "";
+    if (result.error) {
+      wrap.appendChild(el("div", { class: "empty-state", text: "Could not load equipment - try refreshing." }));
+      return;
+    }
+    if (result.data.length === 0) {
+      wrap.appendChild(el("div", { class: "empty-state", text: "No equipment added yet." }));
+      return;
+    }
+    result.data.forEach(function (eq) {
+      var card = el("div", { class: "equipment-card", "data-equipment-id": eq.id });
+      var imageUrl = (eq.images && eq.images[0]) || null;
+      if (imageUrl) {
+        card.appendChild(el("img", { class: "equipment-thumb", src: imageUrl, alt: eq.name }));
+      } else {
+        card.appendChild(el("div", { class: "equipment-thumb-placeholder", text: "No photo" }));
+      }
+      var body = el("div", { class: "equipment-body" }, [
+        el("div", { class: "equipment-title", text: eq.name }),
+        el("div", { class: "equipment-meta", text: eq.category + (eq.plate_or_asset_id ? " · " + eq.plate_or_asset_id : "") })
+      ]);
+      var select = el("select", { class: "availability-select", "data-tone": eq.availability_status, "data-equipment-id": eq.id }, [
+        el("option", { value: "available", text: "Available" }),
+        el("option", { value: "on_job", text: "On job" }),
+        el("option", { value: "maintenance", text: "Maintenance" })
+      ]);
+      select.value = eq.availability_status;
+      select.addEventListener("change", async function () {
+        var newStatus = select.value;
+        select.disabled = true;
+        var updateResult = await supabaseClient.from("equipment").update({ availability_status: newStatus }).eq("id", eq.id);
+        select.disabled = false;
+        if (updateResult.error) {
+          showToast("Could not update availability - try again.");
+          select.value = eq.availability_status;
+          return;
+        }
+        eq.availability_status = newStatus;
+        select.setAttribute("data-tone", newStatus);
+        showToast(eq.name + " marked " + newStatus.replace("_", " ") + ".");
+      });
+      body.appendChild(select);
+      card.appendChild(body);
+      wrap.appendChild(card);
+    });
+  }
+
+  function bindEquipmentModal(vendor) {
+    var overlay = document.getElementById("equipment-modal-overlay");
+    var openBtn = document.getElementById("add-equipment-btn");
+    if (!overlay || !openBtn) return;
+    var closeBtn = document.getElementById("equipment-modal-close");
+    var cancelBtn = document.getElementById("equipment-modal-cancel");
+    var form = document.getElementById("equipment-form");
+    var errorEl = document.getElementById("equipment-form-error");
+    var submitBtn = document.getElementById("equipment-form-submit");
+
+    function openModal() {
+      overlay.hidden = false;
+      errorEl.hidden = true;
+      form.reset();
+      document.getElementById("ef-name").focus();
+    }
+    function closeModal() { overlay.hidden = true; }
+
+    openBtn.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !overlay.hidden) closeModal(); });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      errorEl.hidden = true;
+      var name = document.getElementById("ef-name").value.trim();
+      if (!name) {
+        errorEl.textContent = "Name / description is required.";
+        errorEl.hidden = false;
+        return;
+      }
+      if (!currentVendorSupabaseId) {
+        errorEl.textContent = "Vendor not ready yet - try again in a moment.";
+        errorEl.hidden = false;
+        return;
+      }
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Adding...";
+
+      var images = [];
+      var fileInput = document.getElementById("ef-image");
+      var file = fileInput.files[0];
+      if (file) {
+        var path = currentVendorSupabaseId + "/" + Date.now() + "-" + file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+        var upload = await supabaseClient.storage.from("equipment-images").upload(path, file);
+        if (upload.error) {
+          errorEl.textContent = "Image upload failed: " + upload.error.message;
+          errorEl.hidden = false;
+          submitBtn.disabled = false;
+          submitBtn.textContent = "Add equipment";
+          return;
+        }
+        var publicUrl = supabaseClient.storage.from("equipment-images").getPublicUrl(path);
+        images.push(publicUrl.data.publicUrl);
+      }
+
+      var payload = {
+        vendor_id: currentVendorSupabaseId,
+        category: document.getElementById("ef-category").value,
+        name: name,
+        plate_or_asset_id: document.getElementById("ef-plate").value.trim() || null,
+        availability_status: document.getElementById("ef-availability").value,
+        notes: document.getElementById("ef-notes").value.trim() || null,
+        images: images
+      };
+      var result = await supabaseClient.from("equipment").insert(payload);
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Add equipment";
+      if (result.error) {
+        errorEl.textContent = result.error.message || "Could not add equipment - try again.";
+        errorEl.hidden = false;
+        return;
+      }
+      closeModal();
+      showToast(name + " added.");
+      loadEquipmentForVendor(vendor);
+    });
   }
 
   document.addEventListener("DOMContentLoaded", function () {
@@ -582,6 +854,7 @@
     }
     bindTabs();
     bindNotifications();
+    bindVendorModal();
     renderOverview();
     renderVendors();
     renderJobs();

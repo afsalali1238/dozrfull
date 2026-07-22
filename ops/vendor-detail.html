@@ -11,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Hanken+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 <link rel="icon" type="image/svg+xml" href="../marketplace/assets/favicon.svg">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 </head>
 <body data-page="vendor-detail">
 <a class="skip-link" href="#main-content">Skip to content</a>
@@ -31,6 +32,65 @@
   </main>
 </div>
 
+<!-- ADD EQUIPMENT MODAL -->
+<div class="modal-overlay" id="equipment-modal-overlay" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="equipment-modal-title">
+    <div class="modal-header">
+      <h2 id="equipment-modal-title">Add equipment / vehicle</h2>
+      <button type="button" class="modal-close" id="equipment-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <form id="equipment-form" class="modal-form" novalidate>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label class="field-label" for="ef-category">Category *</label>
+          <select id="ef-category" name="category" required>
+            <option value="excavator">Excavator</option>
+            <option value="wheel-loader">Wheel Loader</option>
+            <option value="crane">Crane</option>
+            <option value="flatbed">Flatbed Truck</option>
+            <option value="low-bed">Low-bed Trailer</option>
+            <option value="box-truck">Box Truck</option>
+            <option value="boom-lift">Boom Lift</option>
+            <option value="scissor-lift">Scissor Lift</option>
+            <option value="generator">Generator</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="ef-availability">Availability</label>
+          <select id="ef-availability" name="availability_status">
+            <option value="available">Available</option>
+            <option value="on_job">On job</option>
+            <option value="maintenance">Maintenance</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="ef-name">Name / description *</label>
+        <input type="text" id="ef-name" name="name" placeholder="e.g. Crane, 60t" required>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="ef-plate">Plate / asset ID</label>
+        <input type="text" id="ef-plate" name="plate_or_asset_id" placeholder="e.g. DXB-A-12345">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="ef-image">Photo</label>
+        <input type="file" id="ef-image" name="image" accept="image/*">
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="ef-notes">Notes</label>
+        <textarea id="ef-notes" name="notes" rows="2"></textarea>
+      </div>
+      <p class="modal-error" id="equipment-form-error" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="equipment-modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="equipment-form-submit">Add equipment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="js/supabase-client.js"></script>
 <script src="data/ops.js"></script>
 <script src="js/main.js"></script>
 </body>
