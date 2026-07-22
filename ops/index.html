@@ -22,57 +22,29 @@
       <span>dozr ops</span>
     </a>
     <span class="badge-internal">Internal</span>
-    <a href="../dashboard/index.html" style="color:rgba(255,255,255,.6);font-size:12px;text-decoration:none;">&larr; Dozr Dashboard</a>
 
     <nav role="tablist" aria-label="Ops dashboard sections" class="top-nav">
-      <button role="tab" id="tab-enquiries" aria-controls="panel-enquiries" aria-selected="true" type="button">Enquiries</button>
-      <button role="tab" id="tab-kanban" aria-controls="panel-kanban" aria-selected="false" type="button">Kanban</button>
+      <button role="tab" id="tab-kanban" aria-controls="panel-kanban" aria-selected="true" type="button">Kanban</button>
       <button role="tab" id="tab-assets" aria-controls="panel-assets" aria-selected="false" type="button">Assets</button>
       <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
-      <button role="tab" id="tab-rfqs" aria-controls="panel-rfqs" aria-selected="false" type="button">RFQs</button>
       <button role="tab" id="tab-billing" aria-controls="panel-billing" aria-selected="false" type="button">Billing</button>
       <button role="tab" id="tab-reports" aria-controls="panel-reports" aria-selected="false" type="button">Reports</button>
     </nav>
 
     <span class="live-pill"><span class="dot" aria-hidden="true"></span>Updated <span id="last-updated">—</span></span>
-
-    <div class="notif-wrap">
-      <button type="button" class="notif-bell" id="notif-bell" aria-haspopup="true" aria-expanded="false" aria-label="Quote request notifications">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a5 5 0 0 0-5 5v3.1c0 .6-.2 1.2-.6 1.7L5 15h14l-1.4-2.2c-.4-.5-.6-1.1-.6-1.7V8a5 5 0 0 0-5-5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9.5 18a2.5 2.5 0 0 0 5 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-        <span class="notif-badge" id="notif-badge" hidden>0</span>
-      </button>
-      <div class="notif-dropdown" id="notif-dropdown" hidden role="menu" aria-label="Pending quote requests">
-        <div class="notif-dropdown-header">Quote requests awaiting a price</div>
-        <div id="notif-list"></div>
-      </div>
-    </div>
   </header>
 
   <main class="app-main" id="main-content">
     <h1 class="sr-only">Dozr Ops — internal operations dashboard</h1>
 
-    <!-- ENQUIRIES -->
-    <section class="tabpanel" id="panel-enquiries" role="tabpanel" aria-labelledby="tab-enquiries">
+    <!-- KANBAN (also the enquiries landing view - "Enquiry Received" is stage 1 of the pipeline below) -->
+    <section class="tabpanel" id="panel-kanban" role="tabpanel" aria-labelledby="tab-kanban">
       <section class="summary-grid" id="enquiries-summary" aria-label="Key metrics"></section>
-      <section class="panel" aria-labelledby="new-enquiries-heading">
-        <div class="panel-header">
-          <h2 id="new-enquiries-heading">New enquiries</h2>
-          <div class="view-toggle" role="group" aria-label="Filter by vertical" id="enquiries-vertical-filter">
-            <button type="button" class="view-toggle-btn" data-vertical="all" aria-pressed="true">All</button>
-            <button type="button" class="view-toggle-btn" data-vertical="logistics" aria-pressed="false">Logistics</button>
-            <button type="button" class="view-toggle-btn" data-vertical="equipment" aria-pressed="false">Equipment Rental</button>
-          </div>
-        </div>
-        <div class="panel-body no-pad" id="new-enquiries-list"></div>
-      </section>
-    </section>
-
-    <!-- KANBAN -->
-    <section class="tabpanel" id="panel-kanban" role="tabpanel" aria-labelledby="tab-kanban" hidden>
       <section class="panel" aria-labelledby="kanban-heading">
         <div class="panel-header">
           <h2 id="kanban-heading">Job pipeline</h2>
           <div class="filter-row" style="gap:12px;align-items:center;">
+            <button class="btn btn-primary btn-sm" type="button" id="add-job-btn">+ New enquiry</button>
             <div class="view-toggle" role="group" aria-label="Filter by vertical" id="jobs-vertical-filter">
               <button type="button" class="view-toggle-btn" data-vertical="all" aria-pressed="true">All</button>
               <button type="button" class="view-toggle-btn" data-vertical="logistics" aria-pressed="false">Logistics</button>
@@ -153,43 +125,14 @@
       </section>
     </section>
 
-    <!-- RFQS -->
-    <section class="tabpanel" id="panel-rfqs" role="tabpanel" aria-labelledby="tab-rfqs" hidden>
-      <div class="panel-header" style="padding:0 0 var(--space-2) 0;">
-        <h2>RFQ assignment</h2>
-        <button class="btn btn-primary btn-sm" type="button" disabled title="RFQ creation ships with the real backend - not wired up on mock data">+ New RFQ</button>
-      </div>
-      <div id="rfqs-list"></div>
-    </section>
-
-    <!-- ESCALATIONS -->
-    <section class="tabpanel" id="panel-escalations" role="tabpanel" aria-labelledby="tab-escalations" hidden>
-      <section class="summary-grid" id="escalations-summary" aria-label="Escalation metrics"></section>
-      <div class="split-layout">
-        <section class="panel" aria-labelledby="escalation-log-heading">
-          <div class="panel-header"><h2 id="escalation-log-heading">Escalation log</h2></div>
-          <div class="panel-body no-pad table-scroll">
-            <table class="data-table">
-              <caption class="sr-only">Escalation log with level, job, issue, owner, and status</caption>
-              <thead>
-                <tr><th scope="col">Level</th><th scope="col">Job</th><th scope="col">Issue</th><th scope="col">Owner</th><th scope="col">Time</th><th scope="col">Status</th></tr>
-              </thead>
-              <tbody id="escalations-tbody"></tbody>
-            </table>
-          </div>
-        </section>
-        <section class="panel" aria-labelledby="routing-rules-heading">
-          <div class="panel-header"><h2 id="routing-rules-heading">Routing rules</h2></div>
-          <div class="panel-body" id="routing-rules"></div>
-        </section>
-      </div>
-    </section>
-
     <!-- BILLING -->
     <section class="tabpanel" id="panel-billing" role="tabpanel" aria-labelledby="tab-billing" hidden>
       <section class="summary-grid" id="billing-summary" aria-label="Billing metrics"></section>
       <section class="panel" aria-labelledby="billing-heading">
-        <div class="panel-header"><h2 id="billing-heading">Invoices</h2></div>
+        <div class="panel-header">
+          <h2 id="billing-heading">Invoices</h2>
+        </div>
+        <p class="note" style="padding:0 var(--space-2);margin:8px 0 0;">Sample invoice data - not yet wired to a real invoicing flow, so "Receipt"/"Remind" are disabled.</p>
         <div class="panel-body no-pad table-scroll">
           <table class="data-table">
             <caption class="sr-only">Client invoices with amount, dates, and payment status</caption>
@@ -220,7 +163,7 @@
           </table>
         </div>
       </section>
-      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records - "Revenue" sums the client-facing price on jobs with a confirmed AED amount. Profit isn't shown because vendor cost isn't tracked per job yet (jobs only carry the client price) - that needs a cost field before a real margin can be reported, not a guessed percentage.</p>
+      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records - "Revenue" sums the client-facing price on jobs with a confirmed AED amount. Profit isn't shown because vendor cost isn't tracked per job yet (jobs only carry the client price) - that needs a cost field before a real margin can be reported, not a guessed percentage. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
     </section>
   </main>
 </div>
@@ -279,6 +222,49 @@
       <div class="modal-actions">
         <button type="button" class="btn btn-ghost btn-sm" id="vendor-modal-cancel">Cancel</button>
         <button type="submit" class="btn btn-primary btn-sm" id="vendor-form-submit">Add vendor</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- NEW ENQUIRY / JOB MODAL -->
+<div class="modal-overlay" id="job-modal-overlay" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="job-modal-title">
+    <div class="modal-header">
+      <h2 id="job-modal-title">Log new enquiry</h2>
+      <button type="button" class="modal-close" id="job-modal-close" aria-label="Close">&times;</button>
+    </div>
+    <form id="job-form" class="modal-form" novalidate>
+      <p class="note" style="margin:0 0 12px;">For enquiries that come in over WhatsApp/phone - logs the job at "Enquiry Received" so it shows up on the board. Vendor and price get set later.</p>
+      <div class="field-group">
+        <label class="field-label" for="jf-client">Client name *</label>
+        <input type="text" id="jf-client" name="client_name" required>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="jf-contact">Client contact (phone/email)</label>
+        <input type="text" id="jf-contact" name="client_contact">
+      </div>
+      <div class="field-row-2">
+        <div class="field-group">
+          <label class="field-label" for="jf-vertical">Vertical *</label>
+          <select id="jf-vertical" name="vertical" required>
+            <option value="equipment">Equipment Rental</option>
+            <option value="logistics">Logistics</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-label" for="jf-route">Route / location</label>
+          <input type="text" id="jf-route" name="route" placeholder="e.g. Jebel Ali → Al Quoz">
+        </div>
+      </div>
+      <div class="field-group">
+        <label class="field-label" for="jf-type">What's needed *</label>
+        <input type="text" id="jf-type" name="type" placeholder="e.g. Crane, 60t, 2 weeks" required>
+      </div>
+      <p class="modal-error" id="job-form-error" role="alert" hidden></p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost btn-sm" id="job-modal-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary btn-sm" id="job-form-submit">Log enquiry</button>
       </div>
     </form>
   </div>

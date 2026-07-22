@@ -52,6 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
       freightDate.value || "Pickup date TBD",
       vehicleType.value || "Vehicle TBD"
     );
-    window.location.href = url;
+    // New-tab, not same-tab redirect - see equipment-detail.js for why
+    // (2026-07-22 audit: WhatsApp handoffs were inconsistent site-wide).
+    window.open(url, "_blank", "noopener,noreferrer");
   });
 });

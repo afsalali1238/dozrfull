@@ -88,10 +88,11 @@ document.addEventListener("DOMContentLoaded", () => {
     return true;
   }
 
+  // Delegates to data/equipment.js's getEquipmentAvailability() so Browse
+  // and equipment-detail.html can never disagree on a unit's availability
+  // tier (see that function's comment - fixed 2026-07-22).
   function getAvailability(unit) {
-    if (["cat-305-cr", "cat-320"].includes(unit.id)) return "same-day";
-    if (["hitachi-zx130", "komatsu-wa320", "volvo-ec220"].includes(unit.id)) return "next-day";
-    return "this-week";
+    return getEquipmentAvailability(unit);
   }
 
   function renderEmptyState(category, categoryCount) {

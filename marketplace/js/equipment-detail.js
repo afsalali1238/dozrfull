@@ -12,6 +12,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const weight = unit.weightTonnes ? `${unit.weightTonnes} tonne` : "verified";
   const specs = Object.entries(unit.specs || {}).map(([key, value]) => `<div class="spec-cell"><span>${key}</span><strong>${value}</strong></div>`).join("");
+  const availabilityLabel = getEquipmentAvailability(unit).replace("-", " ");
 
   main.innerHTML = `
     <div class="card-kicker">${unit.categoryLabel} - ${weight}</div>
@@ -24,7 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   rail.innerHTML = `
     <form class="quote-rail" id="quote-form">
-      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><h2 style="font-size:21px">Request a quote</h2><span class="chip" aria-label="Availability">Same-day</span></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px"><h2 style="font-size:21px">Request a quote</h2><span class="chip" aria-label="Availability">${availabilityLabel}</span></div>
       <p class="text-muted" style="font-size:13px;line-height:1.5;margin:0 0 20px">Share your dates and site - the vendor sends a fixed price back, usually within the hour. No obligation.</p>
       <div class="form-stack">
         <div><label class="field-label" for="rentalStart">Rental start</label><input class="input-control" id="rentalStart" type="date" value="2026-08-12" required></div>
@@ -45,7 +46,10 @@ document.addEventListener("DOMContentLoaded", () => {
     e.preventDefault();
     const dates = `${start.value || 'Start date TBD'} / ${duration.value}`;
     const url = DozrWhatsApp.requestQuote(unit.name, dates, deliverTo.value || 'Site location TBD');
-    window.location.href = url;
+    // New-tab, not same-tab redirect - keeps the customer on Dozr instead of
+    // stranding them on WhatsApp with no way back (matches quote-approval.js's
+    // "Approve Quote" pattern; inconsistency flagged in the 2026-07-22 audit).
+    window.open(url, "_blank", "noopener,noreferrer");
   });
 
   function renderNotFound(id, mainTarget, railTarget) {

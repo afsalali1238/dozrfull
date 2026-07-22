@@ -1,8 +1,11 @@
-/* Shared quote approval link behavior. */
+/* Shared quote approval link behavior.
+   Note: deliberately does NOT read/display a "vendor" param - Dozr manages
+   vendor relationships and never surfaces vendor identity to clients (see
+   CLAUDE.md / ops SUPABASE_PLAN.md). The heading always reads "Your Dozr
+   quote", regardless of what a URL might carry. */
 const approvalParams = new URLSearchParams(window.location.search);
 const quoteRef = approvalParams.get("quote") || approvalParams.get("ref") || "DOZR-Q-1042";
 const quotedUnit = approvalParams.get("unit") || "CAT 320";
-const vendorName = approvalParams.get("vendor") || "Gulf Heavy Rentals";
 const quotePrice = approvalParams.get("price") || "AED 18,400";
 const quoteDate = approvalParams.get("date") || "12 Aug 2026";
 const quoteDuration = approvalParams.get("duration") || "2 weeks";
@@ -15,7 +18,7 @@ const equipmentLabel = quotedEquipment
 const photoUrl = quotedEquipment ? `assets/equipment/${quotedEquipment.id}-hero.jpg` : "assets/equipment/cat-320-hero.jpg";
 
 document.getElementById("equipmentLabel").textContent = equipmentLabel;
-document.getElementById("quoteHeading").textContent = `Quote from ${vendorName}`;
+document.getElementById("quoteHeading").textContent = "Your Dozr quote";
 document.getElementById("quotePrice").textContent = quotePrice;
 document.getElementById("quoteDate").textContent = quoteDate;
 document.getElementById("quoteDuration").textContent = quoteDuration;

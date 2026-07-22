@@ -14,6 +14,32 @@
     return node;
   }
 
+  // Keeps Tab/Shift+Tab cycling within an open modal instead of leaking
+  // focus out to the page behind the overlay. Attached once per overlay at
+  // bind time (not per open) - the handler is a no-op while overlay.hidden
+  // is true, so it's safe to leave attached permanently. Shared by all four
+  // modals (vendor, asset, new-enquiry, equipment) - found missing in the
+  // 2026-07-22 UI/UX audit.
+  function bindModalFocusTrap(overlay) {
+    if (!overlay) return;
+    overlay.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab" || overlay.hidden) return;
+      var focusable = overlay.querySelectorAll(
+        'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      );
+      if (focusable.length === 0) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+  }
+
   function stageTone(stage, total) {
     if (stage >= total - 1) return "ok";
     if (stage <= 1) return "neutral";
@@ -76,8 +102,11 @@
 
   /* ---------------- Live jobs (Supabase) ---------------- */
   // Enquiries/Kanban/Reports read from here, not DATA.jobs, once loaded.
-  // job-detail.html and vendor-detail.html's mock-vendor job history still
-  // use DATA.jobs directly - those pages aren't migrated this pass.
+  // job-detail.html now also queries Supabase directly by code (fixed
+  // 2026-07-22 - see renderJobDetailPage), falling back to DATA.jobs only
+  // for documents/timeline, which aren't modeled in Supabase yet. Only
+  // vendor-detail.html's mock-vendor job history panel is still genuinely
+  // mock-only (DATA.jobs filtered by vendor name).
   var LIVE_JOBS = [];
 
   async function loadJobsFromSupabase() {
@@ -121,11 +150,13 @@
     return { get: function () { return current; } };
   }
 
-  /* ---------------- Enquiries ---------------- */
-  var enquiriesVerticalFilter = "all";
-
+  /* ---------------- Enquiries summary (lives at the top of the Kanban tab) ---------------- */
+  // Was its own tab; merged into Kanban since "Enquiry Received" is already
+  // the first Kanban column - a separate list of the same jobs was
+  // redundant (afzl's call, 2026-07-22).
   function renderEnquiries() {
     var summaryEl = document.getElementById("enquiries-summary");
+    if (!summaryEl) return;
     var allNew = LIVE_JOBS.filter(function (j) { return j.stage === 0; });
     var logisticsCount = allNew.filter(function (j) { return jobVertical(j) === "logistics"; }).length;
     var equipmentCount = allNew.filter(function (j) { return jobVertical(j) === "equipment"; }).length;
@@ -140,44 +171,6 @@
         el("div", { class: "value", text: item.value }),
         el("div", { class: "note", text: item.note })
       ]));
-    });
-
-    renderEnquiriesList();
-  }
-
-  // Bound once at init, not inside renderEnquiries() - that function re-runs
-  // on every stage change (via refreshAllJobViews), and re-binding here each
-  // time would stack duplicate click listeners on the same buttons.
-  function bindEnquiriesVerticalFilter() {
-    bindVerticalFilter("enquiries-vertical-filter", function (v) {
-      enquiriesVerticalFilter = v;
-      renderEnquiriesList();
-    });
-  }
-
-  function renderEnquiriesList() {
-    var enqList = document.getElementById("new-enquiries-list");
-    enqList.innerHTML = "";
-    var newEnquiries = LIVE_JOBS.filter(function (j) {
-      if (j.stage !== 0) return false;
-      return enquiriesVerticalFilter === "all" || jobVertical(j) === enquiriesVerticalFilter;
-    });
-    if (newEnquiries.length === 0) {
-      enqList.appendChild(el("div", { class: "empty-state", text: "No new enquiries." }));
-      return;
-    }
-    newEnquiries.forEach(function (j) {
-      var v = jobVertical(j);
-      var row = el("div", { style: "display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);" }, [
-        el("div", {}, [
-          el("span", { class: "mono", text: j.code + " " }),
-          el("strong", { text: j.client }),
-          el("span", { class: "status-chip", "data-tone": "neutral", style: "margin-left:8px;", text: verticalLabel(v) }),
-          el("div", { class: "note", style: "margin-top:2px;", text: j.type + " · " + j.route })
-        ]),
-        el("a", { class: "btn btn-ghost btn-sm", href: "job-detail.html?job=" + encodeURIComponent(j.code), text: "Open" })
-      ]);
-      enqList.appendChild(row);
     });
   }
 
@@ -212,6 +205,14 @@
   // Vendors added via "+ Onboard vendor" are real Supabase rows, appended
   // below the demo/mock rows above. Mock rows stay as-is (jobs/RFQs still
   // reference them by name, not id) - this is additive, not a migration.
+  // "Dozr Verified Fleet" is a system placeholder (owns the 15 Marketplace-
+  // mirrored assets seeded in 0008_seed_marketplace_equipment.sql) - it's
+  // not a real vendor, so it's excluded here to keep it off the normal
+  // Vendors list (and out of reach of the row Delete button, which would
+  // cascade-delete all 15 assets). Still in the DB, still assignable via
+  // Assets - just hidden from this table (afzl's call, 2026-07-22).
+  var HIDDEN_VENDOR_NAMES = ["Dozr Verified Fleet"];
+
   function loadLiveVendors() {
     var tbody = document.getElementById("vendors-tbody");
     if (!tbody || typeof supabaseClient === "undefined") return;
@@ -223,6 +224,7 @@
         if (result.error) { console.error("loadLiveVendors:", result.error); return; }
         tbody.querySelectorAll('[data-live-vendor="1"]').forEach(function (r) { r.remove(); });
         result.data.forEach(function (v) {
+          if (HIDDEN_VENDOR_NAMES.indexOf(v.name) !== -1) return;
           var tone = v.active ? "ok" : "neutral";
           var row = el("tr", { "data-live-vendor": "1" }, [
             el("td", { class: "mono", text: v.id.slice(0, 8) }),
@@ -271,6 +273,7 @@
     var overlay = document.getElementById("vendor-modal-overlay");
     var openBtn = document.getElementById("add-vendor-btn");
     if (!overlay || !openBtn) return;
+    bindModalFocusTrap(overlay);
     var closeBtn = document.getElementById("vendor-modal-close");
     var cancelBtn = document.getElementById("vendor-modal-cancel");
     var form = document.getElementById("vendor-form");
@@ -323,6 +326,79 @@
       closeModal();
       showToast(name + " added to vendors.");
       loadLiveVendors();
+    });
+  }
+
+  /* ---------------- New enquiry / job modal ---------------- */
+  // The only way a job used to enter the jobs table was Supabase's raw
+  // table editor - Marketplace's booking/quote forms are WhatsApp-native by
+  // design (see marketplace/js/whatsapp.js) and don't write to a backend,
+  // so nothing created jobs automatically. This is staff's manual logging
+  // step for whatever comes in over WhatsApp/phone (added 2026-07-22).
+  function generateJobCode() {
+    return "DZR-J-" + Date.now().toString().slice(-6);
+  }
+
+  function bindJobModal() {
+    var overlay = document.getElementById("job-modal-overlay");
+    var openBtn = document.getElementById("add-job-btn");
+    if (!overlay || !openBtn) return;
+    bindModalFocusTrap(overlay);
+    var closeBtn = document.getElementById("job-modal-close");
+    var cancelBtn = document.getElementById("job-modal-cancel");
+    var form = document.getElementById("job-form");
+    var errorEl = document.getElementById("job-form-error");
+    var submitBtn = document.getElementById("job-form-submit");
+
+    function openModal() {
+      overlay.hidden = false;
+      errorEl.hidden = true;
+      form.reset();
+      document.getElementById("jf-client").focus();
+    }
+    function closeModal() { overlay.hidden = true; }
+
+    openBtn.addEventListener("click", openModal);
+    closeBtn.addEventListener("click", closeModal);
+    cancelBtn.addEventListener("click", closeModal);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
+    document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !overlay.hidden) closeModal(); });
+
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      errorEl.hidden = true;
+      var clientName = document.getElementById("jf-client").value.trim();
+      var type = document.getElementById("jf-type").value.trim();
+      if (!clientName || !type) {
+        errorEl.textContent = "Client name and what's needed are required.";
+        errorEl.hidden = false;
+        return;
+      }
+      var payload = {
+        code: generateJobCode(),
+        client_name: clientName,
+        client_contact: document.getElementById("jf-contact").value.trim() || null,
+        route: document.getElementById("jf-route").value.trim() || null,
+        type: type,
+        vertical: document.getElementById("jf-vertical").value,
+        stage: 0,
+        price: "Quote pending",
+        flagged: false
+      };
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Logging...";
+      var result = await supabaseClient.from("jobs").insert(payload).select().single();
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Log enquiry";
+      if (result.error) {
+        errorEl.textContent = result.error.message || "Could not log enquiry - try again.";
+        errorEl.hidden = false;
+        return;
+      }
+      closeModal();
+      showToast(clientName + "'s enquiry logged as " + result.data.code + ".");
+      await loadJobsFromSupabase();
+      refreshAllJobViews();
     });
   }
 
@@ -429,6 +505,7 @@
     var overlay = document.getElementById("asset-modal-overlay");
     var openBtn = document.getElementById("add-asset-btn");
     if (!overlay || !openBtn) return;
+    bindModalFocusTrap(overlay);
     var closeBtn = document.getElementById("asset-modal-close");
     var cancelBtn = document.getElementById("asset-modal-cancel");
     var form = document.getElementById("asset-form");
@@ -590,7 +667,7 @@
           el("div", { class: "kanban-route", text: j.vendor + " · " + j.route }),
           el("div", { class: "kanban-price", text: j.price })
         ]);
-        var select = el("select", { class: "kanban-stage-select" });
+        var select = el("select", { class: "kanban-stage-select", "aria-label": "Stage for " + j.code });
         DATA.pipeline.forEach(function (name, idx) {
           select.appendChild(el("option", { value: String(idx), text: (idx + 1) + " · " + name }));
         });
@@ -656,50 +733,10 @@
   }
 
   /* ---------------- RFQs ---------------- */
-
-  function rfqAwaitingClientQuote(r) {
-    return r.quotesIn < r.sentTo.length && !r.quotedPrice;
-  }
-
-  function buildQuoteDocument(r) {
-    var today = new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-    return "<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\">" +
-      "<title>Quote " + r.code + " — Dozr</title>" +
-      "<style>" +
-      "body{font-family:'Hanken Grotesk',system-ui,sans-serif;color:#141518;max-width:680px;margin:40px auto;padding:0 24px;}" +
-      "h1{font-family:'Space Grotesk',system-ui,sans-serif;font-size:22px;margin-bottom:4px;}" +
-      ".mono{font-family:'Space Mono',monospace;font-size:12px;color:#5B5F66;}" +
-      "table{width:100%;border-collapse:collapse;margin-top:24px;}" +
-      "td{padding:10px 0;border-bottom:1px solid #E8E8E3;font-size:14px;}" +
-      "td:first-child{color:#5B5F66;width:40%;}" +
-      ".total{font-size:20px;font-weight:700;margin-top:24px;}" +
-      ".accent{color:#E6AF00;}" +
-      "</style></head><body>" +
-      "<h1>Dozr <span class=\"accent\">quote</span></h1>" +
-      "<div class=\"mono\">" + r.code + " · Issued " + today + "</div>" +
-      "<table>" +
-      "<tr><td>Client</td><td>" + r.client + (r.clientContact ? " (" + r.clientContact + ")" : "") + "</td></tr>" +
-      "<tr><td>Route</td><td>" + r.route + "</td></tr>" +
-      "<tr><td>Equipment</td><td>" + r.type + "</td></tr>" +
-      "<tr><td>Deadline</td><td>" + r.deadline + "</td></tr>" +
-      "</table>" +
-      "<div class=\"total\">AED " + Number(r.quotedPrice).toLocaleString("en-US") + "</div>" +
-      "<p class=\"mono\">This quote is valid for 48 hours from issue. Reply to confirm and we'll issue a PO.</p>" +
-      "</body></html>";
-  }
-
-  function downloadQuote(r) {
-    var html = buildQuoteDocument(r);
-    var blob = new Blob([html], { type: "text/html" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url;
-    a.download = "Quote-" + r.code + ".html";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
+  // RFQ tab (quote-collection UI) removed 2026-07-22 - not wired to a real
+  // backend yet, buttons were disabled and read as broken (afzl's call).
+  // Will come back once quote collection is actually built. DATA.rfqs stays
+  // in ops/data/ops.js for when that happens.
 
   function showToast(message) {
     var toast = document.getElementById("ops-toast");
@@ -711,137 +748,6 @@
     toast.classList.add("visible");
     clearTimeout(toast._timer);
     toast._timer = setTimeout(function () { toast.classList.remove("visible"); }, 3200);
-  }
-
-  function renderRfqs() {
-    var wrap = document.getElementById("rfqs-list");
-    wrap.innerHTML = "";
-    if (DATA.rfqs.length === 0) {
-      wrap.appendChild(el("div", { class: "empty-state", text: "No open RFQs." }));
-      return;
-    }
-    DATA.rfqs.forEach(function (r) {
-      var pending = r.sentTo.length - r.quotesIn;
-      var tone = r.quotesIn === 0 ? "neutral" : (pending === 0 ? "ok" : "warn");
-      var card = el("div", { class: "panel", id: "rfq-card-" + r.code }, [
-        el("div", { class: "panel-header" }, [
-          el("div", {}, [
-            el("span", { class: "mono", text: r.code + " " }),
-            el("strong", { text: r.client + " — " + r.route })
-          ]),
-          el("span", { class: "status-chip", "data-tone": tone, text: r.quotesIn + " / " + r.sentTo.length + " quoted" })
-        ]),
-        el("div", { class: "panel-body" }, [
-          el("div", { class: "note", text: r.type + " · Deadline " + r.deadline }),
-          el("div", { class: "note", style: "margin-top:6px;", text: "Sent to: " + r.sentTo.join(", ") }),
-          el("div", { class: "note", style: "margin-top:6px;", text: "Client contact: " + (r.clientContact || "—") + " · " + r.clientEmail }),
-          el("div", { style: "margin-top:10px;display:flex;gap:8px;" }, [
-            el("button", { class: "btn btn-primary btn-sm", type: "button", disabled: "disabled", title: "Not wired up on mock data - ships with the real backend", text: "Add vendor" }),
-            el("button", { class: "btn btn-ghost btn-sm", type: "button", disabled: "disabled", title: "Not wired up on mock data - ships with the real backend", text: "Close RFQ" })
-          ]),
-          el("div", { class: "quote-form" }, [
-            el("label", { class: "field-label", for: "quote-price-" + r.code, text: "Quote price to client (AED)" }),
-            el("div", { class: "quote-form-row" }, [
-              el("input", { type: "number", min: "0", step: "50", id: "quote-price-" + r.code, class: "quote-price-input", value: r.quotedPrice || "" }),
-              el("button", { class: "btn btn-ghost btn-sm", type: "button", "data-action": "download", "data-code": r.code, text: "Download quote" }),
-              el("button", { class: "btn btn-primary btn-sm", type: "button", "data-action": "email", "data-code": r.code, text: "Send to client" })
-            ]),
-            el("div", { class: "quote-status", id: "quote-status-" + r.code, text: r.emailedAt ? ("Emailed to " + r.clientEmail + " · AED " + Number(r.quotedPrice).toLocaleString("en-US") + " · " + r.emailedAt) : "" })
-          ])
-        ])
-      ]);
-      wrap.appendChild(card);
-    });
-
-    wrap.addEventListener("click", function (e) {
-      var btn = e.target.closest("button[data-action]");
-      if (!btn) return;
-      var code = btn.getAttribute("data-code");
-      var r = DATA.rfqs.filter(function (x) { return x.code === code; })[0];
-      if (!r) return;
-      var input = document.getElementById("quote-price-" + code);
-      var price = parseFloat(input.value);
-      var statusEl = document.getElementById("quote-status-" + code);
-
-      if (!price || price <= 0) {
-        statusEl.textContent = "Enter a valid price before continuing.";
-        input.focus();
-        return;
-      }
-      r.quotedPrice = price;
-
-      if (btn.getAttribute("data-action") === "download") {
-        downloadQuote(r);
-        showToast("Quote downloaded for " + r.code + ".");
-      } else if (btn.getAttribute("data-action") === "email") {
-        r.emailedAt = "Just now";
-        statusEl.textContent = "Emailed to " + r.clientEmail + " · AED " + price.toLocaleString("en-US") + " · Just now";
-        showToast("Quote for " + r.code + " sent to " + r.clientEmail + " (simulated — no backend wired up yet).");
-        renderNotifications();
-      }
-    });
-  }
-
-  /* ---------------- Notifications ---------------- */
-  function renderNotifications() {
-    var bell = document.getElementById("notif-bell");
-    var badge = document.getElementById("notif-badge");
-    var list = document.getElementById("notif-list");
-    if (!bell) return;
-
-    var pending = DATA.rfqs.filter(rfqAwaitingClientQuote);
-    list.innerHTML = "";
-
-    if (pending.length === 0) {
-      badge.hidden = true;
-      list.appendChild(el("div", { class: "empty-state", style: "padding:16px;", text: "No quote requests waiting." }));
-      return;
-    }
-
-    badge.hidden = false;
-    badge.textContent = String(pending.length);
-    pending.forEach(function (r) {
-      var item = el("button", { type: "button", class: "notif-item", "data-code": r.code }, [
-        el("span", { class: "mono", text: r.code }),
-        el("span", { text: r.client + " — " + r.type })
-      ]);
-      list.appendChild(item);
-    });
-  }
-
-  function bindNotifications() {
-    var bell = document.getElementById("notif-bell");
-    var dropdown = document.getElementById("notif-dropdown");
-    if (!bell) return;
-
-    bell.addEventListener("click", function () {
-      var open = dropdown.hidden;
-      dropdown.hidden = !open;
-      bell.setAttribute("aria-expanded", String(open));
-    });
-
-    document.addEventListener("click", function (e) {
-      if (!dropdown.hidden && !e.target.closest(".notif-wrap")) {
-        dropdown.hidden = true;
-        bell.setAttribute("aria-expanded", "false");
-      }
-    });
-
-    dropdown.addEventListener("click", function (e) {
-      var item = e.target.closest(".notif-item");
-      if (!item) return;
-      var code = item.getAttribute("data-code");
-      dropdown.hidden = true;
-      bell.setAttribute("aria-expanded", "false");
-      var rfqTab = document.getElementById("tab-rfqs");
-      if (rfqTab) rfqTab.click();
-      var card = document.getElementById("rfq-card-" + code);
-      if (card) {
-        card.scrollIntoView({ behavior: "smooth", block: "center" });
-        card.style.outline = "2px solid var(--yellow)";
-        setTimeout(function () { card.style.outline = ""; }, 1600);
-      }
-    });
   }
 
   /* ---------------- Billing ---------------- */
@@ -929,50 +835,10 @@
     });
   }
 
-  /* ---------------- Escalations ---------------- */
-  function renderEscalations() {
-    var summaryEl = document.getElementById("escalations-summary");
-    DATA.escalations.summary.forEach(function (item) {
-      summaryEl.appendChild(el("div", { class: "summary-card" }, [
-        el("div", { class: "label", text: item.label }),
-        el("div", { class: "value", text: item.value }),
-        el("div", { class: "note", text: item.note })
-      ]));
-    });
-
-    var tbody = document.getElementById("escalations-tbody");
-    DATA.escalations.log.forEach(function (e) {
-      var levelTone = e.level === "L3" ? "error" : (e.level === "L2" ? "warn" : "neutral");
-      var statusTone = e.status === "Open" ? "warn" : "ok";
-      var row = el("tr", {}, [
-        el("td", {}, [el("span", { class: "status-chip", "data-tone": levelTone, text: e.level })]),
-        el("td", { class: "mono" }, [el("a", { href: "job-detail.html?job=" + encodeURIComponent(e.job), text: e.job })]),
-        el("td", { text: e.issue }),
-        el("td", { text: e.owner }),
-        el("td", { text: e.time }),
-        el("td", {}, [el("span", { class: "status-chip", "data-tone": statusTone, text: e.status })])
-      ]);
-      tbody.appendChild(row);
-    });
-
-    var rulesEl = document.getElementById("routing-rules");
-    DATA.escalations.rules.forEach(function (group) {
-      var tone = group.level === "L3" ? "error" : (group.level === "L2" ? "warn" : "neutral");
-      var block = el("div", { style: "margin-bottom:16px;" }, [
-        el("div", { style: "display:flex;align-items:center;gap:8px;margin-bottom:8px;" }, [
-          el("span", { class: "status-chip", "data-tone": tone, text: group.level }),
-          el("strong", { style: "font-size:13px;", text: group.title })
-        ])
-      ]);
-      var list = el("ul", { style: "margin:0;padding-left:18px;" });
-      group.items.forEach(function (item) {
-        var li = el("li", { style: "font-size:12px;color:var(--slate);line-height:1.6;margin-bottom:4px;", text: item });
-        list.appendChild(li);
-      });
-      block.appendChild(list);
-      rulesEl.appendChild(block);
-    });
-  }
+  // Escalations tab (panel-escalations, renderEscalations) was removed
+  // 2026-07-22 - the panel markup had no tab pointing at it since the 7→5
+  // nav trim, so it was rendering into unreachable DOM on every page load.
+  // DATA.escalations stays in ops/data/ops.js if this comes back later.
 
   function bindClock() {
     var updated = document.getElementById("last-updated");
@@ -984,10 +850,36 @@
   }
 
   /* ---------------- Job detail page ---------------- */
-  function renderJobDetailPage() {
+  // Prefers the live Supabase row (so stage/vendor/price reflect whatever
+  // was last set on the Kanban board) and only falls back to mock DATA.jobs
+  // documents/timeline, since those aren't modeled in Supabase yet. Before
+  // this fix (2026-07-22) this page read DATA.jobs only, so moving a job's
+  // stage on Kanban never showed up here - it displayed frozen mock data.
+  async function renderJobDetailPage() {
     var code = qsParam("job");
-    var job = DATA.jobs.filter(function (j) { return j.code === code; })[0];
     var root = document.getElementById("job-detail-root");
+    var mockJob = DATA.jobs.filter(function (j) { return j.code === code; })[0];
+
+    var liveRow = null;
+    if (code && typeof supabaseClient !== "undefined") {
+      var result = await supabaseClient.from("jobs").select("*").eq("code", code).maybeSingle();
+      if (!result.error && result.data) liveRow = result.data;
+    }
+
+    var job = liveRow ? {
+      code: liveRow.code,
+      client: liveRow.client_name,
+      clientContact: liveRow.client_contact,
+      vendor: liveRow.vendor_name || (mockJob && mockJob.vendor) || "— unassigned",
+      driver: liveRow.driver || (mockJob && mockJob.driver) || "",
+      route: liveRow.route,
+      type: liveRow.type,
+      stage: liveRow.stage,
+      price: liveRow.price,
+      documents: mockJob ? mockJob.documents : [],
+      timeline: mockJob ? mockJob.timeline : []
+    } : mockJob;
+
     if (!job) {
       root.appendChild(el("div", { class: "empty-state", text: code ? "No job found for " + code + "." : "No job specified." }));
       return;
@@ -1300,6 +1192,7 @@
     var overlay = document.getElementById("equipment-modal-overlay");
     var openBtn = document.getElementById("add-equipment-btn");
     if (!overlay || !openBtn) return;
+    bindModalFocusTrap(overlay);
     var closeBtn = document.getElementById("equipment-modal-close");
     var cancelBtn = document.getElementById("equipment-modal-cancel");
     var form = document.getElementById("equipment-form");
@@ -1381,7 +1274,7 @@
     var page = document.body.getAttribute("data-page");
     bindClock();
     if (page === "job-detail") {
-      renderJobDetailPage();
+      await renderJobDetailPage();
       return;
     }
     if (page === "vendor-detail") {
@@ -1389,21 +1282,17 @@
       return;
     }
     bindTabs();
-    bindNotifications();
     bindVendorModal();
     bindVendorDelete();
     bindAssetModal();
+    bindJobModal();
     bindJobsViewToggle();
-    bindEnquiriesVerticalFilter();
     renderAssets();
     renderVendors();
-    renderRfqs();
-    renderEscalations();
     renderBilling();
-    renderNotifications();
 
-    // Enquiries/Kanban/Reports all read LIVE_JOBS - load once, then render
-    // all three off the same fetch instead of each firing its own query.
+    // Enquiries summary/Kanban/Reports all read LIVE_JOBS - load once, then
+    // render all three off the same fetch instead of each firing its own query.
     await loadJobsFromSupabase();
     renderEnquiries();
     renderJobs();

@@ -702,3 +702,169 @@ Closes the "still open" item from the last entry.
 vendor job-history still on `ops/data/ops.js`. No "edit vendor on an asset"
 action yet - needed before the Marketplace-mirrored equipment can be
 reassigned off the placeholder vendor.
+
+## Dashboard launcher removed (2026-07-22)
+
+afzl called the `dashboard/` launcher page not required. Archived
+`dashboard/index.html` to `dashboard/_archive/index.html` (can't truly
+delete on this mount, same rename-workaround used elsewhere) and stripped
+the "← Dozr Dashboard" back-link from all 13 pages that had one (`ops/`:
+index, job-detail, login, vendor-detail; `fleet-v2/`: all 9 pages) so
+nothing links to a page that's gone. `ops/` and `fleet-v2/` are reached
+directly now, not through a shared internal home page.
+
+## Ops dashboard expert audit + trim (2026-07-22)
+
+Also checked a separate repo afzl surfaced mid-session,
+`github.com/afsalali1238/KASLO` (deployed at kaslo-liard.vercel.app) - a
+Stitch-AI-built parallel Kasper/logistics MVP with its own ops SPA, driver
+app, client tracking/ePOD, and EmailJS quote flow. afzl confirmed it's an
+old abandoned prototype, not the direction - noted here only so it isn't
+mistaken for live/relevant work if surfaced again.
+
+Ran a real audit of `ops/` against screenshots (not just a feature request)
+and found two actual bugs plus scope bloat, all confirmed with afzl before
+touching code:
+
+- **Bug: pipeline-strip stayed visible in Kanban view.** `.pipeline-strip`
+  had its own `display: flex` rule with no `[hidden]` guard, which silently
+  overrides the browser's native `[hidden]{display:none}` behavior - so the
+  13-stage strip rendered even when `bindJobsViewToggle()` set
+  `pipelineStrip.hidden = true`. Fixed with an explicit
+  `.pipeline-strip[hidden] { display: none; }` rule in `css/styles.css`.
+- **Bug: disabled buttons looked identical to enabled ones.** No
+  `:disabled`/`[disabled]` CSS existed anywhere - Billing's "Receipt"/
+  "Remind" buttons (and the RFQ ones, before that tab was removed) looked
+  fully clickable. Added `.btn:disabled`/`.btn[disabled]` styling
+  (dimmed opacity, `cursor: not-allowed`).
+- **Risk: placeholder vendor was deletable from the normal Vendors list.**
+  "Dozr Verified Fleet" (owns the 15 Marketplace-mirrored assets, see prior
+  entry) showed up as a normal row with a Delete button - one misclick would
+  cascade-delete all 15 assets. Now excluded from the Vendors table render
+  (`HIDDEN_VENDOR_NAMES` in `js/main.js`) - still in the DB, still
+  assignable from the Assets "+ Add asset" vendor dropdown, just not listed/
+  deletable from Vendors.
+- **Scope trim: Enquiries tab merged into Kanban.** It was showing the same
+  jobs as Kanban's "Enquiry Received" column, just as a second list -
+  redundant. The 3 summary cards (new/logistics/equipment counts) now sit at
+  the top of the Kanban tab instead; the separate list and its vertical
+  filter were removed. Kanban is now the first/default tab.
+- **Scope trim: RFQs tab removed.** It only had disabled "Add vendor"/
+  "Close RFQ" buttons and a quote-price-entry form with no real backend -
+  read as broken rather than in-progress. Removed the tab, panel, and all
+  its JS (`renderRfqs`, quote-document builder, notification bell system
+  that existed only to route to it). `DATA.rfqs` stays in `ops/data/ops.js`
+  for when quote collection gets built for real.
+- **Reports vs Billing:** kept both (per afzl - different purposes,
+  Reports = performance from live jobs, Billing = collections from sample
+  invoices) but added an explicit note on both tabs that their totals won't
+  match yet since they read different data sources.
+
+Not yet addressed (raised but not part of this pass): the "Al Ain
+Construction Equipment" vendor that got auto-created by the vendor-bridging
+logic before the mock vendor list was trimmed - still shows in Vendors,
+unclear if intentional; vendor plan-value casing is inconsistent between
+mock rows ("Pro"/"Starter") and live Supabase rows ("verified"/"standard").
+`panel-escalations` in `index.html` has never had a nav tab pointing to it
+(pre-existing, not introduced this pass) - dead markup, candidate for
+removal along with its render function next time this file gets touched.
+
+## Full workflow trace + intake gap fixed (2026-07-22)
+
+afzl asked for an expert pass across every workflow ("make sure everything
+is counted") - traced the whole chain from a client on Marketplace through
+to a closed/paid job, not just the ops UI in isolation. Found and fixed
+three real gaps:
+
+- **No way to create a job in ops at all.** Marketplace's booking/quote
+  forms are WhatsApp-native by design (confirmed in `marketplace/js/
+  whatsapp.js` - every form redirects to a `wa.me` link, nothing calls a
+  backend, matches the spec) but nothing on the ops side ever converts an
+  incoming WhatsApp enquiry into a job record - there was no "+ New
+  enquiry" button anywhere, only Assets/Vendors had "+ Add" actions. The
+  only way a job reached Supabase was manually via the table editor. Fixed:
+  added a "+ New enquiry" button + modal to the Kanban tab
+  (`bindJobModal()` in `js/main.js`) - client name, contact, vertical,
+  route, and what's needed, inserts at stage 0 with an auto-generated
+  `DZR-J-######` code.
+- **`job-detail.html` read frozen mock data.** `renderJobDetailPage()` only
+  ever checked `DATA.jobs` (mock array) - so moving a job's stage on Kanban
+  (a real Supabase write) never showed up on that job's own detail page,
+  which kept displaying the old stage. Fixed: now `async`, queries
+  Supabase by code first and uses that for stage/vendor/price/route/client,
+  falling back to `DATA.jobs` only for `documents`/`timeline` (not modeled
+  in Supabase yet). Also fixed the page's back-link, which pointed at a
+  `#panel-jobs` anchor that hasn't existed since the nav restructure - now
+  points at `#panel-kanban`.
+- **Vendor identity still leaking to clients.** `marketplace/js/
+  quote-approval.js` was still reading a `vendor` URL param and rendering
+  "Quote from {vendorName}" as the page heading - flagged twice previously,
+  never fixed. Fixed: heading is now a fixed "Your Dozr quote" string,
+  vendor param removed entirely, with a comment explaining why.
+
+**Confirmed still true after this pass:** every one of the 13 pipeline
+stages past "Enquiry Received" (RFQ Sent, Quote Received, PO Issued,
+Driver Assigned, Dispatched, In Transit, Delivered, ePOD Signed, Invoice
+Generated, Payment Pending, Paid & Closed) has no dedicated action behind
+it - the Kanban stage dropdown is the only way to move a job through any of
+them. That's consistent with afzl's "staff move jobs manually" call, not a
+bug, but worth naming plainly: there's currently no document upload, driver
+-assignment field, PO generator, ePOD capture, or invoice-from-job action
+anywhere in the app for any of those stages.
+
+## UI/UX audit + fixes, Marketplace + Ops (2026-07-22)
+
+afzl asked to focus on UI/UX across pages, backend not mandatory. Ran a
+structured audit (two parallel passes - one per surface - against the
+brand token set and standard usability/accessibility heuristics) before
+touching anything; full report saved as `Dozr_UIUX_Audit_2026-07-22.md`
+and shared with afzl. Design system held up well overall - most findings
+were narrow, not systemic. afzl approved fixing the 1 Critical + 7
+Should-fix items immediately; all done:
+
+- **Critical:** `quote-approval.html`'s static `<h1>` still hardcoded
+  "Quote from Gulf Heavy Rentals" - JS overwrote it on load, but the
+  `defer`red script meant a real flash of vendor identity on slow loads,
+  contradicting the no-vendor-identity-to-client policy. Fixed the static
+  fallback text directly (now "Your Dozr quote"), matching the JS default.
+- **44px touch targets** added to Marketplace's `.chip`, `.category-tabs
+  button`, `.nav-auth[href]`, `.nav-signin-link` (`marketplace/css/
+  styles.css`) - all previously 29-38px tall, below the brand doc's stated
+  minimum.
+- **Kanban panel-header layout fixed** - the "+ New enquiry" button was a
+  3rd flex child alongside the title and filter row, so `space-between`
+  stranded it in the dead center of the header. Moved inside the
+  filter-row wrapper so the header has 2 children like every other panel.
+- **Kanban stage `<select>` now has `aria-label="Stage for {code}"`** - it
+  previously had no accessible name, so a screen reader announced "13
+  options" with no context of which job.
+- **Modal focus-trap added** - none of the 4 modals (Add Vendor, Add
+  Asset, New Enquiry, Add Equipment) trapped Tab focus inside the dialog.
+  Added one shared `bindModalFocusTrap()` in `ops/js/main.js`, wired into
+  all 4 bind functions.
+- **Equipment-detail availability chip was hardcoded** to "Same-day" for
+  every unit regardless of Browse's real per-unit computed availability
+  (same-day/next-day/this-week) - a unit could show one tier on Browse and
+  a contradicting one on its own page. Extracted the mapping into a shared
+  `getEquipmentAvailability()` in `marketplace/data/equipment.js`, used by
+  both `browse.js` and `equipment-detail.js` now so they can't disagree.
+- **WhatsApp handoff navigation made consistent** - freight form and
+  equipment quote-request both used `window.location.href` (same-tab,
+  stranding the customer on WhatsApp with no way back); quote-approval's
+  "Approve Quote" already used `window.open(..., "_blank")`. Standardized
+  all three on new-tab.
+- **Dead `panel-escalations` markup removed** - had no tab pointing at it
+  since the 7→5 nav trim, but `renderEscalations()` still built and
+  inserted a summary grid, log table, and routing-rules panel into
+  unreachable DOM on every page load. Removed the HTML section and the
+  render function; `DATA.escalations` stays in `ops/data/ops.js` if this
+  comes back later.
+
+**Left for later (Polish tier, not urgent):** `--green`/`--error` CSS
+variables in Marketplace diverge from the documented brand hex values with
+no explanatory comment (unlike `--muted`, which has one); Billing's
+disabled Receipt/Remind buttons rely on a hover tooltip for their
+explanation, not discoverable via keyboard/touch; heavy use of inline
+`style=""` in JS-built ops rows vs. CSS classes (maintainability, not a
+token violation); header/footer markup duplicated verbatim across 7
+Marketplace pages with no template/include mechanism.

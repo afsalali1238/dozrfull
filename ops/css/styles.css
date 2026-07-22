@@ -202,6 +202,9 @@ table { border-collapse: collapse; width: 100%; }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--line); }
 .btn-ghost:hover { background: var(--canvas); }
 .btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn:disabled, .btn[disabled] { opacity: .4; cursor: not-allowed; }
+.btn-ghost:disabled:hover, .btn-ghost[disabled]:hover { background: transparent; }
+.btn-primary:disabled:hover, .btn-primary[disabled]:hover { background: var(--yellow); }
 
 /* ---------------- Pipeline strip ---------------- */
 .pipeline-strip {
@@ -212,6 +215,11 @@ table { border-collapse: collapse; width: 100%; }
   border-bottom: 1px solid var(--line);
   background: var(--canvas);
 }
+/* Without this, the [hidden] attribute set by bindJobsViewToggle() in
+   main.js has no effect - an author display:flex rule on a class selector
+   overrides the browser's built-in [hidden]{display:none} UA rule. This
+   was why the strip stayed visible in Kanban view (bug found 2026-07-22). */
+.pipeline-strip[hidden] { display: none; }
 .pipeline-step {
   font-family: var(--font-mono);
   font-size: 10px;

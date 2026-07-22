@@ -193,6 +193,20 @@ function getEquipmentByCategory(categoryId) {
   return window.DOZR_EQUIPMENT.filter((e) => e.category === categoryId);
 }
 
+/** Illustrative availability tier by unit id — shared by browse.html (card
+    pills) and equipment-detail.html (quote-rail chip), so a unit can't show
+    one availability on Browse and a different one on its own detail page
+    (that mismatch was flagged in the 2026-07-22 UI/UX audit — equipment-
+    detail.html used to hardcode "Same-day" for every unit regardless of
+    this mapping). Replace with a real per-unit field once availability is
+    backend-driven. */
+function getEquipmentAvailability(unit) {
+  if (!unit) return "this-week";
+  if (["cat-305-cr", "cat-320"].includes(unit.id)) return "same-day";
+  if (["hitachi-zx130", "komatsu-wa320", "volvo-ec220"].includes(unit.id)) return "next-day";
+  return "this-week";
+}
+
 /** Look up a single unit by display name — used by quote-approval.html (?unit=),
     since the quote-approval link carries a human-readable name, not the id slug. */
 function getEquipmentByName(name) {
