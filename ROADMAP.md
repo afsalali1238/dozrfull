@@ -1042,3 +1042,28 @@ Vendors, Billing, Reports.
 
 Verified: `node --check` clean, `index.html`/`job-detail.html` tag-balanced,
 no leftover `panel-kanban`/`tab-kanban` references anywhere in `ops/`.
+
+## 2026-07-22 — Dashboard task list + hash-routing fix + Reports "by stage"
+
+- **Dashboard "Needs your attention"**: new panel on the Dashboard tab
+  (`ops/index.html` `#dashboard-tasks`, styled via `.task-row` in
+  `ops/css/styles.css`, rendered by `renderDashboardTasks()` in
+  `ops/js/main.js`). Aggregates 5 task types, each a clickable row linking
+  straight to the record: unquoted enquiries (stage 0) → job detail; jobs at
+  Payment Received missing `vendor_cost` → job detail (Financials panel);
+  vendors with expiring/expired docs (mock `docsExpiring` flag + live
+  Supabase `trade_license_expiry`/`insurance_expiry` within 14 days or past)
+  → vendor detail; vendors pending approval → vendor detail; overdue
+  invoices → Billing tab. Empty state: "All caught up."
+- **Bug found + fixed**: `ops/js/main.js` had zero hash-based tab routing —
+  every existing "← Back to Pipeline"/"← Back to Vendors" deep link
+  (`index.html#panel-X`) has silently done nothing since those links were
+  added; landing on index.html always just showed whichever tab is
+  `selected="true"` in the static HTML. Fixed with a new
+  `activateTabFromHash()`, called once on `DOMContentLoaded`. This also
+  repairs the Dashboard task list's own "Invoice overdue" → Billing tab link.
+- **Reports**: added a "By pipeline stage" table (count + AED total per
+  stage, all 7 stages) and a "Payment received" summary card, alongside the
+  existing Enquiries/Confirmed/Receivables/Payables/Profit cards.
+- Verified: `node --check ops/js/main.js` clean; `ops/index.html` div/section/
+  button tags balanced (58/58, 16/16, 23/23); no duplicate function defs.

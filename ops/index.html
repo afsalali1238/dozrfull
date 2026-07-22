@@ -41,6 +41,10 @@
     <!-- DASHBOARD -->
     <section class="tabpanel" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
       <section class="summary-grid" id="enquiries-summary" aria-label="Key metrics"></section>
+      <section class="panel" aria-labelledby="tasks-heading">
+        <div class="panel-header"><h2 id="tasks-heading">Needs your attention</h2></div>
+        <div class="panel-body no-pad" id="dashboard-tasks"></div>
+      </section>
     </section>
 
     <!-- PIPELINE (renamed from Kanban, split back out from Dashboard - afzl's call, 2026-07-22) -->
@@ -156,6 +160,18 @@
     <!-- REPORTS -->
     <section class="tabpanel" id="panel-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
       <section class="summary-grid" id="reports-summary" aria-label="Report totals"></section>
+      <section class="panel" aria-labelledby="reports-stage-heading">
+        <div class="panel-header"><h2 id="reports-stage-heading">By pipeline stage</h2></div>
+        <div class="panel-body no-pad table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">Every pipeline stage with job count and total AED amount currently sitting at that stage</caption>
+            <thead>
+              <tr><th scope="col">Stage</th><th scope="col">Jobs</th><th scope="col">Amount (AED)</th></tr>
+            </thead>
+            <tbody id="reports-stage-tbody"></tbody>
+          </table>
+        </div>
+      </section>
       <section class="panel" aria-labelledby="reports-vertical-heading">
         <div class="panel-header"><h2 id="reports-vertical-heading">By vertical</h2></div>
         <div class="panel-body no-pad table-scroll">
@@ -168,7 +184,7 @@
           </table>
         </div>
       </section>
-      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records. Receivables = invoiced jobs the client hasn't paid yet. Payables = jobs the client has paid where Dozr hasn't paid the vendor yet - enter each job's vendor cost on its job detail page to include it here (until then it's called out as missing rather than treated as zero). Profit sums client price minus vendor cost, only for jobs where both are known. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
+      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records. Payment received = jobs the client has already paid for (Payment Received stage or later). Receivables = invoiced jobs the client hasn't paid yet. Payables = jobs the client has paid where Dozr hasn't paid the vendor yet - enter each job's vendor cost on its job detail page to include it here (until then it's called out as missing rather than treated as zero). Profit sums client price minus vendor cost, only for jobs where both are known. "By pipeline stage" below shows every stage's job count and total AED amount, not just the ones with their own card above. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
     </section>
   </main>
 </div>

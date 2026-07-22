@@ -83,6 +83,20 @@
     });
   }
 
+  // Tabs had no hash-based routing at all - "Back to Pipeline"/"Back to
+  // Vendors" links from job-detail.html/vendor-detail.html (and now the
+  // Dashboard task list's Billing link) pointed at index.html#panel-X, but
+  // nothing ever read the hash, so landing back on index.html always just
+  // showed whichever tab is selected="true" in the static HTML (Dashboard).
+  // The link's target tab never actually activated (found while wiring the
+  // Dashboard task list, 2026-07-22). Reuses the click handler bindTabs()
+  // already wired up, so no duplicate selection logic here.
+  function activateTabFromHash() {
+    if (!window.location.hash) return;
+    var targetTab = document.querySelector('[role="tab"][aria-controls="' + window.location.hash.slice(1) + '"]');
+    if (targetTab) targetTab.click();
+  }
+
   /* ---------------- Vertical classification (Logistics vs Equipment Rental) ---------------- */
   // Dozr has two business lines, same split Marketplace already uses
   // (browse.html = equipment, freight.html = logistics). Jobs don't have an
@@ -174,6 +188,134 @@
         el("div", { class: "note", text: item.note })
       ]));
     });
+  }
+
+  // Returns true if a "YYYY-MM-DD" date string is within `days` days from now
+  // (or already past). Used for vendor doc-expiry checks on the Dashboard
+  // task list. Bad/missing dates return false rather than throwing.
+  function isExpiringOrPast(dateStr, days) {
+    if (!dateStr) return false;
+    var target = new Date(dateStr);
+    if (isNaN(target.getTime())) return false;
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() + days);
+    return target.getTime() <= cutoff.getTime();
+  }
+
+  // Dashboard "Needs your attention" - aggregates the 5 task types afzl
+  // confirmed (2026-07-22): unquoted enquiries, jobs missing vendor cost at
+  // Payment Received, vendors with expiring/expired docs, vendors pending
+  // approval, and overdue invoices. Each renders as a clickable row that
+  // jumps straight to the relevant record (job/vendor detail page, or the
+  // Billing tab via activateTabFromHash()).
+  function renderDashboardTasks() {
+    var root = document.getElementById("dashboard-tasks");
+    if (!root) return;
+    root.innerHTML = "";
+    var tasks = [];
+
+    // 1. Unquoted enquiries - stage 0, sitting with no quote sent yet.
+    LIVE_JOBS.filter(function (j) { return j.stage === 0; }).forEach(function (j) {
+      tasks.push({
+        tag: "Quote needed",
+        title: j.code + " · " + (j.client || "Unknown client"),
+        detail: (jobVertical(j) === "logistics" ? "Freight" : "Equipment") + " enquiry - not yet sent to a vendor",
+        href: "job-detail.html?job=" + encodeURIComponent(j.code)
+      });
+    });
+
+    // 2. Payment received but vendor cost not entered yet - blocks Payables/Profit.
+    LIVE_JOBS.filter(function (j) { return j.stage === 5 && (j.vendorCost === null || j.vendorCost === undefined); }).forEach(function (j) {
+      tasks.push({
+        tag: "Missing vendor cost",
+        title: j.code + " · " + (j.client || "Unknown client"),
+        detail: "Payment received from client, but vendor cost not recorded",
+        href: "job-detail.html?job=" + encodeURIComponent(j.code)
+      });
+    });
+
+    // 3. Mock vendors with expiring/expired docs or pending approval.
+    DATA.vendors.forEach(function (v) {
+      if (v.docsExpiring) {
+        tasks.push({
+          tag: "Docs expiring",
+          title: v.name,
+          detail: "Trade license or insurance needs renewal",
+          href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
+        });
+      }
+      if (v.plan === "Pending") {
+        tasks.push({
+          tag: "Pending approval",
+          title: v.name,
+          detail: "Vendor application awaiting review",
+          href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
+        });
+      }
+    });
+
+    // 4. Overdue invoices.
+    DATA.billing.invoices.filter(function (inv) { return inv.status === "Overdue"; }).forEach(function (inv) {
+      tasks.push({
+        tag: "Invoice overdue",
+        title: inv.ref + " · " + inv.client,
+        detail: inv.amount + " - was due " + inv.due,
+        href: "index.html#panel-billing"
+      });
+    });
+
+    function renderTasks() {
+      if (tasks.length === 0) {
+        root.appendChild(el("div", { class: "task-row" }, [
+          el("div", { class: "task-row-main" }, [
+            el("div", { class: "task-row-text" }, [
+              el("div", { class: "task-row-title", text: "All caught up" }),
+              el("div", { class: "task-row-detail", text: "No open items need attention right now." })
+            ])
+          ])
+        ]));
+        return;
+      }
+      tasks.forEach(function (t) {
+        root.appendChild(el("a", { class: "task-row", href: t.href }, [
+          el("div", { class: "task-row-main" }, [
+            el("span", { class: "status-chip", "data-tone": "warn", text: t.tag }),
+            el("div", { class: "task-row-text" }, [
+              el("div", { class: "task-row-title", text: t.title }),
+              el("div", { class: "task-row-detail", text: t.detail })
+            ])
+          ]),
+          el("span", { class: "task-row-arrow", "aria-hidden": "true", text: "→" })
+        ]));
+      });
+    }
+
+    // 5. Live (Supabase) vendors with expiring/expired docs - async, appended
+    // once loaded so the other 4 (synchronous) task types show immediately.
+    if (typeof supabaseClient !== "undefined") {
+      supabaseClient
+        .from("vendors")
+        .select("id, name, trade_license_expiry, insurance_expiry")
+        .then(function (result) {
+          if (!result.error && result.data) {
+            result.data.forEach(function (v) {
+              if (HIDDEN_VENDOR_NAMES.indexOf(v.name) !== -1) return;
+              if (isExpiringOrPast(v.trade_license_expiry, 14) || isExpiringOrPast(v.insurance_expiry, 14)) {
+                tasks.push({
+                  tag: "Docs expiring",
+                  title: v.name,
+                  detail: "Trade license or insurance expires within 14 days (or has passed)",
+                  href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
+                });
+              }
+            });
+          }
+          root.innerHTML = "";
+          renderTasks();
+        });
+    } else {
+      renderTasks();
+    }
   }
 
   /* ---------------- Vendors ---------------- */
@@ -835,9 +977,20 @@
     });
     var profitValue = jobsWithBothFigures.reduce(function (sum, j) { return sum + (parseAedPrice(j.price) - j.vendorCost); }, 0);
 
+    // Payment received: money that has actually landed from the client,
+    // regardless of whether Dozr has paid the vendor out yet (stage 5 or 6).
+    // Distinct from Payables below, which is the same stage-5 jobs viewed
+    // from "what we still owe the vendor" instead of "what came in."
+    var paidJobs = LIVE_JOBS.filter(function (j) { return j.stage >= 5; });
+    var paidValue = paidJobs.reduce(function (sum, j) {
+      var price = parseAedPrice(j.price);
+      return price ? sum + price : sum;
+    }, 0);
+
     [
       { label: "Enquiries received", value: String(totalEnquiries), note: "All jobs, any stage" },
       { label: "Confirmed work", value: String(confirmedJobs.length), note: "AED " + confirmedValue.toLocaleString("en-US") + " · Approved or later" },
+      { label: "Payment received", value: "AED " + paidValue.toLocaleString("en-US"), note: paidJobs.length + " job(s) paid by client" },
       { label: "Receivables", value: "AED " + receivablesValue.toLocaleString("en-US"), note: receivableJobs.length + " job(s) invoiced, awaiting client payment" },
       { label: "Payables", value: "AED " + payablesValue.toLocaleString("en-US"), note: payablesMissingCost > 0
         ? payableJobs.length + " job(s) pending vendor payout · vendor cost missing on " + payablesMissingCost
@@ -852,6 +1005,28 @@
         el("div", { class: "note", text: item.note })
       ]));
     });
+
+    // By pipeline stage: every stage, not just the ones with their own
+    // summary card above - full visibility into where the money/jobs
+    // currently sit (afzl's ask, 2026-07-22: "all those reports... with
+    // amount"). Amount is the client-facing price, same field used
+    // everywhere else in Reports - not vendor cost (that's Payables above).
+    var stageTbody = document.getElementById("reports-stage-tbody");
+    if (stageTbody) {
+      stageTbody.innerHTML = "";
+      DATA.pipeline.forEach(function (stageName, stageIdx) {
+        var jobsAtStage = LIVE_JOBS.filter(function (j) { return j.stage === stageIdx; });
+        var stageAmount = jobsAtStage.reduce(function (sum, j) {
+          var price = parseAedPrice(j.price);
+          return price ? sum + price : sum;
+        }, 0);
+        stageTbody.appendChild(el("tr", {}, [
+          el("td", { text: (stageIdx + 1) + " · " + stageName }),
+          el("td", { text: String(jobsAtStage.length) }),
+          el("td", { class: "mono", text: "AED " + stageAmount.toLocaleString("en-US") })
+        ]));
+      });
+    }
 
     var tbody = document.getElementById("reports-vertical-tbody");
     if (!tbody) return;
@@ -1373,6 +1548,7 @@
       return;
     }
     bindTabs();
+    activateTabFromHash();
     bindVendorModal();
     bindVendorDelete();
     bindAssetModal();
@@ -1389,5 +1565,6 @@
     renderJobs();
     renderJobsKanban();
     renderReports();
+    renderDashboardTasks();
   });
 })();

@@ -263,6 +263,21 @@ table { border-collapse: collapse; width: 100%; }
   font-family: var(--font-mono); color: var(--slate); min-width: 110px; flex-shrink: 0;
 }
 .row-inline { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* ---------------- Dashboard task list ---------------- */
+.task-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+  text-decoration: none; color: var(--ink); cursor: pointer;
+}
+.task-row:last-child { border-bottom: none; }
+.task-row:hover { background: var(--yellow-tint); }
+.task-row:focus-visible { outline: 2px solid var(--ink); outline-offset: -2px; }
+.task-row-main { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.task-row-text { min-width: 0; }
+.task-row-title { font-weight: 600; font-size: 13px; }
+.task-row-detail { font-size: 12px; color: var(--slate); margin-top: 1px; }
+.task-row-arrow { color: var(--slate); flex-shrink: 0; }
 .avatar-dot[data-tone="ok"] { background: var(--green); }
 .avatar-dot[data-tone="warn"] { background: var(--yellow-dark); }
 .avatar-dot[data-tone="error"] { background: var(--error); }
