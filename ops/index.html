@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ops Dashboard — Dozr</title>
-<meta name="description" content="Kasper/Dozr internal operations dashboard — enquiries, job pipeline, assets, vendors, RFQs, billing, and reports.">
+<meta name="description" content="Kasper/Dozr internal operations dashboard — dashboard, job pipeline, assets, vendors, billing, and reports.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -24,7 +24,8 @@
     <span class="badge-internal">Internal</span>
 
     <nav role="tablist" aria-label="Ops dashboard sections" class="top-nav">
-      <button role="tab" id="tab-kanban" aria-controls="panel-kanban" aria-selected="true" type="button">Kanban</button>
+      <button role="tab" id="tab-dashboard" aria-controls="panel-dashboard" aria-selected="true" type="button">Dashboard</button>
+      <button role="tab" id="tab-pipeline" aria-controls="panel-pipeline" aria-selected="false" type="button">Pipeline</button>
       <button role="tab" id="tab-assets" aria-controls="panel-assets" aria-selected="false" type="button">Assets</button>
       <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
       <button role="tab" id="tab-billing" aria-controls="panel-billing" aria-selected="false" type="button">Billing</button>
@@ -37,12 +38,16 @@
   <main class="app-main" id="main-content">
     <h1 class="sr-only">Dozr Ops — internal operations dashboard</h1>
 
-    <!-- KANBAN (also the enquiries landing view - "Quote Requested" is stage 1 of the pipeline below) -->
-    <section class="tabpanel" id="panel-kanban" role="tabpanel" aria-labelledby="tab-kanban">
+    <!-- DASHBOARD -->
+    <section class="tabpanel" id="panel-dashboard" role="tabpanel" aria-labelledby="tab-dashboard">
       <section class="summary-grid" id="enquiries-summary" aria-label="Key metrics"></section>
-      <section class="panel" aria-labelledby="kanban-heading">
+    </section>
+
+    <!-- PIPELINE (renamed from Kanban, split back out from Dashboard - afzl's call, 2026-07-22) -->
+    <section class="tabpanel" id="panel-pipeline" role="tabpanel" aria-labelledby="tab-pipeline" hidden>
+      <section class="panel" aria-labelledby="pipeline-heading">
         <div class="panel-header">
-          <h2 id="kanban-heading">Job pipeline</h2>
+          <h2 id="pipeline-heading">Job pipeline</h2>
           <div class="filter-row" style="gap:12px;align-items:center;">
             <button class="btn btn-primary btn-sm" type="button" id="add-job-btn">+ New enquiry</button>
             <div class="view-toggle" role="group" aria-label="Filter by vertical" id="jobs-vertical-filter">

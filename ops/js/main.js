@@ -151,10 +151,11 @@
     return { get: function () { return current; } };
   }
 
-  /* ---------------- Enquiries summary (lives at the top of the Kanban tab) ---------------- */
-  // Was its own tab; merged into Kanban since "Quote Requested" is already
-  // the first Kanban column - a separate list of the same jobs was
-  // redundant (afzl's call, 2026-07-22).
+  /* ---------------- Dashboard: enquiries summary ---------------- */
+  // Was its own tab, then briefly merged into Kanban, then split back out
+  // into a dedicated "Dashboard" tab when Kanban was renamed to "Pipeline"
+  // (afzl's call, 2026-07-22) - Dashboard is just these 3 summary cards for
+  // now, Pipeline is the job board.
   function renderEnquiries() {
     var summaryEl = document.getElementById("enquiries-summary");
     if (!summaryEl) return;

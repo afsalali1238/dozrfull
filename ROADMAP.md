@@ -1016,3 +1016,29 @@ was next in the DOM anyway, but it was structurally wrong markup. Added
 the missing `</div>`, re-verified: 51/51 balanced. Swept all 10
 marketplace pages the same way - all balanced, this was isolated to
 index.html.
+
+## Kanban renamed to Pipeline, split back out from Dashboard (2026-07-22)
+
+afzl's call: rename "Kanban" to "Pipeline" and give it a separate tab from
+a first "Dashboard" tab, rather than the merged single tab from the
+earlier nav trim. Nav is now 6 tabs: **Dashboard**, **Pipeline**, Assets,
+Vendors, Billing, Reports.
+
+- **Dashboard** (`panel-dashboard`, new first/default tab) - just the 3
+  summary cards (new enquiries / logistics / equipment rental counts),
+  same data as before, now on its own tab instead of stacked above the
+  job board.
+- **Pipeline** (`panel-pipeline`, was `panel-kanban`) - the job board
+  itself: vertical filter, Kanban/Table view toggle, "+ New enquiry", the
+  7-stage pipeline strip. Nothing changed functionally, only the tab id/
+  label and heading ("Job pipeline" heading text was already correct,
+  just re-labeled the tab and panel ids to match).
+- Updated `job-detail.html`'s back-link (`#panel-kanban` → `#panel-pipeline`,
+  "Back to Kanban" → "Back to Pipeline") and the meta description, which
+  had also gone stale referencing "RFQs" from before that tab was removed.
+- The Kanban/Table view-toggle buttons *inside* Pipeline still say
+  "Kanban"/"Table" - that's describing the board's visual layout style,
+  not the tab name, so left as-is (no naming conflict).
+
+Verified: `node --check` clean, `index.html`/`job-detail.html` tag-balanced,
+no leftover `panel-kanban`/`tab-kanban` references anywhere in `ops/`.
