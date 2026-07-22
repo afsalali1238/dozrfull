@@ -581,3 +581,124 @@ materials-specific) catalog-admin surface that Marketplace and any future
 vertical could both read from. Confirmed with afzl this is worth its own
 scoped item later, but not in progress now - don't start building it without
 a product doc + phase entry first, same process as everything else.
+
+## Ops: Supabase backend + full nav restructure (2026-07-22)
+
+Building on the "New surface: Kasper internal ops dashboard" section above -
+`ops/` is no longer mock-only for every table. In order:
+
+- **Supabase wired in for Vendors and Assets** (`ops/supabase/migrations/`,
+  0001-0005): real tables for `vendors`, `equipment`, `rfqs`,
+  `rfq_vendor_quotes`, `jobs`, `invoices`, `escalations`, staff auth scaffold
+  (built, then intentionally left disabled - see below). "+ Onboard vendor"
+  and equipment/vehicle add (with photo upload to a Storage bucket +
+  availability toggle) are real, persisted writes now, not mock data.
+- **Staff auth built but turned off** (afzl's call: "sign in not needed for
+  now"). `ops/login.html` and `ops/js/auth-guard.js` still have the real
+  Supabase auth code, just commented out/short-circuited with a note on how
+  to re-enable. RLS was correspondingly opened up
+  (`0003_temp_open_access.sql`, `0005_temp_open_storage.sql`) - anyone with
+  the anon key (public in `ops/js/supabase-client.js`) has full read/write
+  right now. Fine for an internal unlisted URL during build, flagged as
+  not-launch-safe.
+- **Jobs/RFQs/Billing are still mock data** (`ops/data/ops.js`) - not
+  migrated to Supabase yet. Kanban stage changes are staff-editable
+  (dropdown per card, afzl's call over drag-and-drop) but only update
+  in-memory state, not persisted - flagged in the UI itself and here so this
+  doesn't get mistaken for a working feature.
+- **Nav fully reordered and renamed** per afzl's priority order: Enquiries
+  (new landing tab, replaces Overview - shows unsent enquiries with a
+  Logistics/Equipment Rental filter) -> Kanban (renamed from Jobs, kanban is
+  now the default view with Table as a secondary toggle, 13 stages grouped
+  into 6 columns) -> Assets -> Vendors -> RFQs -> Billing -> Reports (new -
+  total enquiries, confirmed, revenue, and vertical breakdown; profit
+  explicitly not shown - no vendor-cost field exists per job yet, afzl's
+  standing preference is an honest gap over a guessed number).
+- **Logistics vs Equipment Rental** is inferred client-side from each job's
+  free-text `type` field (flatbed/low-bed/box-truck -> logistics, everything
+  else -> equipment) - matches Marketplace's existing Browse/Freight split.
+  Not a real schema field yet; worth adding a proper `vertical` column once
+  jobs move to Supabase.
+- **Removed from Overview/Enquiries entirely per afzl:** the "Open
+  escalations" panel and "Daily checklist - Morning" panel. Both tabs/data
+  still exist in `ops/data/ops.js`, just unrendered - same treatment the
+  standalone Escalations tab already got.
+
+**Not done yet, flagged, not forgotten:** Jobs/RFQs/Billing on Supabase (so
+kanban changes actually persist), re-enabling staff auth + locking RLS back
+down, a real `vertical` column instead of the keyword-guess, and a vendor
+cost field so Reports can show real profit instead of "—".
+
+## Delete actions + dummy data trimmed (2026-07-22)
+
+afzl asked for two things mid-build: a Delete option (not just deactivate),
+and far less mock data cluttering the demo.
+
+- **Delete added:** Vendors tab and the central Assets tab both got a real
+  "Delete" button next to the existing soft-delete controls (Vendors'
+  status toggle, Assets' "Turn off"). Same on the per-vendor Equipment panel
+  on `vendor-detail.html`. All three confirm via `window.confirm` first,
+  then call Supabase `.delete()` - vendor delete cascades to that vendor's
+  equipment automatically (FK `on delete cascade`, already in
+  `0001_init.sql`, no new migration needed for that part).
+- **Mock data trimmed** in `ops/data/ops.js`: vendors 12->5, jobs 20->5,
+  RFQs 10->5, billing invoices 12->5, escalations log 10->4 - kept for
+  status/stage variety (active/deactivated/pending vendor, one flagged job,
+  one of each vertical, a Paid/Pending/Overdue invoice spread) rather than
+  arbitrarily keeping the first N. The unused `overview` object (dead since
+  Enquiries started computing its own numbers from `DATA.jobs` directly)
+  was deleted outright, not just trimmed.
+- `ops/supabase/migrations/0007_seed_jobs.sql` updated to match the same 5
+  trimmed jobs (was 20) - if the old version already ran against your
+  Supabase project, `truncate table jobs;` before re-running it, noted in
+  the file itself.
+
+**Still open:** Jobs/RFQs/Billing are still `ops/data/ops.js` mock data, not
+Supabase - migration 0006/0007 added the schema + seed for jobs, but
+`ops/js/main.js`'s Enquiries/Kanban/Reports rendering hasn't been switched
+over to read from Supabase yet. That's the next piece, not done in this pass.
+
+## Jobs moved to Supabase + Marketplace equipment mirrored into ops (2026-07-22)
+
+Closes the "still open" item from the last entry.
+
+- **Jobs are live.** Enquiries, Kanban, and Reports all read from Supabase's
+  `jobs` table now (`loadJobsFromSupabase()` in `ops/js/main.js`), not
+  `ops/data/ops.js`. The kanban stage `<select>` writes to Supabase on
+  change (optimistic UI, reverts the dropdown if the write fails) - stage
+  changes now survive a refresh, closing the gap flagged last entry.
+  `job-detail.html` and the mock-vendor job-history panel on
+  `vendor-detail.html` intentionally still read `ops/data/ops.js` directly -
+  not migrated this pass, same 5 job codes exist in both places so links
+  between them keep resolving.
+- `0006_jobs_extra_fields.sql` added `type`, `vendor_name` (denormalized,
+  same pattern `price` already used - not every job's vendor has a matching
+  Supabase row), and a real `vertical` column (replaces the client-side
+  keyword guess for any job that has one - `jobVertical()` in main.js now
+  checks `job.vertical` first, falls back to the keyword guess only for
+  mock data that predates the column).
+- `0007_seed_jobs.sql` seeds the same 5 trimmed jobs into Supabase.
+- **Marketplace's public equipment catalog mirrored into ops**
+  (`0008_seed_marketplace_equipment.sql`, afzl's call: "whatever assets in
+  the front end should be there in back end"). All 15 units from
+  `marketplace/data/equipment.js` inserted into the real `equipment` table.
+  Real problem hit doing this: every unit needs a `vendor_id` (not null),
+  but Marketplace deliberately never shows which vendor owns a unit (afzl's
+  rule: don't share vendor details with clients). No real per-unit vendor
+  mapping exists, so all 15 went under one placeholder vendor, "Dozr
+  Verified Fleet" - flagged in the migration file itself so this isn't
+  mistaken for real vendor data. Reassigning individual units to their real
+  vendor needs an edit action that doesn't exist yet (Assets page only has
+  add/delete, no edit).
+- Added a `dump-truck` category option to both the Assets and per-vendor
+  equipment "Add" forms - Marketplace's dump-truck listings didn't map to
+  any existing option.
+- **Delete added**, not just deactivate: Vendors tab, Assets tab, and the
+  per-vendor Equipment panel all got a real "Delete" button (confirms via
+  `window.confirm` first). Vendor delete cascades to that vendor's equipment
+  (FK `on delete cascade`, already in `0001_init.sql`).
+
+**Still open:** RFQs and Billing remain mock data. `job-detail.html`/mock
+vendor job-history still on `ops/data/ops.js`. No "edit vendor on an asset"
+action yet - needed before the Marketplace-mirrored equipment can be
+reassigned off the placeholder vendor.

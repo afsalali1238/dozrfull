@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ops Dashboard — Dozr</title>
-<meta name="description" content="Kasper/Dozr internal operations dashboard — vendors, jobs, RFQs, and billing.">
+<meta name="description" content="Kasper/Dozr internal operations dashboard — enquiries, job pipeline, assets, vendors, RFQs, billing, and reports.">
 <meta name="robots" content="noindex, nofollow">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,12 +25,13 @@
     <a href="../dashboard/index.html" style="color:rgba(255,255,255,.6);font-size:12px;text-decoration:none;">&larr; Dozr Dashboard</a>
 
     <nav role="tablist" aria-label="Ops dashboard sections" class="top-nav">
-      <button role="tab" id="tab-overview" aria-controls="panel-overview" aria-selected="true" type="button">Overview</button>
-      <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
+      <button role="tab" id="tab-enquiries" aria-controls="panel-enquiries" aria-selected="true" type="button">Enquiries</button>
+      <button role="tab" id="tab-kanban" aria-controls="panel-kanban" aria-selected="false" type="button">Kanban</button>
       <button role="tab" id="tab-assets" aria-controls="panel-assets" aria-selected="false" type="button">Assets</button>
-      <button role="tab" id="tab-jobs" aria-controls="panel-jobs" aria-selected="false" type="button">Jobs</button>
+      <button role="tab" id="tab-vendors" aria-controls="panel-vendors" aria-selected="false" type="button">Vendors</button>
       <button role="tab" id="tab-rfqs" aria-controls="panel-rfqs" aria-selected="false" type="button">RFQs</button>
       <button role="tab" id="tab-billing" aria-controls="panel-billing" aria-selected="false" type="button">Billing</button>
+      <button role="tab" id="tab-reports" aria-controls="panel-reports" aria-selected="false" type="button">Reports</button>
     </nav>
 
     <span class="live-pill"><span class="dot" aria-hidden="true"></span>Updated <span id="last-updated">—</span></span>
@@ -50,36 +51,58 @@
   <main class="app-main" id="main-content">
     <h1 class="sr-only">Dozr Ops — internal operations dashboard</h1>
 
-    <!-- OVERVIEW -->
-    <section class="tabpanel" id="panel-overview" role="tabpanel" aria-labelledby="tab-overview">
-      <section class="summary-grid" id="overview-summary" aria-label="Key metrics"></section>
-      <section class="panel" aria-labelledby="checklist-heading" style="max-width:520px;">
-        <div class="panel-header"><h2 id="checklist-heading">Daily checklist — Morning</h2></div>
-        <div class="panel-body">
-          <ul id="daily-checklist" style="list-style:none;padding:0;margin:0;"></ul>
+    <!-- ENQUIRIES -->
+    <section class="tabpanel" id="panel-enquiries" role="tabpanel" aria-labelledby="tab-enquiries">
+      <section class="summary-grid" id="enquiries-summary" aria-label="Key metrics"></section>
+      <section class="panel" aria-labelledby="new-enquiries-heading">
+        <div class="panel-header">
+          <h2 id="new-enquiries-heading">New enquiries</h2>
+          <div class="view-toggle" role="group" aria-label="Filter by vertical" id="enquiries-vertical-filter">
+            <button type="button" class="view-toggle-btn" data-vertical="all" aria-pressed="true">All</button>
+            <button type="button" class="view-toggle-btn" data-vertical="logistics" aria-pressed="false">Logistics</button>
+            <button type="button" class="view-toggle-btn" data-vertical="equipment" aria-pressed="false">Equipment Rental</button>
+          </div>
         </div>
+        <div class="panel-body no-pad" id="new-enquiries-list"></div>
       </section>
     </section>
 
-    <!-- VENDORS -->
-    <section class="tabpanel" id="panel-vendors" role="tabpanel" aria-labelledby="tab-vendors" hidden>
-      <section class="panel" aria-labelledby="vendors-heading">
+    <!-- KANBAN -->
+    <section class="tabpanel" id="panel-kanban" role="tabpanel" aria-labelledby="tab-kanban" hidden>
+      <section class="panel" aria-labelledby="kanban-heading">
         <div class="panel-header">
-          <h2 id="vendors-heading">All vendors</h2>
-          <button class="btn btn-primary btn-sm" type="button" id="add-vendor-btn">+ Onboard vendor</button>
+          <h2 id="kanban-heading">Job pipeline</h2>
+          <div class="filter-row" style="gap:12px;align-items:center;">
+            <div class="view-toggle" role="group" aria-label="Filter by vertical" id="jobs-vertical-filter">
+              <button type="button" class="view-toggle-btn" data-vertical="all" aria-pressed="true">All</button>
+              <button type="button" class="view-toggle-btn" data-vertical="logistics" aria-pressed="false">Logistics</button>
+              <button type="button" class="view-toggle-btn" data-vertical="equipment" aria-pressed="false">Equipment Rental</button>
+            </div>
+            <div class="view-toggle" role="group" aria-label="Jobs view">
+              <button type="button" class="view-toggle-btn" id="jobs-view-kanban" aria-pressed="true">Kanban</button>
+              <button type="button" class="view-toggle-btn" id="jobs-view-table" aria-pressed="false">Table</button>
+            </div>
+            <label class="field-label" for="job-status-filter" id="job-status-filter-label" hidden>Stage</label>
+            <select id="job-status-filter" hidden></select>
+          </div>
         </div>
-        <div class="panel-body no-pad table-scroll">
+        <div class="pipeline-strip" id="pipeline-strip" aria-label="13-stage job pipeline" hidden></div>
+        <div class="panel-body no-pad table-scroll" id="jobs-table-view" hidden>
           <table class="data-table">
-            <caption class="sr-only">Vendor roster with plan, job volume, and status</caption>
+            <caption class="sr-only">Active jobs with client, vendor, route, and pipeline stage</caption>
             <thead>
               <tr>
-                <th scope="col">ID</th><th scope="col">Company</th><th scope="col">Plan</th>
-                <th scope="col">Jobs (30d)</th><th scope="col">On-time</th><th scope="col">Joined</th>
-                <th scope="col">Status</th><th scope="col">Action</th>
+                <th scope="col">Job</th><th scope="col">Client</th><th scope="col">Vendor</th>
+                <th scope="col">Route</th><th scope="col">Type</th><th scope="col">Stage</th>
+                <th scope="col">Price</th><th scope="col">Action</th>
               </tr>
             </thead>
-            <tbody id="vendors-tbody"></tbody>
+            <tbody id="jobs-tbody"></tbody>
           </table>
+        </div>
+        <div class="panel-body no-pad" id="jobs-kanban-view">
+          <p class="note" style="padding:0 var(--space-2);margin-bottom:8px;">Each card's stage dropdown is the source of truth - moving a job forward or back is a manual staff action, not automatic.</p>
+          <div class="kanban-board" id="jobs-kanban"></div>
         </div>
       </section>
     </section>
@@ -107,36 +130,25 @@
       </section>
     </section>
 
-    <!-- JOBS -->
-    <section class="tabpanel" id="panel-jobs" role="tabpanel" aria-labelledby="tab-jobs" hidden>
-      <section class="panel" aria-labelledby="jobs-heading">
+    <!-- VENDORS -->
+    <section class="tabpanel" id="panel-vendors" role="tabpanel" aria-labelledby="tab-vendors" hidden>
+      <section class="panel" aria-labelledby="vendors-heading">
         <div class="panel-header">
-          <h2 id="jobs-heading">All jobs</h2>
-          <div class="filter-row" style="gap:12px;align-items:center;">
-            <div class="view-toggle" role="group" aria-label="Jobs view">
-              <button type="button" class="view-toggle-btn" id="jobs-view-table" aria-pressed="true">Table</button>
-              <button type="button" class="view-toggle-btn" id="jobs-view-kanban" aria-pressed="false">Kanban</button>
-            </div>
-            <label class="field-label" for="job-status-filter" id="job-status-filter-label">Stage</label>
-            <select id="job-status-filter"></select>
-          </div>
+          <h2 id="vendors-heading">All vendors</h2>
+          <button class="btn btn-primary btn-sm" type="button" id="add-vendor-btn">+ Onboard vendor</button>
         </div>
-        <div class="pipeline-strip" id="pipeline-strip" aria-label="13-stage job pipeline"></div>
-        <div class="panel-body no-pad table-scroll" id="jobs-table-view">
+        <div class="panel-body no-pad table-scroll">
           <table class="data-table">
-            <caption class="sr-only">Active jobs with client, vendor, route, and pipeline stage</caption>
+            <caption class="sr-only">Vendor roster with plan, job volume, and status</caption>
             <thead>
               <tr>
-                <th scope="col">Job</th><th scope="col">Client</th><th scope="col">Vendor</th>
-                <th scope="col">Route</th><th scope="col">Type</th><th scope="col">Stage</th>
-                <th scope="col">Price</th><th scope="col">Action</th>
+                <th scope="col">ID</th><th scope="col">Company</th><th scope="col">Plan</th>
+                <th scope="col">Jobs (30d)</th><th scope="col">On-time</th><th scope="col">Joined</th>
+                <th scope="col">Status</th><th scope="col">Action</th>
               </tr>
             </thead>
-            <tbody id="jobs-tbody"></tbody>
+            <tbody id="vendors-tbody"></tbody>
           </table>
-        </div>
-        <div class="panel-body no-pad" id="jobs-kanban-view" hidden>
-          <div class="kanban-board" id="jobs-kanban"></div>
         </div>
       </section>
     </section>
@@ -191,6 +203,24 @@
           </table>
         </div>
       </section>
+    </section>
+
+    <!-- REPORTS -->
+    <section class="tabpanel" id="panel-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
+      <section class="summary-grid" id="reports-summary" aria-label="Report totals"></section>
+      <section class="panel" aria-labelledby="reports-vertical-heading">
+        <div class="panel-header"><h2 id="reports-vertical-heading">By vertical</h2></div>
+        <div class="panel-body no-pad table-scroll">
+          <table class="data-table">
+            <caption class="sr-only">Enquiries, confirmed jobs, and revenue split by Logistics vs Equipment Rental</caption>
+            <thead>
+              <tr><th scope="col">Vertical</th><th scope="col">Enquiries</th><th scope="col">Confirmed</th><th scope="col">Revenue</th></tr>
+            </thead>
+            <tbody id="reports-vertical-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records - "Revenue" sums the client-facing price on jobs with a confirmed AED amount. Profit isn't shown because vendor cost isn't tracked per job yet (jobs only carry the client price) - that needs a cost field before a real margin can be reported, not a guessed percentage.</p>
     </section>
   </main>
 </div>
@@ -278,6 +308,7 @@
             <option value="flatbed">Flatbed Truck</option>
             <option value="low-bed">Low-bed Trailer</option>
             <option value="box-truck">Box Truck</option>
+            <option value="dump-truck">Dump Truck</option>
             <option value="boom-lift">Boom Lift</option>
             <option value="scissor-lift">Scissor Lift</option>
             <option value="generator">Generator</option>

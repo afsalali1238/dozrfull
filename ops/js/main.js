@@ -57,10 +57,84 @@
     });
   }
 
-  /* ---------------- Overview ---------------- */
-  function renderOverview() {
-    var summaryEl = document.getElementById("overview-summary");
-    DATA.overview.summary.forEach(function (item) {
+  /* ---------------- Vertical classification (Logistics vs Equipment Rental) ---------------- */
+  // Dozr has two business lines, same split Marketplace already uses
+  // (browse.html = equipment, freight.html = logistics). Jobs don't have an
+  // explicit vertical field yet (mock data predates this ask), so this
+  // infers it from the free-text `type` field. Trucks/trailers/flatbeds
+  // move freight (logistics); cranes/excavators/lifts are rented equipment.
+  var LOGISTICS_KEYWORDS = ["flatbed", "low-bed", "low bed", "box truck", "trailer"];
+  function jobVertical(job) {
+    if (job.vertical) return job.vertical; // real Supabase jobs carry this column now
+    var t = (job.type || "").toLowerCase();
+    for (var i = 0; i < LOGISTICS_KEYWORDS.length; i++) {
+      if (t.indexOf(LOGISTICS_KEYWORDS[i]) !== -1) return "logistics";
+    }
+    return "equipment";
+  }
+  function verticalLabel(v) { return v === "logistics" ? "Logistics" : "Equipment Rental"; }
+
+  /* ---------------- Live jobs (Supabase) ---------------- */
+  // Enquiries/Kanban/Reports read from here, not DATA.jobs, once loaded.
+  // job-detail.html and vendor-detail.html's mock-vendor job history still
+  // use DATA.jobs directly - those pages aren't migrated this pass.
+  var LIVE_JOBS = [];
+
+  async function loadJobsFromSupabase() {
+    if (typeof supabaseClient === "undefined") return LIVE_JOBS;
+    var result = await supabaseClient.from("jobs").select("*").order("created_at", { ascending: false });
+    if (result.error) {
+      console.error("loadJobsFromSupabase:", result.error);
+      return LIVE_JOBS;
+    }
+    LIVE_JOBS = result.data.map(function (row) {
+      return {
+        id: row.id,
+        code: row.code,
+        client: row.client_name,
+        clientContact: row.client_contact,
+        vendor: row.vendor_name || "— unassigned",
+        driver: row.driver || "— unassigned",
+        route: row.route,
+        type: row.type,
+        stage: row.stage,
+        price: row.price,
+        flagged: row.flagged,
+        vertical: row.vertical
+      };
+    });
+    return LIVE_JOBS;
+  }
+
+  function bindVerticalFilter(containerId, onChange) {
+    var container = document.getElementById(containerId);
+    if (!container) return { get: function () { return "all"; } };
+    var current = "all";
+    var buttons = Array.prototype.slice.call(container.querySelectorAll("[data-vertical]"));
+    buttons.forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        current = btn.getAttribute("data-vertical");
+        buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+        onChange(current);
+      });
+    });
+    return { get: function () { return current; } };
+  }
+
+  /* ---------------- Enquiries ---------------- */
+  var enquiriesVerticalFilter = "all";
+
+  function renderEnquiries() {
+    var summaryEl = document.getElementById("enquiries-summary");
+    var allNew = LIVE_JOBS.filter(function (j) { return j.stage === 0; });
+    var logisticsCount = allNew.filter(function (j) { return jobVertical(j) === "logistics"; }).length;
+    var equipmentCount = allNew.filter(function (j) { return jobVertical(j) === "equipment"; }).length;
+    summaryEl.innerHTML = "";
+    [
+      { label: "New enquiries", value: String(allNew.length), note: "Not yet sent to vendors" },
+      { label: "Logistics", value: String(logisticsCount), note: "Freight / trucking enquiries" },
+      { label: "Equipment Rental", value: String(equipmentCount), note: "Crane / excavator / lift enquiries" }
+    ].forEach(function (item) {
       summaryEl.appendChild(el("div", { class: "summary-card" }, [
         el("div", { class: "label", text: item.label }),
         el("div", { class: "value", text: item.value }),
@@ -68,23 +142,42 @@
       ]));
     });
 
-    // "Open escalations" panel removed from Overview for v1 (2026-07-22,
-    // afzl's call - escalations not shown at all initially). DATA.overview.
-    // escalations still populated in ops/data/ops.js, just not rendered
-    // anywhere right now - same as the standalone Escalations tab, which
-    // was already dropped from the nav.
+    renderEnquiriesList();
+  }
 
-    var checklist = document.getElementById("daily-checklist");
-    DATA.overview.dailyChecklist.forEach(function (item) {
-      var li = el("li", {});
-      var label = el("label", { style: "display:flex;align-items:center;gap:8px;font-size:13px;padding:6px 0;" });
-      var box = el("input", { type: "checkbox" });
-      if (item.done) box.setAttribute("checked", "checked");
-      box.disabled = true;
-      label.appendChild(box);
-      label.appendChild(document.createTextNode(item.task));
-      li.appendChild(label);
-      checklist.appendChild(li);
+  // Bound once at init, not inside renderEnquiries() - that function re-runs
+  // on every stage change (via refreshAllJobViews), and re-binding here each
+  // time would stack duplicate click listeners on the same buttons.
+  function bindEnquiriesVerticalFilter() {
+    bindVerticalFilter("enquiries-vertical-filter", function (v) {
+      enquiriesVerticalFilter = v;
+      renderEnquiriesList();
+    });
+  }
+
+  function renderEnquiriesList() {
+    var enqList = document.getElementById("new-enquiries-list");
+    enqList.innerHTML = "";
+    var newEnquiries = LIVE_JOBS.filter(function (j) {
+      if (j.stage !== 0) return false;
+      return enquiriesVerticalFilter === "all" || jobVertical(j) === enquiriesVerticalFilter;
+    });
+    if (newEnquiries.length === 0) {
+      enqList.appendChild(el("div", { class: "empty-state", text: "No new enquiries." }));
+      return;
+    }
+    newEnquiries.forEach(function (j) {
+      var v = jobVertical(j);
+      var row = el("div", { style: "display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid var(--line);" }, [
+        el("div", {}, [
+          el("span", { class: "mono", text: j.code + " " }),
+          el("strong", { text: j.client }),
+          el("span", { class: "status-chip", "data-tone": "neutral", style: "margin-left:8px;", text: verticalLabel(v) }),
+          el("div", { class: "note", style: "margin-top:2px;", text: j.type + " · " + j.route })
+        ]),
+        el("a", { class: "btn btn-ghost btn-sm", href: "job-detail.html?job=" + encodeURIComponent(j.code), text: "Open" })
+      ]);
+      enqList.appendChild(row);
     });
   }
 
@@ -142,13 +235,35 @@
             el("td", { text: "—" }),
             el("td", { text: v.joined_at }),
             el("td", {}, [el("span", { class: "status-chip", "data-tone": tone, text: v.active ? "Active" : "Deactivated" })]),
-            el("td", {}, [
-              el("a", { class: "btn btn-ghost btn-sm", href: "vendor-detail.html?id=" + encodeURIComponent(v.id), text: "View" })
+            el("td", { style: "white-space:nowrap;" }, [
+              el("a", { class: "btn btn-ghost btn-sm", href: "vendor-detail.html?id=" + encodeURIComponent(v.id), text: "View" }),
+              el("button", { class: "btn btn-ghost btn-sm", type: "button", "data-delete-vendor": v.id, style: "color:var(--error);margin-left:4px;", text: "Delete" })
             ])
           ]);
           tbody.appendChild(row);
         });
       });
+  }
+
+  function bindVendorDelete() {
+    var tbody = document.getElementById("vendors-tbody");
+    if (!tbody) return;
+    tbody.addEventListener("click", async function (e) {
+      var btn = e.target.closest("[data-delete-vendor]");
+      if (!btn) return;
+      var id = btn.getAttribute("data-delete-vendor");
+      var name = btn.closest("tr").querySelector("a").textContent;
+      if (!window.confirm("Delete " + name + "? This also deletes its equipment/assets. This can't be undone.")) return;
+      btn.disabled = true;
+      var result = await supabaseClient.from("vendors").delete().eq("id", id);
+      if (result.error) {
+        showToast("Could not delete " + name + " - try again.");
+        btn.disabled = false;
+        return;
+      }
+      showToast(name + " deleted.");
+      loadLiveVendors();
+    });
   }
 
   /* ---------------- Add vendor modal ---------------- */
@@ -274,6 +389,16 @@
         showToast(eq.name + (newActive ? " reactivated." : " turned off."));
       });
 
+      var deleteBtn = el("button", { class: "btn btn-ghost btn-sm", type: "button", style: "color:var(--error);margin-left:4px;", text: "Delete" });
+      deleteBtn.addEventListener("click", async function () {
+        if (!window.confirm("Delete " + eq.name + "? This can't be undone.")) return;
+        deleteBtn.disabled = true;
+        var res = await supabaseClient.from("equipment").delete().eq("id", eq.id);
+        if (res.error) { showToast("Could not delete - try again."); deleteBtn.disabled = false; return; }
+        showToast(eq.name + " deleted.");
+        renderAssets();
+      });
+
       var row = el("tr", {}, [
         thumbCell,
         el("td", { text: eq.name }),
@@ -282,7 +407,7 @@
         el("td", { class: "mono", text: eq.plate_or_asset_id || "—" }),
         el("td", {}, [availSelect]),
         el("td", {}, [statusChip]),
-        el("td", {}, [toggleBtn])
+        el("td", { style: "white-space:nowrap;" }, [toggleBtn, deleteBtn])
       ]);
       tbody.appendChild(row);
     });
@@ -376,10 +501,14 @@
   }
 
   /* ---------------- Jobs ---------------- */
+  var jobsVerticalFilter = "all";
+
   function renderJobs() {
     var total = DATA.pipeline.length;
     var tbody = document.getElementById("jobs-tbody");
-    DATA.jobs.forEach(function (j) {
+    tbody.innerHTML = "";
+    LIVE_JOBS.forEach(function (j) {
+      if (jobsVerticalFilter !== "all" && jobVertical(j) !== jobsVerticalFilter) return;
       var tone = j.flagged ? "warn" : stageTone(j.stage, total);
       var row = el("tr", { "data-stage": String(j.stage) }, [
         el("td", { class: "mono" }, [el("a", { href: "job-detail.html?job=" + encodeURIComponent(j.code), text: j.code })]),
@@ -395,12 +524,14 @@
     });
 
     var strip = document.getElementById("pipeline-strip");
-    DATA.pipeline.forEach(function (name, idx) {
-      strip.appendChild(el("span", { class: "pipeline-step", "data-active": String(idx === DATA.jobs[0].stage), text: (idx + 1) + " " + name }));
-    });
+    if (strip.children.length === 0) {
+      DATA.pipeline.forEach(function (name, idx) {
+        strip.appendChild(el("span", { class: "pipeline-step", "data-active": String(LIVE_JOBS[0] && idx === LIVE_JOBS[0].stage), text: (idx + 1) + " " + name }));
+      });
+    }
 
     var filter = document.getElementById("job-status-filter");
-    if (filter) {
+    if (filter && filter.children.length === 0) {
       filter.appendChild(el("option", { value: "all", text: "All stages" }));
       DATA.pipeline.forEach(function (name, idx) {
         filter.appendChild(el("option", { value: String(idx), text: (idx + 1) + " · " + name }));
@@ -416,8 +547,11 @@
 
   /* ---------------- Jobs kanban ---------------- */
   // Groups the 13-stage pipeline (see DATA.pipeline) into 6 kanban columns -
-  // 13 columns is unusable as a board. The detailed stage still shows on
-  // each card and in job-detail's full pipeline strip.
+  // 13 columns is unusable as a board. Each card's stage <select> is the
+  // editable source of truth (afzl's call: staff move jobs manually, no
+  // automatic progression, no drag-and-drop for v1). Changing it writes
+  // straight to Supabase (jobs table, 2026-07-22) and updates LIVE_JOBS in
+  // memory - it does persist now, unlike the first pass at this.
   var KANBAN_COLUMNS = [
     { title: "Enquiry & Quoting", stages: [0, 1, 2] },
     { title: "Approved & Dispatch Prep", stages: [3, 4, 5] },
@@ -427,12 +561,22 @@
     { title: "Paid & Closed", stages: [12] }
   ];
 
+  function refreshAllJobViews() {
+    renderJobs();
+    renderJobsKanban();
+    renderEnquiries();
+    renderReports();
+  }
+
   function renderJobsKanban() {
     var board = document.getElementById("jobs-kanban");
     if (!board) return;
     board.innerHTML = "";
+    var visibleJobs = LIVE_JOBS.filter(function (j) {
+      return jobsVerticalFilter === "all" || jobVertical(j) === jobsVerticalFilter;
+    });
     KANBAN_COLUMNS.forEach(function (col) {
-      var jobsInCol = DATA.jobs.filter(function (j) { return col.stages.indexOf(j.stage) !== -1; });
+      var jobsInCol = visibleJobs.filter(function (j) { return col.stages.indexOf(j.stage) !== -1; });
       var column = el("div", { class: "kanban-column" }, [
         el("div", { class: "kanban-column-header" }, [
           el("span", { text: col.title }),
@@ -440,16 +584,33 @@
         ])
       ]);
       jobsInCol.forEach(function (j) {
-        var card = el("a", {
-          class: "kanban-card",
-          href: "job-detail.html?job=" + encodeURIComponent(j.code),
-          "data-flagged": String(!!j.flagged)
-        }, [
-          el("span", { class: "mono", text: j.code + " · " + DATA.pipeline[j.stage] }),
+        var card = el("div", { class: "kanban-card", "data-flagged": String(!!j.flagged) }, [
+          el("a", { class: "kanban-card-link", href: "job-detail.html?job=" + encodeURIComponent(j.code), text: j.code }),
           el("div", { class: "kanban-client", text: j.client }),
           el("div", { class: "kanban-route", text: j.vendor + " · " + j.route }),
           el("div", { class: "kanban-price", text: j.price })
         ]);
+        var select = el("select", { class: "kanban-stage-select" });
+        DATA.pipeline.forEach(function (name, idx) {
+          select.appendChild(el("option", { value: String(idx), text: (idx + 1) + " · " + name }));
+        });
+        select.value = String(j.stage);
+        select.addEventListener("change", async function () {
+          var newStage = parseInt(select.value, 10);
+          var previousStage = j.stage;
+          select.disabled = true;
+          var res = await supabaseClient.from("jobs").update({ stage: newStage }).eq("id", j.id);
+          select.disabled = false;
+          if (res.error) {
+            showToast("Could not move " + j.code + " - try again.");
+            select.value = String(previousStage);
+            return;
+          }
+          j.stage = newStage;
+          showToast(j.code + " moved to \"" + DATA.pipeline[j.stage] + "\".");
+          refreshAllJobViews();
+        });
+        card.appendChild(select);
         column.appendChild(card);
       });
       board.appendChild(column);
@@ -474,6 +635,7 @@
       pipelineStrip.hidden = false;
       filterLabel.hidden = false;
       filterSelect.hidden = false;
+      renderJobs();
     });
     kanbanBtn.addEventListener("click", function () {
       kanbanBtn.setAttribute("aria-pressed", "true");
@@ -483,6 +645,12 @@
       pipelineStrip.hidden = true;
       filterLabel.hidden = true;
       filterSelect.hidden = true;
+      renderJobsKanban();
+    });
+
+    bindVerticalFilter("jobs-vertical-filter", function (v) {
+      jobsVerticalFilter = v;
+      renderJobs();
       renderJobsKanban();
     });
   }
@@ -700,6 +868,64 @@
         el("td", {}, [el("button", { class: "btn btn-ghost btn-sm", type: "button", disabled: "disabled", title: "Not wired up on mock data - ships with the real backend", text: inv.status === "Paid" ? "Receipt" : "Remind" })])
       ]);
       tbody.appendChild(row);
+    });
+  }
+
+  /* ---------------- Reports ---------------- */
+  // Computed from LIVE_JOBS, not stored separately - stays consistent with
+  // Enquiries/Kanban automatically. "Confirmed" = stage >= 3 (Quote
+  // Approved onward - the client has committed). Revenue only sums jobs
+  // with a real AED price ("Quote pending"/"RFQ open"/"—" are skipped).
+  // No profit figure - see the note in the Reports panel for why.
+  function parseAedPrice(priceStr) {
+    if (!priceStr) return null;
+    var match = String(priceStr).match(/[\d,]+(\.\d+)?/);
+    if (!match) return null;
+    return parseFloat(match[0].replace(/,/g, ""));
+  }
+
+  function renderReports() {
+    var summaryEl = document.getElementById("reports-summary");
+    if (!summaryEl) return;
+    summaryEl.innerHTML = "";
+
+    var totalEnquiries = LIVE_JOBS.length;
+    var confirmed = LIVE_JOBS.filter(function (j) { return j.stage >= 3; }).length;
+    var totalRevenue = LIVE_JOBS.reduce(function (sum, j) {
+      var price = parseAedPrice(j.price);
+      return price ? sum + price : sum;
+    }, 0);
+
+    [
+      { label: "Total enquiries", value: String(totalEnquiries), note: "All jobs, any stage" },
+      { label: "Confirmed", value: String(confirmed), note: "Quote approved or later" },
+      { label: "Total revenue", value: "AED " + totalRevenue.toLocaleString("en-US"), note: "Sum of client-facing job prices" },
+      { label: "Profit", value: "—", note: "Needs vendor cost per job - not tracked yet" }
+    ].forEach(function (item) {
+      summaryEl.appendChild(el("div", { class: "summary-card" }, [
+        el("div", { class: "label", text: item.label }),
+        el("div", { class: "value", text: item.value }),
+        el("div", { class: "note", text: item.note })
+      ]));
+    });
+
+    var tbody = document.getElementById("reports-vertical-tbody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    ["logistics", "equipment"].forEach(function (v) {
+      var jobsInVertical = LIVE_JOBS.filter(function (j) { return jobVertical(j) === v; });
+      var enquiries = jobsInVertical.length;
+      var confirmedInVertical = jobsInVertical.filter(function (j) { return j.stage >= 3; }).length;
+      var revenue = jobsInVertical.reduce(function (sum, j) {
+        var price = parseAedPrice(j.price);
+        return price ? sum + price : sum;
+      }, 0);
+      tbody.appendChild(el("tr", {}, [
+        el("td", { text: verticalLabel(v) }),
+        el("td", { text: String(enquiries) }),
+        el("td", { text: String(confirmedInVertical) }),
+        el("td", { class: "mono", text: "AED " + revenue.toLocaleString("en-US") })
+      ]));
     });
   }
 
@@ -1053,7 +1279,18 @@
         select.setAttribute("data-tone", newStatus);
         showToast(eq.name + " marked " + newStatus.replace("_", " ") + ".");
       });
+      var deleteBtn = el("button", { class: "btn btn-ghost btn-sm", type: "button", style: "color:var(--error);margin-top:6px;", text: "Delete" });
+      deleteBtn.addEventListener("click", async function () {
+        if (!window.confirm("Delete " + eq.name + "? This can't be undone.")) return;
+        deleteBtn.disabled = true;
+        var res = await supabaseClient.from("equipment").delete().eq("id", eq.id);
+        if (res.error) { showToast("Could not delete - try again."); deleteBtn.disabled = false; return; }
+        showToast(eq.name + " deleted.");
+        loadEquipmentForVendor(vendor);
+      });
+
       body.appendChild(select);
+      body.appendChild(deleteBtn);
       card.appendChild(body);
       wrap.appendChild(card);
     });
@@ -1140,7 +1377,7 @@
     });
   }
 
-  document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", async function () {
     var page = document.body.getAttribute("data-page");
     bindClock();
     if (page === "job-detail") {
@@ -1154,15 +1391,23 @@
     bindTabs();
     bindNotifications();
     bindVendorModal();
+    bindVendorDelete();
     bindAssetModal();
     bindJobsViewToggle();
+    bindEnquiriesVerticalFilter();
     renderAssets();
-    renderOverview();
     renderVendors();
-    renderJobs();
     renderRfqs();
     renderEscalations();
     renderBilling();
     renderNotifications();
+
+    // Enquiries/Kanban/Reports all read LIVE_JOBS - load once, then render
+    // all three off the same fetch instead of each firing its own query.
+    await loadJobsFromSupabase();
+    renderEnquiries();
+    renderJobs();
+    renderJobsKanban();
+    renderReports();
   });
 })();
