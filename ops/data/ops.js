@@ -23,17 +23,26 @@ window.DOZR_OPS = {
      to demo, not a full dataset). Real vendors now live in Supabase - see
      ops/supabase/migrations/ - these mock rows stay only until every ops
      view is migrated off ops/data/ops.js. Kept for status variety:
-     Active/docs-expiring, Deactivated, and Pending approval. */
+     Active/docs-expiring, Deactivated, and Pending approval.
+
+     `plan` is a verification/trust badge (Standard/Verified/Premium - matches
+     the live Supabase vendors.plan check constraint), not a paid
+     subscription - Dozr is a marketplace, vendors don't pay a recurring fee.
+     `pendingApproval` is its own field now instead of overloading `plan`
+     with a "Pending" value (afzl's correction, 2026-07-23: "there are no
+     vendor plans" - the old mock data made it look like SaaS billing tiers,
+     which isn't the actual model). See Billing's "Commission earned" card
+     for the real revenue figure (client price minus vendor cost, per job). */
   vendors: [
-    { id: "V-021", name: "Emirates Crane Services", plan: "Pro", jobs30d: 26, onTime: "97%", trn: "100987654300003", active: true, docsExpiring: false, joined: "Nov 2025",
+    { id: "V-021", name: "Emirates Crane Services", plan: "Premium", pendingApproval: false, jobs30d: 26, onTime: "97%", trn: "100987654300003", active: true, docsExpiring: false, joined: "Nov 2025",
       phone: "+971 50 222 3344", fleet: "8 mobile cranes (40t-150t)", documents: [{ label: "Trade License", status: "Valid", expires: "20 Aug 2026" }, { label: "Insurance", status: "Valid", expires: "11 Nov 2026" }] },
-    { id: "V-009", name: "Gulf Flatbed Co.", plan: "Starter", jobs30d: 7, onTime: "82%", trn: "100112233400003", active: true, docsExpiring: true, joined: "May 2026",
+    { id: "V-009", name: "Gulf Flatbed Co.", plan: "Standard", pendingApproval: false, jobs30d: 7, onTime: "82%", trn: "100112233400003", active: true, docsExpiring: true, joined: "May 2026",
       phone: "+971 50 333 4455", fleet: "5 flatbeds, 2 low-beds", documents: [{ label: "Trade License", status: "Valid", expires: "30 Sep 2026" }, { label: "Insurance", status: "Expires in 9 days", expires: "30 Jul 2026" }] },
-    { id: "V-006", name: "Khor Fakkan Logistics", plan: "Starter", jobs30d: 4, onTime: "75%", trn: "100778899100003", active: false, docsExpiring: true, joined: "Jul 2025",
+    { id: "V-006", name: "Khor Fakkan Logistics", plan: "Standard", pendingApproval: false, jobs30d: 4, onTime: "75%", trn: "100778899100003", active: false, docsExpiring: true, joined: "Jul 2025",
       phone: "+971 50 555 6677", fleet: "3 box trucks", documents: [{ label: "Trade License", status: "Expired", expires: "12 Jun 2026" }, { label: "Insurance", status: "Expires in 4 days", expires: "25 Jul 2026" }] },
-    { id: "V-042", name: "Abu Dhabi Port Movers", plan: "Pending", jobs30d: 0, onTime: "-", trn: "100889900100003", active: false, docsExpiring: false, joined: "Application: 19 Jul 2026",
+    { id: "V-042", name: "Abu Dhabi Port Movers", plan: "Standard", pendingApproval: true, jobs30d: 0, onTime: "-", trn: "100889900100003", active: false, docsExpiring: false, joined: "Application: 19 Jul 2026",
       phone: "+971 50 888 9900", fleet: "Not yet verified", documents: [{ label: "Trade License", status: "Submitted, unverified", expires: "—" }, { label: "Insurance", status: "Submitted, unverified", expires: "—" }] },
-    { id: "V-050", name: "Fujairah Marine Logistics", plan: "Growth", jobs30d: 9, onTime: "85%", trn: "100334455600003", active: true, docsExpiring: false, joined: "Apr 2026",
+    { id: "V-050", name: "Fujairah Marine Logistics", plan: "Verified", pendingApproval: false, jobs30d: 9, onTime: "85%", trn: "100334455600003", active: true, docsExpiring: false, joined: "Apr 2026",
       phone: "+971 50 999 0011", fleet: "6 flatbeds, port-handling gear", documents: [{ label: "Trade License", status: "Valid", expires: "11 Jan 2027" }, { label: "Insurance", status: "Valid", expires: "23 Jun 2027" }] }
   ],
 
@@ -126,7 +135,6 @@ window.DOZR_OPS = {
      (DZR-J-1020) plus 4 more for a Paid/Pending/Overdue status spread. */
   billing: {
     summary: [
-      { label: "MRR", value: "AED 52.6k", note: "5 active vendor plans" },
       { label: "Outstanding", value: "AED 26.9k", note: "3 unpaid invoices" },
       { label: "Overdue", value: "AED 14.2k", note: "1 invoice, past due date" },
       { label: "Collected 30d", value: "AED 96k", note: "Includes closed jobs not shown below" }

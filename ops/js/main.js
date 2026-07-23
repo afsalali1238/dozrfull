@@ -281,7 +281,7 @@
           href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
         });
       }
-      if (v.plan === "Pending") {
+      if (v.pendingApproval) {
         tasks.push({
           tag: "Pending approval",
           title: v.name,
@@ -359,8 +359,8 @@
   function renderVendors() {
     var tbody = document.getElementById("vendors-tbody");
     DATA.vendors.forEach(function (v) {
-      var tone = !v.active ? (v.plan === "Pending" ? "neutral" : "error") : (v.docsExpiring ? "warn" : "ok");
-      var statusLabel = v.plan === "Pending" ? "Pending approval" : (v.active ? "Active" : "Deactivated");
+      var tone = !v.active ? (v.pendingApproval ? "neutral" : "error") : (v.docsExpiring ? "warn" : "ok");
+      var statusLabel = v.pendingApproval ? "Pending approval" : (v.active ? "Active" : "Deactivated");
       var row = el("tr", {}, [
         el("td", { class: "mono", text: v.id }),
         el("td", {}, [el("div", { class: "avatar-name" }, [
@@ -926,6 +926,7 @@
   /* ---------------- Billing ---------------- */
   function renderBilling() {
     var summaryEl = document.getElementById("billing-summary");
+    summaryEl.innerHTML = "";
     DATA.billing.summary.forEach(function (item) {
       summaryEl.appendChild(el("div", { class: "summary-card" }, [
         el("div", { class: "label", text: item.label }),
@@ -933,6 +934,26 @@
         el("div", { class: "note", text: item.note })
       ]));
     });
+
+    // Commission earned - Dozr's actual revenue: client price minus vendor
+    // cost, per confirmed job (same calc as Reports' Profit card, just
+    // scoped to Billing). Replaces a static "MRR" card that assumed vendors
+    // pay a recurring subscription - they don't, this is a marketplace, not
+    // SaaS (afzl's correction, 2026-07-23: "there are no vendor plans").
+    // Reads LIVE_JOBS, so this is a no-op on the first paint (before
+    // loadJobsFromSupabase() resolves) and accurate once renderBilling() is
+    // called again afterward - see the DOMContentLoaded handler.
+    var jobsWithCommission = LIVE_JOBS.filter(function (j) {
+      return j.vendorCost !== null && j.vendorCost !== undefined && parseAedPrice(j.price) !== null;
+    });
+    var commissionTotal = jobsWithCommission.reduce(function (sum, j) { return sum + (parseAedPrice(j.price) - j.vendorCost); }, 0);
+    summaryEl.appendChild(el("div", { class: "summary-card" }, [
+      el("div", { class: "label", text: "Commission earned" }),
+      el("div", { class: "value", text: jobsWithCommission.length > 0 ? formatAed(commissionTotal) : "—" }),
+      el("div", { class: "note", text: jobsWithCommission.length > 0
+        ? "Client price minus vendor cost, " + jobsWithCommission.length + " job(s) with both known"
+        : "Needs vendor cost entered per job (job-detail.html) - none yet" })
+    ]));
 
     // VAT collected/due - summed across every invoice listed below (afzl's
     // ask, 2026-07-23). Not filtered by status: this is "VAT on invoices
@@ -949,6 +970,7 @@
     ]));
 
     var tbody = document.getElementById("billing-tbody");
+    tbody.innerHTML = "";
     DATA.billing.invoices.forEach(function (inv) {
       var tone = inv.status === "Paid" ? "ok" : (inv.status === "Overdue" ? "error" : "warn");
       var net = parseAedPrice(inv.amount);
@@ -1847,8 +1869,8 @@
   function renderMockVendorDetail(vendor, root) {
     document.getElementById("vendor-detail-title").textContent = vendor.name;
 
-    var tone = !vendor.active ? (vendor.plan === "Pending" ? "neutral" : "error") : (vendor.docsExpiring ? "warn" : "ok");
-    var statusLabel = vendor.plan === "Pending" ? "Pending approval" : (vendor.active ? "Active" : "Deactivated");
+    var tone = !vendor.active ? (vendor.pendingApproval ? "neutral" : "error") : (vendor.docsExpiring ? "warn" : "ok");
+    var statusLabel = vendor.pendingApproval ? "Pending approval" : (vendor.active ? "Active" : "Deactivated");
 
     var summary = el("section", { class: "summary-grid" }, [
       el("div", { class: "summary-card" }, [el("div", { class: "label", text: "Status" }), el("div", {}, [el("span", { class: "status-chip", "data-tone": tone, text: statusLabel })])]),
@@ -2139,13 +2161,17 @@
     bindTableDownload("stage-download", "reports-stage-table", "dozr-by-pipeline-stage.csv");
     bindTableDownload("vertical-download", "reports-vertical-table", "dozr-by-vertical.csv");
 
-    // Enquiries summary/Kanban/Reports all read LIVE_JOBS - load once, then
-    // render all three off the same fetch instead of each firing its own query.
+    // Enquiries summary/Kanban/Reports/Billing's commission card all read
+    // LIVE_JOBS - load once, then render everything off the same fetch
+    // instead of each firing its own query. Billing is rendered twice (once
+    // above for the static invoice table, again here) since its Commission
+    // card needs LIVE_JOBS, which isn't ready until this resolves.
     await loadJobsFromSupabase();
     renderEnquiries();
     renderJobs();
     renderJobsKanban();
     renderReports();
+    renderBilling();
     renderDashboardTasks();
   });
 })();

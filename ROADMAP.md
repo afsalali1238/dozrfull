@@ -1150,3 +1150,27 @@ view rather than just two separate totals:
   as CSV.
 - Verified: `node --check js/main.js` clean; `index.html` tags balanced
   (div 82/82, section 20/20, button 29/29, table/thead/tbody/select 9-10/9-10).
+
+## 2026-07-23 — Removed fake MRR/vendor-plan billing concept
+
+afzl's correction: "there are no vendor plans" - Billing's MRR card and the
+mock vendors' Pro/Starter/Growth "plans" implied a SaaS subscription model
+that isn't real. Dozr is a marketplace - vendors don't pay a recurring fee.
+
+- **Removed**: "MRR" summary card (`DATA.billing.summary`, `ops/data/ops.js`).
+- **Replaced with**: "Commission earned" card in Billing - client price
+  minus vendor cost, computed live from `LIVE_JOBS` (same calc as Reports'
+  Profit card). `renderBilling()` now runs twice (once on initial paint for
+  the static invoice table, again after `loadJobsFromSupabase()` resolves
+  so this card has real numbers) - added `.innerHTML = ""` resets to both
+  `#billing-summary` and `#billing-tbody` so the second run doesn't duplicate rows.
+- **Mock vendor data fixed**: `plan` now uses the same values as the live
+  Supabase schema (Standard/Verified/Premium - a verification/trust badge,
+  not a billing tier) instead of "Pro"/"Starter"/"Growth". This also closes
+  a previously-noted inconsistency (mock vs. live plan casing).
+- **Decoupled pending-approval from plan**: mock vendors had a `plan:
+  "Pending"` value doing double duty as an application-status flag. Added a
+  dedicated `pendingApproval` boolean field instead; every `v.plan ===
+  "Pending"` check (Vendors table, Dashboard task list, vendor-detail.html)
+  now reads `v.pendingApproval`.
+- Verified: `node --check` clean on both files; `index.html` tags balanced.
