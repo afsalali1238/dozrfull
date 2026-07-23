@@ -43,28 +43,28 @@ window.DOZR_OPS = {
      so job-detail.html (still mock-only) keeps resolving correctly once
      Enquiries/Kanban/Reports read from Supabase instead of this array. */
   jobs: [
-    { code: "DZR-J-1034", client: "Aldar", clientContact: "Mariam Khoury", vendor: "— unassigned", driver: "— unassigned", route: "Abu Dhabi KIZAD", type: "Excavator", stage: 0, price: "—", flagged: false,
+    { code: "DZR-J-1034", client: "Aldar", clientContact: "Mariam Khoury", vendor: "— unassigned", driver: "— unassigned", route: "Abu Dhabi KIZAD", type: "Excavator", stage: 0, price: "—", flagged: false, createdAt: "2026-07-23",
       documents: [],
       timeline: [{ time: "Today 09:05", note: "Enquiry received, RFQ not yet sent" }] },
-    { code: "DZR-J-1033", client: "RAK Ceramics", clientContact: "Bilal Farooq", vendor: "Ras Al Khaimah Crane Co.", driver: "Anwar Sadiq", route: "RAK Industrial Zone", type: "Crane, 50t", stage: 2, price: "AED 5,600", flagged: false,
+    { code: "DZR-J-1033", client: "RAK Ceramics", clientContact: "Bilal Farooq", vendor: "Ras Al Khaimah Crane Co.", driver: "Anwar Sadiq", route: "RAK Industrial Zone", type: "Crane, 50t", stage: 2, price: "AED 5,600", flagged: false, createdAt: "2026-07-20",
       documents: [{ label: "Quote", ref: "QTE-1033" }, { label: "PO", ref: "PO-1033" }],
       timeline: [
         { time: "Today 06:50", note: "Quote approved" },
         { time: "Today 07:10", note: "PO issued, awaiting driver assignment" }
       ] },
-    { code: "DZR-J-1039", client: "Petrofac", clientContact: "Layla Nasser", vendor: "Gulf Flatbed Co.", driver: "Hassan Ali", route: "Abu Dhabi → Ruwais", type: "Low-bed", stage: 2, price: "AED 6,750", flagged: true,
+    { code: "DZR-J-1039", client: "Petrofac", clientContact: "Layla Nasser", vendor: "Gulf Flatbed Co.", driver: "Hassan Ali", route: "Abu Dhabi → Ruwais", type: "Low-bed", stage: 2, price: "AED 6,750", flagged: true, createdAt: "2026-07-18",
       documents: [{ label: "Quote", ref: "QTE-1039" }, { label: "PO", ref: "PO-1039" }],
       timeline: [
         { time: "Yesterday", note: "PO issued, driver assigned" },
         { time: "Today 07:15", note: "Escalation L1: driver running 25 min late" }
       ] },
-    { code: "DZR-J-1032", client: "Fujairah Port Authority", clientContact: "Salim Al Kaabi", vendor: "Fujairah Marine Logistics", driver: "Imran Sheikh", route: "Fujairah Port site", type: "Flatbed, port cargo", stage: 3, price: "AED 7,100", flagged: false,
+    { code: "DZR-J-1032", client: "Fujairah Port Authority", clientContact: "Salim Al Kaabi", vendor: "Fujairah Marine Logistics", driver: "Imran Sheikh", route: "Fujairah Port site", type: "Flatbed, port cargo", stage: 3, price: "AED 7,100", flagged: false, createdAt: "2026-07-10",
       documents: [{ label: "Quote", ref: "QTE-1032" }, { label: "PO", ref: "PO-1032" }],
       timeline: [
         { time: "Yesterday", note: "Delivered" },
         { time: "Today 06:00", note: "ePOD signed by client" }
       ] },
-    { code: "DZR-J-1020", client: "Meraas", clientContact: "Yousef Al Ali", vendor: "Emirates Crane Services", driver: "Sunil Perera", route: "Bluewaters Island", type: "Crane, 60t", stage: 5, price: "AED 6,200", flagged: false,
+    { code: "DZR-J-1020", client: "Meraas", clientContact: "Yousef Al Ali", vendor: "Emirates Crane Services", driver: "Sunil Perera", route: "Bluewaters Island", type: "Crane, 60t", stage: 5, price: "AED 6,200", flagged: false, createdAt: "2026-06-25",
       documents: [{ label: "Quote", ref: "QTE-1020" }, { label: "PO", ref: "PO-1020" }, { label: "Invoice", ref: "INV-DZR-J-1020" }],
       timeline: [
         { time: "10 days ago", note: "Delivered and ePOD signed" },

@@ -1067,3 +1067,86 @@ no leftover `panel-kanban`/`tab-kanban` references anywhere in `ops/`.
   existing Enquiries/Confirmed/Receivables/Payables/Profit cards.
 - Verified: `node --check ops/js/main.js` clean; `ops/index.html` div/section/
   button tags balanced (58/58, 16/16, 23/23); no duplicate function defs.
+
+## 2026-07-23 — Reports: Job ledger + Invoice statement (filter/sort/CSV)
+
+- **Job ledger** (new panel, top of Reports): every job as a line item -
+  code (links to job detail), client, vertical, stage, date, amount, vendor
+  cost, profit. Filterable by stage, vertical, and date range (from/to);
+  sortable by clicking any column header (toggles asc/desc, arrow indicator);
+  "Download CSV" exports exactly what's currently filtered/sorted.
+- **Invoice statement** (new panel, below By vertical): read-only,
+  filterable-by-status, sortable, downloadable view of the same invoice data
+  Billing uses - distinct from Billing's own table (which has Receipt/Remind
+  action buttons and isn't meant to be exported).
+- **By pipeline stage** and **By vertical** tables also got a "Download CSV"
+  button each (reads current table DOM, so always matches what's displayed).
+- Added `createdAt` to mock jobs (`ops/data/ops.js`) and mapped
+  `row.created_at` onto `LIVE_JOBS` in `loadJobsFromSupabase()`
+  (`ops/js/main.js`) - needed for the ledger's date filter/sort; Supabase's
+  `jobs` table already had `created_at`, nothing new added to the schema.
+- CSV export is generic (`tableToCsvRows()` + `downloadCsv()`), reads
+  directly from the rendered `<table>` DOM rather than recomputing a
+  separate export dataset, so exports can never drift from the on-screen view.
+- Verified: `node --check js/main.js` and `data/ops.js` clean; `index.html`
+  div/section/button/table/thead/tbody/select tags all balanced.
+
+## 2026-07-23 — Expert review + 4 gap closures (VAT, SLA alerts, documents, trends)
+
+Ran an expert review of ops against comparable TMS/rental-ops dashboards
+(dispatch boards, rental fleet management platforms). afzl picked 4 gaps to
+close now (declined global search / staff roles+audit log / vendor
+scorecards for this round):
+
+- **VAT (5%)**: Billing invoices table and Reports' Invoice statement now
+  show Amount (excl. VAT) / VAT (5%) / Total (incl. VAT) columns, plus a
+  "VAT on invoices" summary card on both Billing and Reports. All AED
+  figures elsewhere (job price) remain excl. VAT by convention - documented
+  in the Reports note.
+- **SLA/aging alerts**: Dashboard task list gained a 6th type - "Aging in
+  pipeline", flagging jobs stuck at Quote Requested/Quote Sent 48h+ with no
+  stage change (`updated_at`, already existed in the jobs table via the
+  existing trigger - just wasn't mapped into `LIVE_JOBS` until now).
+- **Document management**: job-detail.html's Documents panel now does real
+  file upload/view (Quote/PO/Invoice/ePOD) via a new `job-documents`
+  Supabase Storage bucket - see
+  `ops/supabase/migrations/0011_job_documents_storage.sql` (**needs to be
+  run manually in the Supabase SQL Editor**, same as prior migrations).
+  Public bucket + open policies, matching the existing temp-open-access
+  posture. Falls back to the old static list for jobs not yet in Supabase.
+- **Trend charts**: new "Trends" panel on Reports - revenue by week, job
+  volume by week (both from `LIVE_JOBS.createdAt`), and vendor activity
+  (jobs in last 30 days). Plain inline SVG generated in JS, no charting
+  library - keeps the no-build-step stack.
+- Declined for now (afzl's call): global search, staff roles/audit log UI,
+  computed vendor scorecards (on-time % is still a static hand-entered
+  field). Worth revisiting once real job volume exists.
+- Verified: `node --check js/main.js` clean; `index.html` div/section/
+  button/table tags balanced.
+
+## 2026-07-23 — Reconciliation: match client invoices against vendor payments
+
+afzl's ask: "match every invoice I make with every invoice I paid... make
+sure there is some receivables and payable for each." Built as a matched-pair
+view rather than just two separate totals:
+
+- **New job fields** (`ops/supabase/migrations/0012_vendor_invoice_tracking.sql`
+  - **needs to be run manually**, same as prior migrations): `vendor_invoice_ref`,
+  `vendor_payment_status` ('unpaid'/'paid', default unpaid), `vendor_paid_at`.
+  Mirrors the client invoice's ref+status shape, on top of the existing
+  `vendor_cost` (0010).
+- **job-detail.html**: Financials panel now has a "Vendor invoice" block
+  (ref, Paid/Unpaid status, paid date, Save) below the existing vendor cost
+  input - separate save action, since cost and payment status are entered
+  at different times in practice.
+- **Reports > Reconciliation** (new panel): one row per confirmed job (stage
+  >= 2) - client invoice ref/status matched by job code in the invoice ref
+  (client invoices are still mock/sample data with no real job_id link yet,
+  documented as a known limitation to fix once Billing reads real Supabase
+  invoices), alongside vendor cost/invoice ref/payment status, with a
+  computed flag: Reconciled, Payable outstanding (client paid, vendor not),
+  Paid vendor before client (cash-flow risk, flagged red), Awaiting both,
+  Vendor cost missing, or Not yet invoiced. Filterable by flag, downloadable
+  as CSV.
+- Verified: `node --check js/main.js` clean; `index.html` tags balanced
+  (div 82/82, section 20/20, button 29/29, table/thead/tbody/select 9-10/9-10).

@@ -141,13 +141,14 @@
         <div class="panel-header">
           <h2 id="billing-heading">Invoices</h2>
         </div>
-        <p class="note" style="padding:0 var(--space-2);margin:8px 0 0;">Sample invoice data - not yet wired to a real invoicing flow, so "Receipt"/"Remind" are disabled.</p>
+        <p class="note" style="padding:0 var(--space-2);margin:8px 0 0;">Sample invoice data - not yet wired to a real invoicing flow, so "Receipt"/"Remind" are disabled. Amounts are treated as excl. VAT (same convention Reports already uses for job price) - UAE VAT of 5% is shown alongside, not baked into the stored figure.</p>
         <div class="panel-body no-pad table-scroll">
           <table class="data-table">
-            <caption class="sr-only">Client invoices with amount, dates, and payment status</caption>
+            <caption class="sr-only">Client invoices with amount excl. VAT, VAT, total incl. VAT, dates, and payment status</caption>
             <thead>
               <tr>
-                <th scope="col">Invoice</th><th scope="col">Client</th><th scope="col">Amount</th>
+                <th scope="col">Invoice</th><th scope="col">Client</th><th scope="col">Amount (excl. VAT)</th>
+                <th scope="col">VAT (5%)</th><th scope="col">Total (incl. VAT)</th>
                 <th scope="col">Issued</th><th scope="col">Due</th><th scope="col">Status</th><th scope="col">Action</th>
               </tr>
             </thead>
@@ -160,10 +161,77 @@
     <!-- REPORTS -->
     <section class="tabpanel" id="panel-reports" role="tabpanel" aria-labelledby="tab-reports" hidden>
       <section class="summary-grid" id="reports-summary" aria-label="Report totals"></section>
+
+      <section class="panel" aria-labelledby="trends-heading">
+        <div class="panel-header"><h2 id="trends-heading">Trends</h2></div>
+        <div class="panel-body">
+          <div class="trend-grid">
+            <div class="trend-card">
+              <div class="trend-card-title">Revenue by week (last 8 weeks)</div>
+              <div id="trend-revenue-chart" role="img" aria-label="Bar chart of revenue by week"></div>
+            </div>
+            <div class="trend-card">
+              <div class="trend-card-title">Job volume by week (last 8 weeks)</div>
+              <div id="trend-volume-chart" role="img" aria-label="Bar chart of job count by week"></div>
+            </div>
+            <div class="trend-card">
+              <div class="trend-card-title">Vendor activity (jobs, last 30 days)</div>
+              <div id="trend-vendor-chart" role="img" aria-label="Bar chart of jobs per vendor in the last 30 days"></div>
+            </div>
+          </div>
+          <p class="note" style="margin-top:var(--space-2);">Weekly figures use each job's created date - sparse until more real jobs flow through. Vendor activity is the same jobs30d figure shown on the Vendors tab.</p>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="ledger-heading">
+        <div class="panel-header">
+          <h2 id="ledger-heading">Job ledger</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="ledger-download">Download CSV</button>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="filter-row" style="gap:12px;align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-3) 0;">
+            <select id="ledger-filter-stage" aria-label="Filter by stage">
+              <option value="">All stages</option>
+            </select>
+            <select id="ledger-filter-vertical" aria-label="Filter by vertical">
+              <option value="">All verticals</option>
+              <option value="logistics">Logistics</option>
+              <option value="equipment">Equipment Rental</option>
+            </select>
+            <label class="sr-only" for="ledger-filter-from">From date</label>
+            <input type="date" id="ledger-filter-from" aria-label="From date">
+            <label class="sr-only" for="ledger-filter-to">To date</label>
+            <input type="date" id="ledger-filter-to" aria-label="To date">
+            <button class="btn btn-ghost btn-sm" type="button" id="ledger-filter-clear">Clear filters</button>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="ledger-table">
+              <caption class="sr-only">Every job with client, vertical, stage, date, amount, vendor cost and profit - filterable, sortable, and downloadable as CSV</caption>
+              <thead>
+                <tr>
+                  <th scope="col" data-sort-key="code" class="sortable">Job</th>
+                  <th scope="col" data-sort-key="client" class="sortable">Client</th>
+                  <th scope="col" data-sort-key="vertical" class="sortable">Vertical</th>
+                  <th scope="col" data-sort-key="stage" class="sortable">Stage</th>
+                  <th scope="col" data-sort-key="date" class="sortable">Date</th>
+                  <th scope="col" data-sort-key="price" class="sortable">Amount (AED)</th>
+                  <th scope="col" data-sort-key="vendorCost" class="sortable">Vendor cost (AED)</th>
+                  <th scope="col" data-sort-key="profit" class="sortable">Profit (AED)</th>
+                </tr>
+              </thead>
+              <tbody id="ledger-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
       <section class="panel" aria-labelledby="reports-stage-heading">
-        <div class="panel-header"><h2 id="reports-stage-heading">By pipeline stage</h2></div>
+        <div class="panel-header">
+          <h2 id="reports-stage-heading">By pipeline stage</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="stage-download">Download CSV</button>
+        </div>
         <div class="panel-body no-pad table-scroll">
-          <table class="data-table">
+          <table class="data-table" id="reports-stage-table">
             <caption class="sr-only">Every pipeline stage with job count and total AED amount currently sitting at that stage</caption>
             <thead>
               <tr><th scope="col">Stage</th><th scope="col">Jobs</th><th scope="col">Amount (AED)</th></tr>
@@ -173,9 +241,12 @@
         </div>
       </section>
       <section class="panel" aria-labelledby="reports-vertical-heading">
-        <div class="panel-header"><h2 id="reports-vertical-heading">By vertical</h2></div>
+        <div class="panel-header">
+          <h2 id="reports-vertical-heading">By vertical</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="vertical-download">Download CSV</button>
+        </div>
         <div class="panel-body no-pad table-scroll">
-          <table class="data-table">
+          <table class="data-table" id="reports-vertical-table">
             <caption class="sr-only">Enquiries, confirmed jobs, and revenue split by Logistics vs Equipment Rental</caption>
             <thead>
               <tr><th scope="col">Vertical</th><th scope="col">Enquiries</th><th scope="col">Confirmed</th><th scope="col">Revenue</th></tr>
@@ -184,7 +255,81 @@
           </table>
         </div>
       </section>
-      <p class="note" style="margin-top:var(--space-2);">Figures are computed from current job records. Payment received = jobs the client has already paid for (Payment Received stage or later). Receivables = invoiced jobs the client hasn't paid yet. Payables = jobs the client has paid where Dozr hasn't paid the vendor yet - enter each job's vendor cost on its job detail page to include it here (until then it's called out as missing rather than treated as zero). Profit sums client price minus vendor cost, only for jobs where both are known. "By pipeline stage" below shows every stage's job count and total AED amount, not just the ones with their own card above. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
+
+      <section class="panel" aria-labelledby="invoice-statement-heading">
+        <div class="panel-header">
+          <h2 id="invoice-statement-heading">Invoice statement</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="invoices-download">Download CSV</button>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="filter-row" style="gap:12px;align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-3) 0;">
+            <select id="invoices-filter-status" aria-label="Filter by status">
+              <option value="">All statuses</option>
+              <option value="Paid">Paid</option>
+              <option value="Pending">Pending</option>
+              <option value="Overdue">Overdue</option>
+            </select>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="invoices-table">
+              <caption class="sr-only">Every invoice with client, amount excl. VAT, VAT, total incl. VAT, issue date, due date and status - filterable, sortable, and downloadable as CSV</caption>
+              <thead>
+                <tr>
+                  <th scope="col" data-sort-key="ref" class="sortable">Invoice</th>
+                  <th scope="col" data-sort-key="client" class="sortable">Client</th>
+                  <th scope="col" data-sort-key="amount" class="sortable">Amount (excl. VAT)</th>
+                  <th scope="col" data-sort-key="vat" class="sortable">VAT (5%)</th>
+                  <th scope="col" data-sort-key="total" class="sortable">Total (incl. VAT)</th>
+                  <th scope="col" data-sort-key="issued" class="sortable">Issued</th>
+                  <th scope="col" data-sort-key="due" class="sortable">Due</th>
+                  <th scope="col" data-sort-key="status" class="sortable">Status</th>
+                </tr>
+              </thead>
+              <tbody id="invoices-statement-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel" aria-labelledby="reconciliation-heading">
+        <div class="panel-header">
+          <h2 id="reconciliation-heading">Reconciliation</h2>
+          <button class="btn btn-ghost btn-sm" type="button" id="reconciliation-download">Download CSV</button>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="filter-row" style="gap:12px;align-items:center;flex-wrap:wrap;padding:var(--space-3) var(--space-3) 0;">
+            <select id="reconciliation-filter-status" aria-label="Filter by reconciliation status">
+              <option value="">All statuses</option>
+              <option value="Reconciled">Reconciled</option>
+              <option value="Payable outstanding">Payable outstanding</option>
+              <option value="Paid vendor before client">Paid vendor before client</option>
+              <option value="Awaiting both">Awaiting both</option>
+              <option value="Vendor cost missing">Vendor cost missing</option>
+              <option value="Not yet invoiced">Not yet invoiced</option>
+            </select>
+          </div>
+          <div class="table-scroll">
+            <table class="data-table" id="reconciliation-table">
+              <caption class="sr-only">Every confirmed job with its matched client invoice and vendor payment, flagged where one side is settled and the other isn't</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Job</th>
+                  <th scope="col">Client</th>
+                  <th scope="col">Client invoice</th>
+                  <th scope="col">Client status</th>
+                  <th scope="col">Vendor cost</th>
+                  <th scope="col">Vendor invoice</th>
+                  <th scope="col">Vendor status</th>
+                  <th scope="col">Reconciliation</th>
+                </tr>
+              </thead>
+              <tbody id="reconciliation-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <p class="note" style="margin-top:var(--space-2);">All AED figures on this page (job price, invoice amount) are excl. VAT unless labeled otherwise - UAE VAT is 5%, shown separately on the Invoice statement and as its own summary card. Figures are computed from current job records. Payment received = jobs the client has already paid for (Payment Received stage or later). Receivables = invoiced jobs the client hasn't paid yet. Payables = jobs the client has paid where Dozr hasn't paid the vendor yet - enter each job's vendor cost on its job detail page to include it here (until then it's called out as missing rather than treated as zero). Profit sums client price minus vendor cost, only for jobs where both are known. "By pipeline stage" below shows every stage's job count and total AED amount, not just the ones with their own card above. The Job ledger and Invoice statement above are individually filterable, sortable (click a column header), and downloadable as CSV. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
     </section>
   </main>
 </div>

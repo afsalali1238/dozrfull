@@ -184,6 +184,53 @@ table { border-collapse: collapse; width: 100%; }
 .table-scroll { overflow-x: auto; }
 .mono { font-family: var(--font-mono); font-size: 12px; }
 
+/* Sortable report/statement columns - Job ledger + Invoice statement
+   (afzl's ask, 2026-07-23: "check each sort filter and download and all"). */
+.data-table th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+.data-table th.sortable:hover { color: var(--ink); }
+.data-table th.sortable::after {
+  content: "\2195"; /* up-down arrow, neutral until sorted */
+  margin-left: 4px;
+  opacity: .35;
+  font-size: 10px;
+}
+.data-table th.sortable[data-sort-dir="asc"]::after { content: "\2191"; opacity: 1; }
+.data-table th.sortable[data-sort-dir="desc"]::after { content: "\2193"; opacity: 1; }
+/* ---------------- Trend charts (Reports) ---------------- */
+/* Lightweight inline-SVG bars, generated in JS - no charting library, no
+   build step, consistent with the rest of this stack (afzl's ask,
+   2026-07-23: trend charts/analytics). */
+.trend-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-3);
+}
+.trend-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  padding: var(--space-2);
+  background: var(--surface);
+}
+.trend-card-title {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--slate);
+  margin-bottom: 8px;
+}
+.filter-row input[type="date"] {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-button);
+  padding: 8px 12px;
+  font-size: 13px;
+  background: var(--surface);
+  color: var(--ink);
+}
+
 /* ---------------- Buttons ---------------- */
 .btn {
   display: inline-flex;
