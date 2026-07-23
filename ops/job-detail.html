@@ -22,13 +22,28 @@
       <span>dozr ops</span>
     </a>
     <span class="badge-internal">Internal</span>
-    <a href="index.html#panel-pipeline" class="btn btn-ghost btn-sm" style="margin-left:auto;">&larr; Back to Pipeline</a>
+    <button type="button" class="btn btn-ghost btn-sm" id="global-search-trigger" style="margin-left:auto;color:#fff;border-color:rgba(255,255,255,.25);">Search <span class="mono" style="opacity:.6;">⌘K</span></button>
+    <a href="index.html#panel-pipeline" class="btn btn-ghost btn-sm" style="color:#fff;border-color:rgba(255,255,255,.25);">&larr; Back to Pipeline</a>
   </header>
 
   <main class="app-main" id="main-content">
     <h1 id="job-detail-title" style="font-size:22px;margin-bottom:var(--space-3);">Job detail</h1>
     <div id="job-detail-root"></div>
   </main>
+</div>
+
+<!-- GLOBAL SEARCH (Ctrl+K / Cmd+K) -->
+<div class="modal-overlay" id="global-search-overlay" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title" style="max-width:560px;padding:0;">
+    <h2 id="global-search-title" class="sr-only">Search jobs, vendors, and invoices</h2>
+    <div style="display:flex;align-items:center;gap:8px;padding:var(--space-3);border-bottom:1px solid var(--line);">
+      <input type="text" id="global-search-input" placeholder="Search jobs, vendors, invoices..." autocomplete="off"
+        style="flex:1;border:none;font-size:16px;font-family:inherit;background:transparent;color:var(--ink);outline:none;">
+      <button type="button" class="modal-close" id="global-search-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="global-search-results" style="max-height:360px;overflow-y:auto;"></div>
+    <p class="note" style="padding:8px var(--space-3);margin:0;border-top:1px solid var(--line);">Type at least 2 characters · Esc to close</p>
+  </div>
 </div>
 
 <script src="js/supabase-client.js" defer></script>

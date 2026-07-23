@@ -1174,3 +1174,34 @@ that isn't real. Dozr is a marketplace - vendors don't pay a recurring fee.
   "Pending"` check (Vendors table, Dashboard task list, vendor-detail.html)
   now reads `v.pendingApproval`.
 - Verified: `node --check` clean on both files; `index.html` tags balanced.
+
+## 2026-07-23 — External UI/UX review: 3 of 4 suggestions actioned
+
+afzl relayed a UI/UX review with 4 suggestions. Ran them past him first since
+one directly conflicted with an earlier decision:
+
+- **Drag-and-drop Kanban**: declined - Pipeline is already Kanban-by-default,
+  but afzl explicitly chose dropdown-only stage changes earlier this session
+  to avoid accidental drags. No change.
+- **Global Ctrl+K/Cmd+K search**: built. New modal (`#global-search-overlay`)
+  on all 3 ops pages (index/job-detail/vendor-detail), triggered by a header
+  button or the keyboard shortcut, bound via `bindGlobalSearch()` before the
+  job-detail/vendor-detail early-returns so it works everywhere. Searches
+  live Supabase jobs/vendors (debounced, race-guarded with a token counter)
+  plus mock invoices/vendors client-side. Links straight to the record. This
+  was declined once already in the earlier expert-review round but afzl
+  reconsidered after seeing the same suggestion from an independent source.
+- **Visual status hierarchy**: Dashboard task list chips now carry a
+  per-task `tone` instead of one flat yellow for everything - "Aging in
+  pipeline", "Missing vendor cost", and "Invoice overdue" are now
+  error/red (genuine exceptions), "Pending approval" is neutral (routine),
+  "Docs expiring"/"Quote needed" stay warn/yellow. Reconciliation's "Vendor
+  cost missing" flag also moved from warn to error to match.
+- **Quick actions**: Vendors table gets a one-click "Approve" button for
+  pending-approval vendors (primary action) alongside "View" (secondary) -
+  mock-data only, flips `pendingApproval`/`active` in memory and re-renders,
+  doesn't persist (no backend for demo vendors, same disclosed-limitation
+  precedent as Billing's disabled Receipt/Remind). `renderVendors()` now
+  resets its tbody before rendering, since it can be called more than once now.
+- Verified: `node --check` clean on `js/main.js` and `data/ops.js`; all 3
+  HTML pages' div/section/button/table tags balanced.

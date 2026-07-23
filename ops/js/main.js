@@ -40,6 +40,116 @@
     });
   }
 
+  // Global search (Ctrl+K / Cmd+K) - jump straight to a job, vendor, or
+  // invoice without clicking through tabs (afzl's ask, 2026-07-23, echoing
+  // a suggestion from an external UI/UX review - declined once already on
+  // 2026-07-23 but reconsidered after seeing the same suggestion twice).
+  // Queries Supabase fresh on every search rather than reading LIVE_JOBS,
+  // so it works the same on job-detail.html/vendor-detail.html (which never
+  // populate LIVE_JOBS - they render their own single record and return
+  // early) as it does on the main dashboard. Bound once per page, before
+  // the job-detail/vendor-detail early-returns in DOMContentLoaded, so the
+  // shortcut works everywhere.
+  function bindGlobalSearch() {
+    var overlay = document.getElementById("global-search-overlay");
+    var input = document.getElementById("global-search-input");
+    var resultsEl = document.getElementById("global-search-results");
+    var trigger = document.getElementById("global-search-trigger");
+    if (!overlay || !input || !resultsEl) return;
+    bindModalFocusTrap(overlay);
+
+    function open() {
+      overlay.hidden = false;
+      input.value = "";
+      resultsEl.innerHTML = "";
+      input.focus();
+    }
+    function close() {
+      overlay.hidden = true;
+    }
+
+    if (trigger) trigger.addEventListener("click", open);
+    document.getElementById("global-search-close").addEventListener("click", close);
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+    document.addEventListener("keydown", function (e) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        open();
+      } else if (e.key === "Escape" && !overlay.hidden) {
+        close();
+      }
+    });
+
+    function renderResults(results) {
+      resultsEl.innerHTML = "";
+      if (results.length === 0) {
+        resultsEl.appendChild(el("div", { class: "note", style: "padding:8px 16px;", text: "No matches." }));
+        return;
+      }
+      results.slice(0, 20).forEach(function (r) {
+        resultsEl.appendChild(el("a", { class: "task-row", href: r.href }, [
+          el("div", { class: "task-row-main" }, [
+            el("span", { class: "status-chip", "data-tone": "neutral", text: r.type }),
+            el("div", { class: "task-row-text" }, [
+              el("div", { class: "task-row-title", text: r.title }),
+              el("div", { class: "task-row-detail", text: r.detail })
+            ])
+          ]),
+          el("span", { class: "task-row-arrow", "aria-hidden": "true", text: "→" })
+        ]));
+      });
+    }
+
+    var debounceTimer;
+    var searchToken = 0;
+    input.addEventListener("input", function () {
+      clearTimeout(debounceTimer);
+      var q = input.value.trim();
+      if (q.length < 2) { resultsEl.innerHTML = ""; return; }
+      debounceTimer = setTimeout(function () { runSearch(q); }, 150);
+    });
+
+    async function runSearch(q) {
+      var token = ++searchToken; // guards against a slow older query overwriting a newer one
+      resultsEl.innerHTML = '<div class="note" style="padding:8px 16px;">Searching...</div>';
+      var results = [];
+      var needle = q.toLowerCase();
+
+      DATA.billing.invoices.forEach(function (inv) {
+        if (inv.ref.toLowerCase().indexOf(needle) !== -1 || inv.client.toLowerCase().indexOf(needle) !== -1) {
+          results.push({ type: "Invoice", title: inv.ref, detail: inv.client + " - " + inv.amount, href: "index.html#panel-billing" });
+        }
+      });
+      DATA.vendors.forEach(function (v) {
+        if (v.name.toLowerCase().indexOf(needle) !== -1) {
+          results.push({ type: "Vendor", title: v.name, detail: v.plan + (v.pendingApproval ? " · pending approval" : ""), href: "vendor-detail.html?id=" + encodeURIComponent(v.id) });
+        }
+      });
+
+      if (typeof supabaseClient !== "undefined") {
+        var esc = q.replace(/[%,]/g, "");
+        var jobsRes = await supabaseClient.from("jobs").select("code, client_name").or("code.ilike.%" + esc + "%,client_name.ilike.%" + esc + "%").limit(8);
+        if (token !== searchToken) return;
+        if (!jobsRes.error && jobsRes.data) {
+          jobsRes.data.forEach(function (j) {
+            results.push({ type: "Job", title: j.code, detail: j.client_name || "", href: "job-detail.html?job=" + encodeURIComponent(j.code) });
+          });
+        }
+        var vendorsRes = await supabaseClient.from("vendors").select("id, name, plan").ilike("name", "%" + esc + "%").limit(8);
+        if (token !== searchToken) return;
+        if (!vendorsRes.error && vendorsRes.data) {
+          vendorsRes.data.forEach(function (v) {
+            if (HIDDEN_VENDOR_NAMES.indexOf(v.name) !== -1) return;
+            results.push({ type: "Vendor", title: v.name, detail: v.plan || "", href: "vendor-detail.html?id=" + encodeURIComponent(v.id) });
+          });
+        }
+      }
+
+      if (token !== searchToken) return;
+      renderResults(results);
+    }
+  }
+
   function stageTone(stage, total) {
     if (stage >= total - 1) return "ok";
     if (stage <= 1) return "neutral";
@@ -240,6 +350,7 @@
     LIVE_JOBS.filter(function (j) { return j.stage === 0; }).forEach(function (j) {
       tasks.push({
         tag: "Quote needed",
+        tone: "warn",
         title: j.code + " · " + (j.client || "Unknown client"),
         detail: (jobVertical(j) === "logistics" ? "Freight" : "Equipment") + " enquiry - not yet sent to a vendor",
         href: "job-detail.html?job=" + encodeURIComponent(j.code)
@@ -254,6 +365,7 @@
       if (hours >= AGING_THRESHOLD_HOURS) {
         tasks.push({
           tag: "Aging in pipeline",
+          tone: "error",
           title: j.code + " · " + (j.client || "Unknown client"),
           detail: "No stage change in " + Math.floor(hours / 24) + "+ day(s) - still at " + DATA.pipeline[j.stage],
           href: "job-detail.html?job=" + encodeURIComponent(j.code)
@@ -265,6 +377,7 @@
     LIVE_JOBS.filter(function (j) { return j.stage === 5 && (j.vendorCost === null || j.vendorCost === undefined); }).forEach(function (j) {
       tasks.push({
         tag: "Missing vendor cost",
+        tone: "error",
         title: j.code + " · " + (j.client || "Unknown client"),
         detail: "Payment received from client, but vendor cost not recorded",
         href: "job-detail.html?job=" + encodeURIComponent(j.code)
@@ -276,6 +389,7 @@
       if (v.docsExpiring) {
         tasks.push({
           tag: "Docs expiring",
+          tone: "warn",
           title: v.name,
           detail: "Trade license or insurance needs renewal",
           href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
@@ -284,6 +398,7 @@
       if (v.pendingApproval) {
         tasks.push({
           tag: "Pending approval",
+          tone: "neutral",
           title: v.name,
           detail: "Vendor application awaiting review",
           href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
@@ -291,10 +406,13 @@
       }
     });
 
-    // 5. Overdue invoices.
+    // 5. Overdue invoices - genuinely late money, not a routine "not yet"
+    // state, so this gets the same alarm-red treatment as an overdue
+    // invoice status chip anywhere else in the app.
     DATA.billing.invoices.filter(function (inv) { return inv.status === "Overdue"; }).forEach(function (inv) {
       tasks.push({
         tag: "Invoice overdue",
+        tone: "error",
         title: inv.ref + " · " + inv.client,
         detail: inv.amount + " - was due " + inv.due,
         href: "index.html#panel-billing"
@@ -316,7 +434,7 @@
       tasks.forEach(function (t) {
         root.appendChild(el("a", { class: "task-row", href: t.href }, [
           el("div", { class: "task-row-main" }, [
-            el("span", { class: "status-chip", "data-tone": "warn", text: t.tag }),
+            el("span", { class: "status-chip", "data-tone": t.tone || "warn", text: t.tag }),
             el("div", { class: "task-row-text" }, [
               el("div", { class: "task-row-title", text: t.title }),
               el("div", { class: "task-row-detail", text: t.detail })
@@ -340,6 +458,7 @@
               if (isExpiringOrPast(v.trade_license_expiry, 14) || isExpiringOrPast(v.insurance_expiry, 14)) {
                 tasks.push({
                   tag: "Docs expiring",
+                  tone: "warn",
                   title: v.name,
                   detail: "Trade license or insurance expires within 14 days (or has passed)",
                   href: "vendor-detail.html?id=" + encodeURIComponent(v.id)
@@ -356,8 +475,32 @@
   }
 
   /* ---------------- Vendors ---------------- */
+  function vendorRowActions(v) {
+    // Quick action: the single most likely next step gets a one-click
+    // primary button instead of forcing a click-through to vendor-detail
+    // just to approve (afzl's ask, 2026-07-23, echoing an external UI/UX
+    // review). Mock vendor data only - this flips `v.pendingApproval`/
+    // `v.active` in memory and re-renders the row, it doesn't persist
+    // anywhere (no backend for the demo vendors), same honesty-about-limits
+    // precedent as Billing's disabled Receipt/Remind buttons.
+    var actions = [];
+    if (v.pendingApproval) {
+      var approveBtn = el("button", { class: "btn btn-primary btn-sm", type: "button", text: "Approve" });
+      approveBtn.addEventListener("click", function () {
+        v.pendingApproval = false;
+        v.active = true;
+        showToast(v.name + " approved.");
+        renderVendors();
+      });
+      actions.push(approveBtn);
+    }
+    actions.push(el("a", { class: "btn btn-ghost btn-sm", href: "vendor-detail.html?id=" + encodeURIComponent(v.id), text: "View" }));
+    return actions;
+  }
+
   function renderVendors() {
     var tbody = document.getElementById("vendors-tbody");
+    tbody.innerHTML = "";
     DATA.vendors.forEach(function (v) {
       var tone = !v.active ? (v.pendingApproval ? "neutral" : "error") : (v.docsExpiring ? "warn" : "ok");
       var statusLabel = v.pendingApproval ? "Pending approval" : (v.active ? "Active" : "Deactivated");
@@ -372,9 +515,7 @@
         el("td", { text: v.onTime }),
         el("td", { text: v.joined }),
         el("td", {}, [el("span", { class: "status-chip", "data-tone": tone, text: statusLabel })]),
-        el("td", {}, [
-          el("a", { class: "btn btn-ghost btn-sm", href: "vendor-detail.html?id=" + encodeURIComponent(v.id), text: "View" })
-        ])
+        el("td", { style: "white-space:nowrap;" }, vendorRowActions(v))
       ]);
       tbody.appendChild(row);
     });
@@ -1471,7 +1612,12 @@
 
   function reconciliationStatus(clientInvoice, hasVendorCost, vendorPaid) {
     if (!hasVendorCost) {
-      return clientInvoice ? { label: "Vendor cost missing", tone: "warn" } : { label: "Not yet invoiced", tone: "neutral" };
+      // Client already invoiced but vendor cost was never entered - a real
+      // exception (blocks Payables/Profit), not a routine "not yet" state,
+      // so this gets the same alarm-red treatment as an overdue invoice
+      // (afzl's ask, 2026-07-23: high-contrast status colors - "Missing
+      // Vendor Cost... should be a bright, alarming red").
+      return clientInvoice ? { label: "Vendor cost missing", tone: "error" } : { label: "Not yet invoiced", tone: "neutral" };
     }
     var clientPaid = !!clientInvoice && clientInvoice.status === "Paid";
     if (clientPaid && vendorPaid) return { label: "Reconciled", tone: "ok" };
@@ -2137,6 +2283,7 @@
   document.addEventListener("DOMContentLoaded", async function () {
     var page = document.body.getAttribute("data-page");
     bindClock();
+    bindGlobalSearch();
     if (page === "job-detail") {
       await renderJobDetailPage();
       return;

@@ -32,6 +32,7 @@
       <button role="tab" id="tab-reports" aria-controls="panel-reports" aria-selected="false" type="button">Reports</button>
     </nav>
 
+    <button type="button" class="btn btn-ghost btn-sm" id="global-search-trigger" style="color:#fff;border-color:rgba(255,255,255,.25);">Search <span class="mono" style="opacity:.6;">⌘K</span></button>
     <span class="live-pill"><span class="dot" aria-hidden="true"></span>Updated <span id="last-updated">—</span></span>
   </header>
 
@@ -332,6 +333,20 @@
       <p class="note" style="margin-top:var(--space-2);">All AED figures on this page (job price, invoice amount) are excl. VAT unless labeled otherwise - UAE VAT is 5%, shown separately on the Invoice statement and as its own summary card. Figures are computed from current job records. Payment received = jobs the client has already paid for (Payment Received stage or later). Receivables = invoiced jobs the client hasn't paid yet. Payables = jobs the client has paid where Dozr hasn't paid the vendor yet - enter each job's vendor cost on its job detail page to include it here (until then it's called out as missing rather than treated as zero). Profit sums client price minus vendor cost, only for jobs where both are known. "By pipeline stage" below shows every stage's job count and total AED amount, not just the ones with their own card above. The Job ledger and Invoice statement above are individually filterable, sortable (click a column header), and downloadable as CSV. Note: these numbers won't match Billing's totals yet - Reports reads live job records, Billing still reads separate sample invoice data until it's connected to real invoicing.</p>
     </section>
   </main>
+</div>
+
+<!-- GLOBAL SEARCH (Ctrl+K / Cmd+K) -->
+<div class="modal-overlay" id="global-search-overlay" hidden>
+  <div class="modal-dialog" role="dialog" aria-modal="true" aria-labelledby="global-search-title" style="max-width:560px;padding:0;">
+    <h2 id="global-search-title" class="sr-only">Search jobs, vendors, and invoices</h2>
+    <div style="display:flex;align-items:center;gap:8px;padding:var(--space-3);border-bottom:1px solid var(--line);">
+      <input type="text" id="global-search-input" placeholder="Search jobs, vendors, invoices..." autocomplete="off"
+        style="flex:1;border:none;font-size:16px;font-family:inherit;background:transparent;color:var(--ink);outline:none;">
+      <button type="button" class="modal-close" id="global-search-close" aria-label="Close">&times;</button>
+    </div>
+    <div id="global-search-results" style="max-height:360px;overflow-y:auto;"></div>
+    <p class="note" style="padding:8px var(--space-3);margin:0;border-top:1px solid var(--line);">Type at least 2 characters · Esc to close</p>
+  </div>
 </div>
 
 <!-- ADD VENDOR MODAL -->
